@@ -81,7 +81,9 @@ async function handleUpdate(update) {
 
   // Commands take priority over question-answering.
   const text = msg.text.trim();
-  const cmd = text.replace(/^\//, '').toLowerCase().split(/\s+/)[0];
+  // Match the first word to a command, letters only: "Ian", "/ledger",
+  // "FinanceFred", "GM George" → ian / ledger / financefred / gm.
+  const cmd = text.split(/\s+/)[0].replace(/^\//, '').toLowerCase().replace(/[^a-z]/g, '');
   if (commands[cmd]) {
     try {
       await commands[cmd](text);

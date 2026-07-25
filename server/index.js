@@ -10,6 +10,7 @@ import { ping } from './db.js';
 import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
 import { runLedger, ledgerReady, hoursSinceLastRun } from './workers/ledger.js';
+import { runScout, scoutReady, scoutHasRun } from './workers/scout.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -77,14 +78,35 @@ app.post('/api/questions', requireWorkerKey, async (req, res) => {
 });
 
 // --- Workers ---------------------------------------------------------------
-// Telegram commands: type "ledger" (or "/ledger") in the hive thread.
-commands.ledger = () => runLedger();
+// Each teammate answers to their name or title+name (e.g. "fred" or "financefred").
+const LIVE = {
+  ian: () => runScout(), icpian: () => runScout(), scout: () => runScout(),
+  fred: () => runLedger(), financefred: () => runLedger(), ledger: () => runLedger(),
+};
+const COMING = {
+  ricky: 'Ricky (Research)', researchricky: 'Ricky (Research)',
+  tom: 'Tom (Tools)', toolstom: 'Tom (Tools)',
+  sam: 'Sam (Socials)', socialssam: 'Sam (Socials)',
+  george: 'George (GM)', gmgeorge: 'George (GM)',
+};
+for (const [alias, fn] of Object.entries(LIVE)) commands[alias] = fn;
+for (const [alias, who] of Object.entries(COMING)) {
+  commands[alias] = () => send(`🐝 ${who} isn't online yet — coming in a later phase.`);
+}
 commands.help = () =>
-  send('🐝 Commands:\n• `ledger` — run the revenue pulse now\n• `help` — this list');
+  send(
+    '🐝 *The hive* — message a name or title+name:\n' +
+      '• *Ian* / ICPIan — ICP & subscribers\n' +
+      '• *Fred* / FinanceFred — revenue pulse\n' +
+      '• *Ricky, Tom, Sam, George* — coming soon\n' +
+      '• *help* — this list'
+  );
 
 async function runWorker(name, res) {
+  const key = String(name || '').toLowerCase();
   try {
-    if (name === 'ledger') return res.json(await runLedger());
+    if (['ledger', 'fred'].includes(key)) return res.json(await runLedger());
+    if (['scout', 'ian'].includes(key)) return res.json(await runScout());
     return res.status(404).json({ error: `unknown worker "${name}"` });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -138,14 +160,16 @@ async function ledgerTick() {
 }
 
 function scheduleWorkers() {
+  // Fred: daily revenue pulse at ~08:00 Sydney.
   setInterval(() => ledgerTick().catch(() => {}), 60 * 60 * 1000); // hourly
+  // Ian: onboarding once, the first time Wix is connected (Scout-first focus).
   setTimeout(async () => {
     try {
-      if (ledgerReady() && (await hoursSinceLastRun()) > 12) await runLedger();
+      if (scoutReady() && !(await scoutHasRun())) await runScout();
     } catch (e) {
-      console.error('[boot] ledger warmup:', e.message);
+      console.error('[boot] ian warmup:', e.message);
     }
-  }, 15000);
+  }, 20000);
 }
 
 async function boot() {

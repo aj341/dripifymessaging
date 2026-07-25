@@ -1,76 +1,24 @@
-// Ledger — Revenue & Churn. Source of truth: Wix Pricing Plans (subscriptions).
+// Fred — Revenue & Finance (worker key: ledger). Source of truth: Wix Pricing Plans.
 //
-// Evidence rule: every number written to the brain carries its receipt (the Wix
-// endpoint, order counts, and fetch time). Amounts come straight from the order
-// priceDetails; nothing is estimated except the MRR cycle-normalisation, which
-// is disclosed in the provenance.
+// Evidence rule: every number carries its receipt (the Wix endpoint, order
+// counts, fetch time). Amounts come straight from order priceDetails; the only
+// estimate (MRR cycle-normalisation) is disclosed in the provenance.
 import { writeSignal, setMemory, getSetting, setSetting } from '../brain.js';
 import { send } from '../telegram.js';
+import {
+  wixReady,
+  fetchAllPricingOrders,
+  orderAmount,
+  orderCycleMonths,
+  money,
+  WIX_SITE_ID,
+  WIX_CURRENCY,
+} from '../wix.js';
 
-const SITE_ID = process.env.WIX_SITE_ID || 'aa112b96-b980-49fa-8f7f-202343661708'; // Design Bees
-const API_KEY = process.env.WIX_API_KEY;
-const CURRENCY = 'AUD';
+const WORKER = { key: 'ledger', name: 'Fred', emoji: '📊' };
 
 export function ledgerReady() {
-  return Boolean(API_KEY);
-}
-
-async function wixGet(path) {
-  const res = await fetch(`https://www.wixapis.com${path}`, {
-    headers: {
-      Authorization: API_KEY,
-      'wix-site-id': SITE_ID,
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    throw new Error(`Wix ${res.status} ${res.statusText} ${txt.slice(0, 200)}`);
-  }
-  return res.json();
-}
-
-/** Page through all pricing-plan orders (50 per page). */
-async function fetchAllOrders(maxPages = 60) {
-  const orders = [];
-  let offset = 0;
-  for (let page = 0; page < maxPages; page++) {
-    const data = await wixGet(`/pricing-plans/v2/orders?limit=50&offset=${offset}`);
-    const batch = data.orders || [];
-    orders.push(...batch);
-    const total = data.pagingMetadata?.total ?? orders.length;
-    offset += 50;
-    if (batch.length === 0 || orders.length >= total) break;
-  }
-  return orders;
-}
-
-// Months contained in one billing cycle, for MRR normalisation.
-function cycleMonths(cd) {
-  if (!cd || !cd.count || !cd.unit) return null;
-  const u = String(cd.unit).toUpperCase();
-  if (u === 'DAY') return cd.count / 30.44;
-  if (u === 'WEEK') return cd.count / 4.345;
-  if (u === 'MONTH') return cd.count;
-  if (u === 'YEAR') return cd.count * 12;
-  return null;
-}
-
-function num(v) {
-  const n = parseFloat(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function orderAmount(o) {
-  const pd = o.priceDetails || {};
-  return num(pd.total ?? pd.subtotal ?? pd.planPrice);
-}
-
-function orderCycle(o) {
-  const pd = o.priceDetails || {};
-  return (pd.subscription && pd.subscription.cycleDuration) ||
-    (o.pricing && o.pricing.subscription && o.pricing.subscription.cycleDuration) ||
-    null;
+  return wixReady();
 }
 
 function inRange(iso, start, end) {
@@ -79,37 +27,26 @@ function inRange(iso, start, end) {
   return t >= start.getTime() && t < end.getTime();
 }
 
-function money(n) {
-  return n.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
-/** Compute the metrics. All windows in UTC (disclosed in provenance). */
+/** Compute the metrics. Windows in UTC (disclosed in provenance). */
 function analyze(orders, now = new Date()) {
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const elapsedMs = now.getTime() - monthStart.getTime();
   const lastMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   const lastMonthSamePoint = new Date(lastMonthStart.getTime() + elapsedMs);
 
-  let active = 0;
-  let mrr = 0;
-  let newCount = 0;
-  let newValue = 0;
-  let lastNewCount = 0;
-  let lastNewValue = 0;
-  let churnCount = 0;
-  let churnMrrLost = 0;
+  let active = 0, mrr = 0, newCount = 0, newValue = 0;
+  let lastNewCount = 0, lastNewValue = 0, churnCount = 0, churnMrrLost = 0;
 
   for (const o of orders) {
     const status = String(o.status || '').toUpperCase();
     const amount = orderAmount(o);
-    const months = cycleMonths(orderCycle(o));
+    const months = orderCycleMonths(o);
     const monthly = months ? amount / months : 0;
 
     if (status === 'ACTIVE') {
       active += 1;
       mrr += monthly;
     }
-
     if (inRange(o.createdDate, monthStart, now)) {
       newCount += 1;
       newValue += amount;
@@ -118,10 +55,8 @@ function analyze(orders, now = new Date()) {
       lastNewCount += 1;
       lastNewValue += amount;
     }
-
     if (status === 'CANCELED' || status === 'ENDED') {
-      const when = o.endDate || o.updatedDate;
-      if (inRange(when, monthStart, now)) {
+      if (inRange(o.endDate || o.updatedDate, monthStart, now)) {
         churnCount += 1;
         churnMrrLost += monthly;
       }
@@ -149,7 +84,7 @@ function report(m) {
     m.salesDelta < 0 ? `📉 down $${money(-m.salesDelta)} vs last month` :
     `level with last month`;
   return (
-    `📊 *Ledger — revenue pulse* (${CURRENCY})\n\n` +
+    `📊 *Fred — revenue pulse* (${WIX_CURRENCY})\n\n` +
     `*Active subscribers:* ${m.active}  ·  *MRR:* ~$${money(m.mrr)}/mo\n` +
     `*New this month:* ${m.newCount} ($${money(m.newValue)})\n` +
     `*Same point last month:* ${m.lastNewCount} ($${money(m.lastNewValue)})\n` +
@@ -160,19 +95,19 @@ function report(m) {
   );
 }
 
-/** Run Ledger: fetch → analyse → write signal → snapshot → Telegram. */
+/** Run Fred: fetch → analyse → write signal → snapshot → Telegram. */
 export async function runLedger() {
   if (!ledgerReady()) {
-    console.warn('[ledger] WIX_API_KEY not set — skipping.');
+    console.warn('[fred] WIX_API_KEY not set — skipping.');
     return { skipped: 'no WIX_API_KEY' };
   }
   const now = new Date();
-  const orders = await fetchAllOrders();
+  const orders = await fetchAllPricingOrders();
   const m = analyze(orders, now);
 
   const source = {
     tool: 'wix:pricing-plans/v2/orders',
-    siteId: SITE_ID,
+    siteId: WIX_SITE_ID,
     ordersScanned: m.ordersScanned,
     activeCount: m.active,
     mrrAud: m.mrr,
@@ -187,31 +122,25 @@ export async function runLedger() {
   await writeSignal({
     worker_key: 'ledger',
     kind: m.churnCount > 0 || m.salesDelta < 0 ? 'alert' : 'finding',
-    title: `MRR ~$${money(m.mrr)} ${CURRENCY} · ${m.active} active · sales ${trendWord} vs last month · ${m.churnCount} churned MTD`,
+    title: `MRR ~$${money(m.mrr)} ${WIX_CURRENCY} · ${m.active} active · sales ${trendWord} vs last month · ${m.churnCount} churned MTD`,
     body: report(m).replace(/\*/g, ''),
     confidence: 'fact',
     source,
   });
 
   const dateKey = now.toISOString().slice(0, 10);
-  await setMemory({
-    worker_key: 'ledger',
-    key: `snapshot:${dateKey}`,
-    value: m,
-    source,
-  });
+  await setMemory({ worker_key: 'ledger', key: `snapshot:${dateKey}`, value: m, source });
   await setMemory({ worker_key: 'ledger', key: 'latest', value: m, source });
   await setSetting('ledger_last_run', now.toISOString());
 
-  await send(report(m), { worker: { key: 'ledger', name: 'Ledger', emoji: '📊' } }).catch((e) =>
-    console.error('[ledger] telegram send failed:', e.message)
+  await send(report(m), { worker: WORKER }).catch((e) =>
+    console.error('[fred] telegram send failed:', e.message)
   );
 
-  console.log(`[ledger] pulse: ${m.active} active, MRR ~$${m.mrr}, ${m.churnCount} churned`);
+  console.log(`[fred] pulse: ${m.active} active, MRR ~$${m.mrr}, ${m.churnCount} churned`);
   return m;
 }
 
-/** How long since the last run, in hours (Infinity if never). */
 export async function hoursSinceLastRun() {
   const last = await getSetting('ledger_last_run');
   if (!last) return Infinity;
