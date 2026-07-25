@@ -1,9 +1,10 @@
-// Ian — ICP & Sourcing (worker key: scout). Reads real paying clients from Wix
-// Payments transactions (who paid, how much, which plan), drafts ICP evidence,
-// and asks AJ the first best-fit-client question. Never invents an ICP.
-import { writeSignal, setMemory, askQuestion, hasOpenQuestion, getSetting, setSetting } from '../brain.js';
+// Ian — ICP & Sourcing (worker key: scout). Builds deterministic customer
+// cohorts from Wix (Nectar 2025+, Honeycomb 2026+, active >3 months). The
+// founder/marketing/agency breakdown and demo→conversion are later steps that
+// need enrichment (Clay) and Google Calendar respectively.
+import { writeSignal, setMemory, getSetting, setSetting } from '../brain.js';
 import { send } from '../telegram.js';
-import { wixReady, fetchAllTransactions, summarizeRevenue, money, WIX_SITE_ID } from '../wix.js';
+import { wixReady, fetchAllTransactions, buildCohorts, money, WIX_SITE_ID } from '../wix.js';
 
 const WORKER = { key: 'scout', name: 'Ian', emoji: '🔭' };
 
@@ -11,74 +12,54 @@ export function scoutReady() {
   return wixReady();
 }
 
-function summaryText(s, rev90) {
-  const clients = s.clientRows.slice(0, 8).map((c) => {
-    const plan = c.plans.filter((p) => p !== 'Unknown')[0] || '';
-    return `• *${c.name}* — $${money(c.total)}${plan ? ` · ${plan}` : ''}`;
-  });
-  const plans = s.planRows.slice(0, 6).map((p) => `• *${p.plan}* — ${p.count} · $${money(p.revenue)}`);
+function line(m) {
+  return `• *${m.name}* — ${m.domain || 'no email'} · ${m.tenureMonths}mo · $${money(m.spend)}`;
+}
+function block(title, arr) {
+  const rows = arr.slice(0, 6).map(line).join('\n') || '• _none_';
+  const more = arr.length > 6 ? `\n_…and ${arr.length - 6} more_` : '';
+  return `*${title}:* ${arr.length}\n${rows}${more}`;
+}
+function cohortsText(c) {
   return (
-    `🔭 *Ian — ICP onboarding* (from Wix Payments)\n\n` +
-    `Your paying clients (last 90 days):\n` +
-    `*Active clients:* ${s.activeClients90}  ·  *Revenue (90d):* $${money(rev90)}\n` +
-    `*This month:* $${money(s.monthRevenue)} (${s.monthCount} payments)\n\n` +
-    `*Top clients by spend:*\n${clients.join('\n') || '• _none yet_'}\n` +
-    (s.unattributed90 ? `_(+$${money(s.unattributed90)} from payments without a name attached)_\n` : '') +
-    `\n` +
-    `*Top plans:*\n${plans.join('\n') || '• _none yet_'}\n\n` +
-    `To shape our ICP from evidence, one question to start:\n` +
-    `*Which client type — industry, business size, or category — are your best-fit, highest-value clients?* ` +
-    `I'll match your answer against who's actually paying.\n\n` +
-    `_Next: connect your demo calendar and I'll track which demo-bookers became paying clients._`
+    `🔭 *Ian — customer cohorts* (from Wix)\n\n` +
+    `${block('Nectar (2025+)', c.nectar2025)}\n\n` +
+    `${block('Honeycomb (2026+)', c.honeycomb2026)}\n\n` +
+    `${block('Active >3 months', c.active3mo)}\n\n` +
+    `_Next: enrich these into Sales Nav filters — founder / marketing / agency (needs Clay). Demo→conversion since March needs Google Calendar._`
   );
 }
 
-const PRIMARY_QUESTION =
-  'Which client type — industry, business size, or category — are your best-fit, highest-value clients? (Ian will match this against who is actually paying.)';
-
-export async function runScout() {
+export async function runScout({ notify = true } = {}) {
   if (!scoutReady()) {
-    await send('🔭 Ian needs the Wix key to see your clients — add WIX_API_KEY and I can start.', { worker: WORKER }).catch(() => {});
+    if (notify) await send('🔭 Ian needs the Wix key to build your cohorts.', { worker: WORKER }).catch(() => {});
     return { skipped: 'no WIX_API_KEY' };
   }
   const now = new Date();
-  const txns = await fetchAllTransactions();
-  const s = summarizeRevenue(txns, now);
-  const rev90 = s.revenue90;
-
+  const c = buildCohorts(await fetchAllTransactions(), now);
   const source = {
     tool: 'wix:payments/api/merchant/v2/transactions',
     siteId: WIX_SITE_ID,
-    transactionsScanned: s.fetched,
-    activeClients90: s.activeClients90,
-    revenue90Aud: rev90,
-    monthRevenueAud: s.monthRevenue,
+    totalClients: c.totalClients,
+    nectar2025: c.nectar2025.length,
+    honeycomb2026: c.honeycomb2026.length,
+    active3mo: c.active3mo.length,
     fetchedAt: now.toISOString(),
   };
-
   await writeSignal({
     worker_key: 'scout',
     kind: 'finding',
-    title: `ICP draft: ${s.activeClients90} active clients (90d), $${money(rev90)} · top client "${s.clientRows[0]?.name ?? 'n/a'}"`,
-    body: summaryText(s, rev90).replace(/\*/g, ''),
-    confidence: 'hypothesis',
+    title: `Cohorts: Nectar(2025+) ${c.nectar2025.length}, Honeycomb(2026+) ${c.honeycomb2026.length}, active>3mo ${c.active3mo.length}`,
+    body: cohortsText(c).replace(/\*/g, ''),
+    confidence: 'fact',
     source,
   });
-  await setMemory({
-    worker_key: 'scout',
-    key: 'icp:draft',
-    value: { topClients: s.clientRows.slice(0, 15), planRows: s.planRows, activeClients90: s.activeClients90, revenue90: rev90 },
-    source,
-  });
-
-  if (!(await hasOpenQuestion('scout'))) {
-    await askQuestion({ worker_key: 'scout', question: PRIMARY_QUESTION }).catch(() => {});
-  }
-  await send(summaryText(s, rev90), { worker: WORKER }).catch((e) => console.error('[ian] send failed:', e.message));
-
+  await setMemory({ worker_key: 'scout', key: 'cohorts', value: c, source });
   await setSetting('scout_last_run', now.toISOString());
-  console.log(`[ian] onboarding sent: ${s.activeClients90} clients (90d), $${rev90}`);
-  return s;
+
+  if (notify) await send(cohortsText(c), { worker: WORKER }).catch((e) => console.error('[ian] send failed:', e.message));
+  console.log(`[ian] cohorts: Nectar ${c.nectar2025.length}, Honeycomb ${c.honeycomb2026.length}, active3mo ${c.active3mo.length}`);
+  return c;
 }
 
 export async function scoutHasRun() {
