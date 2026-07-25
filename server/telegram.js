@@ -13,6 +13,10 @@ const API = TOKEN ? `https://api.telegram.org/bot${TOKEN}` : null;
 
 let started = false;
 
+// Command registry: an inbound message like "/ledger" or "ledger" runs
+// commands.ledger(). index.js populates this after the workers are imported.
+export const commands = {};
+
 export function telegramReady() {
   return Boolean(TOKEN);
 }
@@ -74,6 +78,19 @@ async function handleUpdate(update) {
   }
 
   await logMessage({ direction: 'in', text: msg.text, telegram_message_id: msg.message_id });
+
+  // Commands take priority over question-answering.
+  const text = msg.text.trim();
+  const cmd = text.replace(/^\//, '').toLowerCase().split(/\s+/)[0];
+  if (commands[cmd]) {
+    try {
+      await commands[cmd](text);
+    } catch (err) {
+      console.error(`[telegram] command ${cmd} failed:`, err.message);
+      await send(`⚠️ ${cmd} failed: ${err.message}`).catch(() => {});
+    }
+    return;
+  }
 
   // Naive Phase-0 behaviour: treat a reply as the answer to the newest open
   // question. Phase 1 makes this properly conversational.
