@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { migrate } from './migrate.js';
 import { ping } from './db.js';
 import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
-import { startPolling, telegramReady, send } from './telegram.js';
+import { startPolling, telegramReady, send, commands } from './telegram.js';
+import { runLedger, ledgerReady, hoursSinceLastRun } from './workers/ledger.js';
+import { runScout, scoutReady, scoutHasRun } from './workers/scout.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -75,6 +77,44 @@ app.post('/api/questions', requireWorkerKey, async (req, res) => {
   }
 });
 
+// --- Workers ---------------------------------------------------------------
+// Each teammate answers to their name or title+name (e.g. "fred" or "financefred").
+const LIVE = {
+  ian: () => runScout(), icpian: () => runScout(), scout: () => runScout(),
+  fred: () => runLedger(), financefred: () => runLedger(), ledger: () => runLedger(),
+};
+const COMING = {
+  ricky: 'Ricky (Research)', researchricky: 'Ricky (Research)',
+  tom: 'Tom (Tools)', toolstom: 'Tom (Tools)',
+  sam: 'Sam (Socials)', socialssam: 'Sam (Socials)',
+  george: 'George (GM)', gmgeorge: 'George (GM)',
+};
+for (const [alias, fn] of Object.entries(LIVE)) commands[alias] = fn;
+for (const [alias, who] of Object.entries(COMING)) {
+  commands[alias] = () => send(`🐝 ${who} isn't online yet — coming in a later phase.`);
+}
+commands.help = () =>
+  send(
+    '🐝 *The hive* — message a name or title+name:\n' +
+      '• *Ian* / ICPIan — ICP & subscribers\n' +
+      '• *Fred* / FinanceFred — revenue pulse\n' +
+      '• *Ricky, Tom, Sam, George* — coming soon\n' +
+      '• *help* — this list'
+  );
+
+async function runWorker(name, res) {
+  const key = String(name || '').toLowerCase();
+  try {
+    if (['ledger', 'fred'].includes(key)) return res.json(await runLedger());
+    if (['scout', 'ian'].includes(key)) return res.json(await runScout());
+    return res.status(404).json({ error: `unknown worker "${name}"` });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+app.post('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.params.worker, res));
+app.get('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.params.worker, res));
+
 // --- Pages -----------------------------------------------------------------
 // The Hive Wall — the place to see everyone's thoughts — is the front door.
 const hiveWall = (_req, res) => res.sendFile(path.join(__dirname, 'public', 'hive.html'));
@@ -83,14 +123,63 @@ app.get('/hive', hiveWall);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // --- Boot ------------------------------------------------------------------
-async function boot() {
-  try {
-    await migrate();
-  } catch (err) {
-    console.error('[boot] migration failed:', err.message);
+// Retry the migration a few times: on a fresh deploy the private database DNS
+// can lag a moment, and a DB restart shouldn't leave the brain unbuilt.
+async function migrateWithRetry(attempts = 6, delayMs = 3000) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await migrate();
+      return true;
+    } catch (err) {
+      console.error(`[boot] migration attempt ${i}/${attempts} failed: ${err.message}`);
+      if (i < attempts) await new Promise((r) => setTimeout(r, delayMs));
+    }
   }
+  console.error('[boot] migration gave up — brain not ready; still serving pages.');
+  return false;
+}
+
+// Daily cadence: run Ledger at ~08:00 Australia/Sydney if it hasn't run in the
+// last 12h, plus once shortly after boot so a fresh deploy surfaces a pulse
+// (the 12h guard means redeploys don't spam the thread).
+function sydneyHour() {
+  return Number(
+    new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Sydney',
+      hour: 'numeric',
+      hour12: false,
+    }).format(new Date())
+  );
+}
+
+async function ledgerTick() {
+  if (!ledgerReady()) return;
+  if (sydneyHour() !== 8) return;
+  if ((await hoursSinceLastRun()) < 12) return;
+  await runLedger().catch((e) => console.error('[schedule] ledger:', e.message));
+}
+
+function scheduleWorkers() {
+  // Fred: daily revenue pulse at ~08:00 Sydney.
+  setInterval(() => ledgerTick().catch(() => {}), 60 * 60 * 1000); // hourly
+  // Ian: onboarding once, the first time Wix is connected (Scout-first focus).
+  setTimeout(async () => {
+    try {
+      if (scoutReady() && !(await scoutHasRun())) await runScout();
+    } catch (e) {
+      console.error('[boot] ian warmup:', e.message);
+    }
+  }, 20000);
+}
+
+async function boot() {
+  console.log(
+    `[hive] build: phase1-ian-fred-renames | wix:${scoutReady()} telegram:${telegramReady()}`
+  );
+  await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
   startPolling().catch((err) => console.error('[boot] telegram:', err.message));
+  scheduleWorkers();
 }
 
 boot();

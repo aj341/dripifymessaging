@@ -11,9 +11,11 @@ CREATE TABLE IF NOT EXISTS workers (
   name       TEXT NOT NULL,
   emoji      TEXT,
   role       TEXT,
+  title      TEXT,
   status     TEXT NOT NULL DEFAULT 'idle',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS title TEXT;
 
 CREATE TABLE IF NOT EXISTS signals (
   id         BIGSERIAL PRIMARY KEY,
@@ -70,24 +72,26 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 `;
 
+// key stays stable internally; name/title are what AJ sees and addresses.
 const WORKERS = [
-  ['scout', 'Scout', '🔭', 'ICP & Sourcing'],
-  ['voice', 'Voice', '🎙️', 'Social Content'],
-  ['radar', 'Radar', '📡', 'Research & Trends'],
-  ['forge', 'Forge', '🛠️', 'Internal Tools & Analytics'],
-  ['ledger', 'Ledger', '📊', 'Revenue & Churn'],
-  ['queen', 'Queen', '👑', 'Chief of Staff'],
+  ['scout', 'Ian', '🔭', 'ICP & Sourcing', 'ICP'],
+  ['voice', 'Sam', '🎙️', 'Socials & Content', 'Socials'],
+  ['radar', 'Ricky', '📡', 'Research & Trends', 'Research'],
+  ['forge', 'Tom', '🛠️', 'Tools & Analytics', 'Tools'],
+  ['ledger', 'Fred', '📊', 'Revenue & Finance', 'Finance'],
+  ['queen', 'George', '👑', 'General Manager', 'GM'],
 ];
 
 export async function migrate() {
   await query(SCHEMA);
-  for (const [key, name, emoji, role] of WORKERS) {
+  for (const [key, name, emoji, role, title] of WORKERS) {
     await query(
-      `INSERT INTO workers (key, name, emoji, role)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO workers (key, name, emoji, role, title)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (key) DO UPDATE
-         SET name = EXCLUDED.name, emoji = EXCLUDED.emoji, role = EXCLUDED.role`,
-      [key, name, emoji, role]
+         SET name = EXCLUDED.name, emoji = EXCLUDED.emoji,
+             role = EXCLUDED.role, title = EXCLUDED.title`,
+      [key, name, emoji, role, title]
     );
   }
   console.log('[migrate] schema ready, workers seeded');
