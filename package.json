@@ -1,0 +1,17 @@
+{
+  "name": "designbees-hive",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Design Bees AI Brain — the hive server (Phase 0: brain + Hive Wall + Telegram bridge)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}
