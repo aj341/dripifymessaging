@@ -59,6 +59,15 @@ export async function askQuestion({ worker_key, question }) {
   return res.rows[0];
 }
 
+/** True if the worker already has an unanswered question open. */
+export async function hasOpenQuestion(worker_key) {
+  const res = await query(
+    `SELECT 1 FROM questions WHERE worker_key = $1 AND status = 'open' LIMIT 1`,
+    [worker_key]
+  );
+  return res.rowCount > 0;
+}
+
 /** Everything the Hive Wall needs in one shot. */
 export async function readHive() {
   const [workers, signals, questions, memory] = await Promise.all([
