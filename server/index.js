@@ -106,13 +106,14 @@ commands.refresh = () => runLedger();
 commands.reconcile = () => runLedgerReconcile({ notify: true });
 commands.prepay = () => runLedgerReconcile({ notify: true });
 commands.prepayments = () => runLedgerReconcile({ notify: true });
+commands.cohorts = () => runScout({ notify: true });
 commands.help = () =>
   send(
     '🐝 *The hive* — message a name or title+name:\n' +
       '• *Fred* / FinanceFred — revenue pulse (cached; `refresh` to update)\n' +
       '• *clients* — who paid what (last 90 days)\n' +
       '• *reconcile* / *prepay* — prepayments & one-offs (since Apr 2026)\n' +
-      '• *Ian* / ICPIan — ICP & your paying clients\n' +
+      '• *Ian* / ICPIan / *cohorts* — customer cohorts (Nectar, Honeycomb, active)\n' +
       '• *Ricky, Tom, Sam, George* — coming soon\n' +
       '• *help* — this list'
   );
@@ -183,10 +184,19 @@ async function reconcileTick() {
   await runLedgerReconcile({ notify: false }).catch((e) => console.error('[schedule] reconcile:', e.message));
 }
 
+// Ian refreshes the cohorts quietly each morning (stored, not sent).
+async function scoutTick() {
+  if (!scoutReady()) return;
+  if (sydneyHour() !== 8) return;
+  if (!(await scoutHasRun())) return; // first run is the boot warmup below
+  await runScout({ notify: false }).catch((e) => console.error('[schedule] ian:', e.message));
+}
+
 function scheduleWorkers() {
   setInterval(() => {
     ledgerTick().catch(() => {});
     reconcileTick().catch(() => {});
+    scoutTick().catch(() => {});
   }, 60 * 60 * 1000); // hourly
   // Ian: onboarding once, the first time Wix is connected.
   setTimeout(async () => {
@@ -208,7 +218,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: revenue-reconcile-v4 | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: ian-cohorts-v5 | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));

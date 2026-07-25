@@ -379,3 +379,60 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
   oneOffs.sort((a, b) => b.amount - a.amount);
   return { scanned, standard, prepayments, oneOffs, from: from.toISOString().slice(0, 10) };
 }
+
+// --- Customer cohorts (for Ian) --------------------------------------------
+// Deterministic customer segments from Wix payments. The founder/marketing/
+// agency breakdown is a later step (needs enrichment); this gives the lists.
+export function buildCohorts(txns, now = new Date()) {
+  const DAY = 86400000;
+  const Y2025 = new Date('2025-01-01T00:00:00Z');
+  const Y2026 = new Date('2026-01-01T00:00:00Z');
+  const clients = {};
+
+  for (const t of txns) {
+    if (String(t.type).toUpperCase() !== 'SALE' || String(t.status).toUpperCase() !== 'APPROVED') continue;
+    const cust = txCustomer(t);
+    if (isExcludedCustomer(cust)) continue;
+    const amount = txAmount(t);
+    if (amount < 100) continue;
+    const d = t.createdAt ? new Date(t.createdAt) : null;
+    if (!d) continue;
+
+    const items = t.order && t.order.description && t.order.description.items;
+    const plan = normalizePlan((items && items[0] && items[0].name) || '');
+    const key = (cust.email || cust.name || 'unknown').toLowerCase();
+    const c = clients[key] || (clients[key] = {
+      name: cust.name, email: cust.email,
+      domain: cust.email ? cust.email.split('@')[1] : null,
+      plans: new Set(), first: d, last: d, spend: 0, nectar2025: false, honey2026: false,
+    });
+    c.plans.add(plan);
+    c.spend += amount;
+    if (d < c.first) c.first = d;
+    if (d > c.last) c.last = d;
+    if (/nectar/i.test(plan) && d >= Y2025) c.nectar2025 = true;
+    if (/honeycomb/i.test(plan) && d >= Y2026) c.honey2026 = true;
+  }
+
+  const member = (c) => ({
+    name: c.name,
+    email: c.email,
+    domain: c.domain,
+    plans: [...c.plans].filter(Boolean),
+    tenureMonths: +((now.getTime() - c.first.getTime()) / (30.44 * DAY)).toFixed(1),
+    spend: Math.round(c.spend),
+    lastActive: c.last.toISOString().slice(0, 10),
+  });
+  const list = Object.values(clients);
+  const bySpend = (a, b) => b.spend - a.spend;
+
+  return {
+    totalClients: list.length,
+    nectar2025: list.filter((c) => c.nectar2025).map(member).sort(bySpend),
+    honeycomb2026: list.filter((c) => c.honey2026).map(member).sort(bySpend),
+    active3mo: list
+      .filter((c) => now.getTime() - c.first.getTime() > 90 * DAY && now.getTime() - c.last.getTime() <= 45 * DAY)
+      .map(member).sort(bySpend),
+    builtAt: now.toISOString(),
+  };
+}
