@@ -92,6 +92,15 @@ export async function readHive() {
   };
 }
 
+/** Read a single memory row (value + when it was written). */
+export async function getMemory(worker_key, key) {
+  const res = await query(
+    'SELECT value, source, updated_at FROM memory WHERE worker_key = $1 AND key = $2',
+    [worker_key, key]
+  );
+  return res.rows[0] || null;
+}
+
 export async function getSetting(key) {
   const res = await query('SELECT value FROM settings WHERE key = $1', [key]);
   return res.rows[0]?.value ?? null;

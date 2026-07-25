@@ -305,3 +305,77 @@ export function summarizeOrders(orders, now = new Date()) {
     salesDelta: Math.round(newValue - lastNewValue),
   };
 }
+
+// --- Reconciliation: standard price vs prepayments/discounts ----------------
+// Base monthly prices per plan (some have changed over time). Used to classify
+// every payment as: a standard month, a multi-month prepayment (named or
+// inferred), or a one-off/project payment.
+// Current standard monthly prices (AJ): anything else in-window is non-standard.
+const STANDARD_PRICES = [545, 995, 1645, 2645];
+const PRICE_PLAN = { 545: 'Worker Bee', 995: 'Buzz Basics', 1645: 'Honeycomb Plus', 2645: 'Nectar' };
+const planForPrice = (p) => PRICE_PLAN[p] || `$${p}/mo plan`;
+// Known single-month prices incl. recent historical — a match here is one month
+// (possibly at an old rate), NOT a prepayment; keeps recurring old-price
+// payments from being mis-read as multi-month prepayments.
+const KNOWN_MONTHLY = [499, 545, 745, 845, 945, 995, 1195, 1495, 1645, 2495, 2645];
+// AJ only cares about prepayments from April 2026 onward.
+const RECONCILE_FROM = new Date('2026-04-01T00:00:00Z');
+
+export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
+  const prepayments = [], oneOffs = [];
+  let standard = 0, scanned = 0;
+  const isStandard = (a) => STANDARD_PRICES.some((p) => Math.abs(a - p) <= 1.5);
+
+  for (const t of txns) {
+    if (String(t.type).toUpperCase() !== 'SALE' || String(t.status).toUpperCase() !== 'APPROVED') continue;
+    const cust = txCustomer(t);
+    if (isExcludedCustomer(cust)) continue;
+    const d = t.createdAt ? new Date(t.createdAt) : null;
+    if (!d || d < from) continue; // April 2026 → today only
+    const amount = txAmount(t);
+    if (amount < 100) continue; // disregard anything under $100 (AJ)
+
+    scanned += 1;
+    const items = t.order && t.order.description && t.order.description.items;
+    const rawName = (items && items[0] && items[0].name) || '';
+    const name = normalizePlan(rawName);
+
+    // A standard plan month — not a prepayment.
+    if (isStandard(amount)) { standard += 1; continue; }
+
+    // Prepayment stated in the plan name (e.g. "Prepaid Honeycomb 3 months - 10% off")
+    const mMonths = rawName.match(/(\d+)\s*months?/i);
+    if (/prepaid|prepay/i.test(rawName) && mMonths) {
+      const mDisc = rawName.match(/(\d+)\s*%\s*off/i);
+      prepayments.push({ client: cust.name, email: cust.email, plan: name, amount, months: +mMonths[1], discountPct: mDisc ? +mDisc[1] : null, basis: 'named', confidence: 'fact', date: t.createdAt });
+      continue;
+    }
+
+    // A single month at a known (possibly old) price — not a prepayment.
+    if (KNOWN_MONTHLY.some((p) => Math.abs(amount - p) <= 1.5)) {
+      oneOffs.push({ client: cust.name, email: cust.email, label: name || rawName || 'single month', amount, date: t.createdAt });
+      continue;
+    }
+
+    // Infer a multi-month prepayment: amount ≈ standard price × months × (1 − discount)
+    let best = null;
+    for (const price of STANDARD_PRICES) {
+      for (let n = 2; n <= 12; n++) {
+        const disc = 1 - amount / (price * n);
+        if (disc < -0.02 || disc > 0.16) continue;
+        const roundErr = Math.abs(disc - Math.round(disc / 0.05) * 0.05);
+        if (!best || roundErr < best.roundErr || (Math.abs(roundErr - best.roundErr) < 1e-9 && n < best.months)) {
+          best = { price, months: n, discountPct: Math.round(disc * 100), roundErr };
+        }
+      }
+    }
+    if (best && best.roundErr <= 0.02) {
+      prepayments.push({ client: cust.name, email: cust.email, plan: planForPrice(best.price), amount, months: best.months, discountPct: best.discountPct, basis: 'inferred', confidence: 'hypothesis', date: t.createdAt });
+    } else {
+      oneOffs.push({ client: cust.name, email: cust.email, label: name || rawName || 'payment', amount, date: t.createdAt });
+    }
+  }
+  prepayments.sort((a, b) => b.amount - a.amount);
+  oneOffs.sort((a, b) => b.amount - a.amount);
+  return { scanned, standard, prepayments, oneOffs, from: from.toISOString().slice(0, 10) };
+}

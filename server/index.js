@@ -9,7 +9,15 @@ import { migrate } from './migrate.js';
 import { ping } from './db.js';
 import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
-import { runLedger, runLedgerClients, ledgerReady, hoursSinceLastRun } from './workers/ledger.js';
+import {
+  runLedger,
+  sendPulse,
+  runLedgerClients,
+  runLedgerReconcile,
+  ledgerReady,
+  hoursSinceLastRun,
+  hoursSinceReconcile,
+} from './workers/ledger.js';
 import { runScout, scoutReady, scoutHasRun } from './workers/scout.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +89,7 @@ app.post('/api/questions', requireWorkerKey, async (req, res) => {
 // Each teammate answers to their name or title+name (e.g. "fred" or "financefred").
 const LIVE = {
   ian: () => runScout(), icpian: () => runScout(), scout: () => runScout(),
-  fred: () => runLedger(), financefred: () => runLedger(), ledger: () => runLedger(),
+  fred: () => sendPulse(), financefred: () => sendPulse(), ledger: () => sendPulse(),
 };
 const COMING = {
   ricky: 'Ricky (Research)', researchricky: 'Ricky (Research)',
@@ -94,12 +102,17 @@ for (const [alias, who] of Object.entries(COMING)) {
   commands[alias] = () => send(`🐝 ${who} isn't online yet — coming in a later phase.`);
 }
 commands.clients = () => runLedgerClients();
+commands.refresh = () => runLedger();
+commands.reconcile = () => runLedgerReconcile({ notify: true });
+commands.prepay = () => runLedgerReconcile({ notify: true });
+commands.prepayments = () => runLedgerReconcile({ notify: true });
 commands.help = () =>
   send(
     '🐝 *The hive* — message a name or title+name:\n' +
-      '• *Ian* / ICPIan — ICP & your paying clients\n' +
-      '• *Fred* / FinanceFred — revenue pulse\n' +
+      '• *Fred* / FinanceFred — revenue pulse (cached; `refresh` to update)\n' +
       '• *clients* — who paid what (last 90 days)\n' +
+      '• *reconcile* / *prepay* — prepayments & one-offs (since Apr 2026)\n' +
+      '• *Ian* / ICPIan — ICP & your paying clients\n' +
       '• *Ricky, Tom, Sam, George* — coming soon\n' +
       '• *help* — this list'
   );
@@ -161,10 +174,21 @@ async function ledgerTick() {
   await runLedger().catch((e) => console.error('[schedule] ledger:', e.message));
 }
 
+// Fred's reconciliation runs quietly in the background (stored, not sent);
+// AJ views it on demand with `reconcile`.
+async function reconcileTick() {
+  if (!ledgerReady()) return;
+  if (sydneyHour() !== 8) return;
+  if ((await hoursSinceReconcile()) < 20) return;
+  await runLedgerReconcile({ notify: false }).catch((e) => console.error('[schedule] reconcile:', e.message));
+}
+
 function scheduleWorkers() {
-  // Fred: daily revenue pulse at ~08:00 Sydney.
-  setInterval(() => ledgerTick().catch(() => {}), 60 * 60 * 1000); // hourly
-  // Ian: onboarding once, the first time Wix is connected (Scout-first focus).
+  setInterval(() => {
+    ledgerTick().catch(() => {});
+    reconcileTick().catch(() => {});
+  }, 60 * 60 * 1000); // hourly
+  // Ian: onboarding once, the first time Wix is connected.
   setTimeout(async () => {
     try {
       if (scoutReady() && !(await scoutHasRun())) await runScout();
@@ -172,11 +196,19 @@ function scheduleWorkers() {
       console.error('[boot] ian warmup:', e.message);
     }
   }, 20000);
+  // Fred: reconcile once shortly after boot (silent), then daily.
+  setTimeout(async () => {
+    try {
+      if (ledgerReady() && (await hoursSinceReconcile()) > 20) await runLedgerReconcile({ notify: false });
+    } catch (e) {
+      console.error('[boot] reconcile:', e.message);
+    }
+  }, 30000);
 }
 
 async function boot() {
   console.log(
-    `[hive] build: revenue-ytd-v3 | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: revenue-reconcile-v4 | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
