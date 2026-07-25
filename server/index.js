@@ -83,12 +83,24 @@ app.get('/hive', hiveWall);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // --- Boot ------------------------------------------------------------------
-async function boot() {
-  try {
-    await migrate();
-  } catch (err) {
-    console.error('[boot] migration failed:', err.message);
+// Retry the migration a few times: on a fresh deploy the private database DNS
+// can lag a moment, and a DB restart shouldn't leave the brain unbuilt.
+async function migrateWithRetry(attempts = 6, delayMs = 3000) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await migrate();
+      return true;
+    } catch (err) {
+      console.error(`[boot] migration attempt ${i}/${attempts} failed: ${err.message}`);
+      if (i < attempts) await new Promise((r) => setTimeout(r, delayMs));
+    }
   }
+  console.error('[boot] migration gave up — brain not ready; still serving pages.');
+  return false;
+}
+
+async function boot() {
+  await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
   startPolling().catch((err) => console.error('[boot] telegram:', err.message));
 }
