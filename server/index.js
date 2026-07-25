@@ -173,6 +173,9 @@ function scheduleWorkers() {
 }
 
 async function boot() {
+  console.log(
+    `[hive] build: phase1-ian-fred-renames | wix:${scoutReady()} telegram:${telegramReady()}`
+  );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
   startPolling().catch((err) => console.error('[boot] telegram:', err.message));
