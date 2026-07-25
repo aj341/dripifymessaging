@@ -31,6 +31,7 @@ function pulseText(s) {
     `*This month:* $${money(s.monthRevenue)}  (${s.monthCount} payments)\n` +
     `*Same point last month:* $${money(s.lastMonthRevenue)}  (${s.lastMonthCount})\n` +
     `*Trend:* ${trend}\n` +
+    `*${s.year} YTD:* $${money(s.ytd)}  (${s.ytdCount} payments)\n` +
     `*Active clients (90d):* ${s.activeClients90}\n\n` +
     `*Top plans this month:*\n${plans}\n\n` +
     `_Source: Wix Payments · type_ \`clients\` _for who paid what_`
@@ -69,6 +70,7 @@ export async function runLedger() {
     transactionsScanned: s.fetched,
     monthRevenueAud: s.monthRevenue,
     monthPayments: s.monthCount,
+    ytdAud: s.ytd,
     lastMonthMTD: { revenue: s.lastMonthRevenue, payments: s.lastMonthCount },
     activeClients90: s.activeClients90,
     window: 'approved SALE transactions; MTD vs same day-of-month last month, UTC',
