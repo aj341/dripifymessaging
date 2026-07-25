@@ -159,7 +159,7 @@ export function summarizeRevenue(txns, now = new Date()) {
   const since90 = new Date(now.getTime() - 90 * DAY);
 
   const statusCounts = {};
-  let mSum = 0, mCount = 0, lmSum = 0, lmCount = 0, rev90 = 0;
+  let mSum = 0, mCount = 0, lmSum = 0, lmCount = 0, rev90 = 0, ytd = 0, ytdCount = 0;
   const plans = {}, clients = {};
 
   for (const t of txns) {
@@ -174,6 +174,7 @@ export function summarizeRevenue(txns, now = new Date()) {
     const d = t.createdAt ? new Date(t.createdAt) : null;
     const plan = txPlan(t);
 
+    if (d && d.getUTCFullYear() === now.getUTCFullYear()) { ytd += amount; ytdCount += 1; }
     if (d && d >= mStart && d <= now) {
       mSum += amount; mCount += 1;
       plans[plan] = plans[plan] || { count: 0, revenue: 0 };
@@ -212,6 +213,9 @@ export function summarizeRevenue(txns, now = new Date()) {
     lastMonthCount: lmCount,
     delta: Math.round(mSum - lmSum),
     revenue90: Math.round(rev90),
+    ytd: Math.round(ytd),
+    ytdCount,
+    year: now.getUTCFullYear(),
     planRows,
     clientRows,
     activeClients90: clientRows.length,
