@@ -11,7 +11,6 @@ import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
 import { startPolling, telegramReady, send } from './telegram.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
 const PORT = process.env.PORT || 3000;
 
 const app = express();
@@ -77,10 +76,10 @@ app.post('/api/questions', requireWorkerKey, async (req, res) => {
 });
 
 // --- Pages -----------------------------------------------------------------
-// The Hive Wall — the place to see everyone's thoughts.
-app.get('/hive', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'hive.html')));
-// The existing Dripify Messaging Editor stays at the root.
-app.get('/', (_req, res) => res.sendFile(path.join(ROOT, 'index.html')));
+// The Hive Wall — the place to see everyone's thoughts — is the front door.
+const hiveWall = (_req, res) => res.sendFile(path.join(__dirname, 'public', 'hive.html'));
+app.get('/', hiveWall);
+app.get('/hive', hiveWall);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // --- Boot ------------------------------------------------------------------
