@@ -78,6 +78,147 @@ export function money(n) {
   return Number(n).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+// --- Wix Payments transactions (the real revenue source) -------------------
+// Each paid invoice / plan / pay-link becomes a transaction with the plan name,
+// amount, and customer. This is where Design Bees' actual money lives.
+export async function fetchAllTransactions(maxPages = 40) {
+  const all = [];
+  let offset = 0;
+  for (let p = 0; p < maxPages; p++) {
+    const data = await wixGet(`/payments/api/merchant/v2/transactions?limit=100&offset=${offset}`);
+    const batch = data.transactions || [];
+    all.push(...batch);
+    const total = data.pagination && data.pagination.total;
+    offset += 100;
+    if (!batch.length || (total != null && all.length >= total)) break;
+  }
+  return all;
+}
+
+// "(Upgrade)" / "Upgrade" is just how Design Bees moves someone between plans —
+// it is not a distinct plan, so strip it and merge.
+export function normalizePlan(name) {
+  if (!name) return 'Unknown';
+  return (
+    String(name)
+      .replace(/\(\s*upgrade\s*\)/gi, '')
+      .replace(/\bupgrade\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Unknown'
+  );
+}
+
+function txAmount(t) {
+  return num(t.amount && t.amount.amount);
+}
+function txPlan(t) {
+  const items = t.order && t.order.description && t.order.description.items;
+  return normalizePlan(items && items[0] && items[0].name);
+}
+function txCustomer(t) {
+  const b = t.order && t.order.description && t.order.description.billingAddress;
+  if (!b) return { name: 'Unknown', email: null };
+  const name = `${b.firstName || ''} ${b.lastName || ''}`.trim() || b.company || b.email || 'Unknown';
+  return { name, email: b.email || null };
+}
+
+// Internal / staff — excluded from client and revenue analysis. The email
+// domain is the robust catch-all; names cover anyone who used a personal email.
+const EXCLUDE_EMAIL_DOMAINS = ['designbees.com.au'];
+const EXCLUDE_NAMES = new Set([
+  'miguel gutierrez',
+  'rae mckenzie', 'rae mackenzie',
+  'nathan azouz',
+  'liz lord', 'elizabeth lord',
+  'joyce mary', 'mary joyce',
+  'a k', 'ak',
+]);
+function normName(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+}
+export function isExcludedCustomer(cust) {
+  if (!cust) return false;
+  const email = (cust.email || '').toLowerCase();
+  if (EXCLUDE_EMAIL_DOMAINS.some((d) => email.endsWith('@' + d))) return true;
+  const n = normName(cust.name);
+  if (EXCLUDE_NAMES.has(n)) return true;
+  const parts = n.split(' ');
+  if (parts.length === 2 && EXCLUDE_NAMES.has(`${parts[1]} ${parts[0]}`)) return true; // reversed order
+  return false;
+}
+
+// Revenue picture from transactions. Gross = APPROVED sales (fully-refunded
+// sales carry a REFUND status and are already excluded). Internal contacts are
+// filtered out. Used by Fred & Ian.
+export function summarizeRevenue(txns, now = new Date()) {
+  const DAY = 86400000;
+  const mStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const elapsed = now.getTime() - mStart.getTime();
+  const lastMStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const lastMPoint = new Date(lastMStart.getTime() + elapsed);
+  const since90 = new Date(now.getTime() - 90 * DAY);
+
+  const statusCounts = {};
+  let mSum = 0, mCount = 0, lmSum = 0, lmCount = 0, rev90 = 0;
+  const plans = {}, clients = {};
+
+  for (const t of txns) {
+    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+    if (String(t.type).toUpperCase() !== 'SALE') continue;
+    if (String(t.status).toUpperCase() !== 'APPROVED') continue;
+
+    const cust = txCustomer(t);
+    if (isExcludedCustomer(cust)) continue; // internal / staff
+
+    const amount = txAmount(t);
+    const d = t.createdAt ? new Date(t.createdAt) : null;
+    const plan = txPlan(t);
+
+    if (d && d >= mStart && d <= now) {
+      mSum += amount; mCount += 1;
+      plans[plan] = plans[plan] || { count: 0, revenue: 0 };
+      plans[plan].count += 1; plans[plan].revenue += amount;
+    }
+    if (d && d >= lastMStart && d < lastMPoint) { lmSum += amount; lmCount += 1; }
+
+    if (d && d >= since90) {
+      rev90 += amount;
+      const key = cust.email || cust.name;
+      clients[key] = clients[key] || { name: cust.name, email: cust.email, total: 0, payments: 0, plans: new Set(), last: null };
+      clients[key].total += amount;
+      clients[key].payments += 1;
+      clients[key].plans.add(plan);
+      if (!clients[key].last || d > new Date(clients[key].last)) clients[key].last = t.createdAt;
+    }
+  }
+
+  const planRows = Object.entries(plans)
+    .map(([plan, v]) => ({ plan, count: v.count, revenue: Math.round(v.revenue) }))
+    .sort((a, b) => b.revenue - a.revenue);
+  const named = Object.values(clients).filter((c) => c.name && c.name !== 'Unknown');
+  const unattributed90 = Math.round(
+    Object.values(clients).filter((c) => !c.name || c.name === 'Unknown').reduce((a, c) => a + c.total, 0)
+  );
+  const clientRows = named
+    .map((c) => ({ name: c.name, email: c.email, total: Math.round(c.total), payments: c.payments, plans: [...c.plans], last: c.last }))
+    .sort((a, b) => b.total - a.total);
+
+  return {
+    fetched: txns.length,
+    statusCounts,
+    monthRevenue: Math.round(mSum),
+    monthCount: mCount,
+    lastMonthRevenue: Math.round(lmSum),
+    lastMonthCount: lmCount,
+    delta: Math.round(mSum - lmSum),
+    revenue90: Math.round(rev90),
+    planRows,
+    clientRows,
+    activeClients90: clientRows.length,
+    unattributed90,
+  };
+}
+
 // One shared, correct summary of the order book. DRAFT orders (abandoned
 // checkouts) are ignored entirely. Recurring MRR and one-time revenue are kept
 // separate. Used by both Ian and Fred so their numbers always agree.

@@ -9,7 +9,7 @@ import { migrate } from './migrate.js';
 import { ping } from './db.js';
 import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
-import { runLedger, ledgerReady, hoursSinceLastRun } from './workers/ledger.js';
+import { runLedger, runLedgerClients, ledgerReady, hoursSinceLastRun } from './workers/ledger.js';
 import { runScout, scoutReady, scoutHasRun } from './workers/scout.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -93,11 +93,13 @@ for (const [alias, fn] of Object.entries(LIVE)) commands[alias] = fn;
 for (const [alias, who] of Object.entries(COMING)) {
   commands[alias] = () => send(`🐝 ${who} isn't online yet — coming in a later phase.`);
 }
+commands.clients = () => runLedgerClients();
 commands.help = () =>
   send(
     '🐝 *The hive* — message a name or title+name:\n' +
-      '• *Ian* / ICPIan — ICP & subscribers\n' +
+      '• *Ian* / ICPIan — ICP & your paying clients\n' +
       '• *Fred* / FinanceFred — revenue pulse\n' +
+      '• *clients* — who paid what (last 90 days)\n' +
       '• *Ricky, Tom, Sam, George* — coming soon\n' +
       '• *help* — this list'
   );
@@ -174,7 +176,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: phase1-ian-fred-renames | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: revenue-transactions-v2 | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
