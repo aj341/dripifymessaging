@@ -88,22 +88,28 @@ export function salesNavText(c) {
   );
 }
 
+const shortDate = (iso) => (iso ? iso.slice(5).replace('-', '/') : '?');
+
 export function demosText(d) {
   if (!d) return `🔭 *Ian* — no demo data loaded yet.`;
   const conv = d.conversions.map((x) => {
-    const money$ = x.spend ? ` · $${money(x.spend)}` : '';
-    const flag = x.basis && x.basis.startsWith('alias') ? ' _[alias]_' : '';
-    return `• *${x.client}* — ${x.company} · demo ${x.demoDate} · ${x.plan || 'converted'}${money$}${flag}`;
+    const co = x.company ? ` (${x.company})` : '';
+    const when = `${shortDate(x.demoDate)} → ${x.paidDate ? shortDate(x.paidDate) : 'paid'}`;
+    const note = x.note ? `\n   _${x.note}_` : '';
+    return `• *${x.client}*${co} · ${when} · ${x.plan} · $${money(x.spend)}${note}`;
   });
-  const other = (d.existingCustomerMeetings || []).map((x) => `• *${x.client}* — ${x.date} · _${x.note}_`);
+  const total = d.conversions.reduce((a, c) => a + (c.spend || 0), 0);
+  const rate = d.totalDemosInWindow
+    ? ` (${Math.round((d.conversions.length / d.totalDemosInWindow) * 100)}%)`
+    : '';
+  const excl = (d.excluded || []).map((x) => `• ${x.who} — _${x.reason}_`);
   return (
     `🔭 *Ian — demo → conversion* (${d.window.from} → ${d.window.to})\n\n` +
-    `*Demos booked in window:* ${d.totalDemosInWindow}\n` +
-    `*Converted to paying clients:* ${d.conversions.length}\n\n` +
+    `*Demos booked:* ${d.totalDemosInWindow}\n` +
+    `*Converted:* ${d.conversions.length}${rate} · *$${money(total)}*\n\n` +
     `${conv.join('\n')}\n\n` +
-    `*Met but already a customer:*\n${other.join('\n')}\n\n` +
-    `_Source: ${d.source}._\n` +
-    `_${d.note}_`
+    (excl.length ? `*Excluded:*\n${excl.join('\n')}\n\n` : '') +
+    `_Source: ${d.source}._\n_${d.note}_`
   );
 }
 
