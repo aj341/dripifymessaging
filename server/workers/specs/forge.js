@@ -9,6 +9,7 @@
 import { query as dbQuery } from '../../db.js';
 import { tools as analyticsTools, handlers as analyticsHandlers } from '../analytics-tools.js';
 import { PLAN_LINE } from '../blog-engine.js';
+import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
 
 const clean = (v) => (typeof v === 'string' ? v.trim() : '');
 
@@ -38,6 +39,7 @@ EVIDENCE RULE, unchanged: never state a number you cannot point to a source for.
 
   tools: [
     ...analyticsTools,
+    ...libraryTools,
     {
       name: 'hive_health',
       description:
@@ -74,6 +76,7 @@ EVIDENCE RULE, unchanged: never state a number you cannot point to a source for.
 
   handlers: {
     ...analyticsHandlers,
+    ...libraryHandlers,
     hive_health: async (input = {}) => {
       try {
         const hours = Math.min(Math.max(Number(input.hours) || 24, 1), 168);

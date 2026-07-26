@@ -6,6 +6,7 @@ import {
   PLAN_LINE,
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
+import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
 import { tools as analyticsTools, handlers as analyticsHandlers } from '../analytics-tools.js';
 import { tools as queryTools, handlers as queryHandlers } from '../query-tools.js';
 // Ricky — Research (worker key: radar). The entry point of the hive's cascade:
@@ -168,6 +169,7 @@ ${ANALYTICS_STATUS}`,
     ...transcriptTools,
     ...skillTools,
     ...blogEngineTools,
+    ...libraryTools,
     ...analyticsTools,
     ...queryTools,
     {
@@ -337,6 +339,7 @@ ${ANALYTICS_STATUS}`,
     ...transcriptHandlers,
     ...skillHandlers,
     ...blogEngineHandlers,
+    ...libraryHandlers,
     ...analyticsHandlers,
     ...queryHandlers,
     reddit_scan: async (input = {}) => {

@@ -54,6 +54,16 @@ export const ANALYTICS_STATUS =
 // carries the retired hours framing, so anyone reading it gets told on the way in
 // rather than quietly copying $30/hr and 20 hours into a post.
 const DRIFT = {
+  'engine-content-map.md':
+    '\n\n---\n[HIVE NOTE, not part of the file]\nSection 5 says the legacy live blog is "not yet ' +
+    'inventoried" — that inventory now EXISTS: read keyword-ownership-map.md, built from live Search ' +
+    'Console data on 26 Jul 2026. Check every candidate query against BOTH maps. Where the two maps and ' +
+    'the live site disagree, flag it to AJ rather than picking a side.',
+  'keyword-ownership-map.md':
+    '\n\n---\n[HIVE NOTE, not part of the file]\nThis map is written for "anyone writing", including AJ ' +
+    'himself. For SAM one restriction still applies on top of it: approved open topic 2 (competitor- ' +
+    'alternative pages) names competitors and is AJ-MANUAL per the operator pack — Sam never writes those. ' +
+    'Topics 1, 3, 4 and 5 are in Sam\'s lane once gate-cleared.',
   'L99-voice.md':
     '\n\n---\n[HIVE DRIFT NOTE, not part of the file]\nThe "Structure" section above still reads ' +
     '"$545/mo = roughly $30/hr = roughly 20 hours of design a month". That framing is RETIRED. ' +
@@ -62,6 +72,24 @@ const DRIFT = {
 };
 
 const DOCS = [
+  {
+    file: 'keyword-ownership-map.md',
+    what:
+      'THE CANNIBALISATION BIBLE (AJ, 26 Jul 2026, from live Search Console data): which live page owns ' +
+      'which keyword cluster, the terms banned from any new title/H1/slug, the retired topics never to ' +
+      'recreate, the currently-contested queries where our own pages are already fighting, and the short ' +
+      'list of approved open topics. THE ONE RULE: one keyword cluster, one page. Check a target query ' +
+      'against this BEFORE any gap verdict and BEFORE any draft — if a page owns it, strengthen that page ' +
+      'or support it with a link, never compete with it.',
+  },
+  {
+    file: 'engine-content-map.md',
+    what:
+      'The engine drafts\' ownership map: which of the 9 drafted posts owns which primary query, the ' +
+      'secondary terms each already covers, the money-cluster rule (full at four — never a fifth cost ' +
+      'post), the unowned "how to brief a designer" hotspot, and the writer rules. Read together with ' +
+      'keyword-ownership-map.md, which covers the legacy LIVE blog.',
+  },
   {
     file: 'BLOG-ENGINE-OPERATOR-PACK.md',
     what:
@@ -102,7 +130,73 @@ function readDoc(name) {
   return body + (DRIFT[doc.file] || '');
 }
 
+// --- The live blog inventory ---------------------------------------------------
+// Cannibalisation guard (AJ, 2026-07-26): the site audit found duplicate pages
+// competing against each other, so nobody proposes a gap or drafts a post
+// without first knowing what is already live. The public RSS feed is the
+// source; the sitemap is the fallback. Wix blocks the default fetch UA, so a
+// real one is sent — same lesson as Reddit.
+const SITE_BASE = process.env.PUBLIC_SITE_URL || 'https://www.designbees.com.au';
+const BROWSER_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 designbees-hive/1.0';
+let _liveCache = null; // { at, posts } — one fetch an hour is plenty
+
+async function fetchText(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/xml,text/xml,*/*' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return res.text();
+}
+
+function decodeEntities(s) {
+  return String(s || '')
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+    .trim();
+}
+
+async function liveBlogPosts() {
+  if (_liveCache && Date.now() - _liveCache.at < 60 * 60 * 1000) return _liveCache.posts;
+  let posts = [];
+  try {
+    const rss = await fetchText(`${SITE_BASE}/blog-feed.xml`);
+    for (const item of rss.match(/<item>[\s\S]*?<\/item>/g) || []) {
+      const title = decodeEntities((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1]);
+      const link = decodeEntities((item.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
+      const date = decodeEntities((item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1]);
+      if (title && link) posts.push({ title, url: link, published: date || null });
+    }
+  } catch {
+    /* fall through to sitemap */
+  }
+  if (!posts.length) {
+    // Sitemap fallback: the index names a blog-posts sitemap; its <loc>s are the post URLs.
+    const index = await fetchText(`${SITE_BASE}/sitemap.xml`);
+    const blogMap = (index.match(/<loc>([^<]*blog[^<]*sitemap[^<]*)<\/loc>/i) || [])[1];
+    const mapXml = blogMap ? await fetchText(decodeEntities(blogMap)) : index;
+    for (const m of mapXml.match(/<loc>([^<]*\/post\/[^<]+)<\/loc>/g) || []) {
+      const url = decodeEntities(m.replace(/<\/?loc>/g, ''));
+      posts.push({ title: decodeURIComponent(url.split('/post/')[1] || '').replace(/-/g, ' '), url, published: null });
+    }
+  }
+  _liveCache = { at: Date.now(), posts };
+  return posts;
+}
+
 export const tools = [
+  {
+    name: 'list_live_blog_posts',
+    description:
+      'Every post currently LIVE on the Design Bees blog (public feed/sitemap — no auth, always current). ' +
+      'THE CANNIBALISATION GUARD: call this before proposing a query as a gap and before drafting anything. ' +
+      'If a live post already targets the query or overlaps it heavily, the answer is to strengthen or ' +
+      'refresh that post (flag it to AJ), never to write a second page that competes with our own — the ' +
+      'site audit found exactly that mistake costing rankings.',
+    input_schema: { type: 'object', properties: {} },
+  },
   {
     name: 'list_blog_engine_docs',
     description:
@@ -131,6 +225,22 @@ export const tools = [
 ];
 
 export const handlers = {
+  list_live_blog_posts: async () => {
+    try {
+      const posts = await liveBlogPosts();
+      if (!posts.length) {
+        return 'The public feed and sitemap returned no posts. Do NOT treat this as "no blog exists" — report the fetch came back empty and check with AJ before assuming anything about live content.';
+      }
+      return (
+        `${posts.length} post(s) live on the Design Bees blog right now:\n` +
+        posts.map((p) => `• ${p.title}${p.published ? ` (${String(p.published).slice(0, 16)})` : ''}\n  ${p.url}`).join('\n') +
+        `\n\nBefore a gap verdict or a new draft: if any post above already targets the query, the move is to strengthen/refresh that post, not write a competitor to it.`
+      );
+    } catch (err) {
+      return `Could not fetch the live blog inventory (${err.message}). Do not guess what is live — say the check failed and treat cannibalisation as UNVERIFIED for this pass.`;
+    }
+  },
+
   list_blog_engine_docs: async () =>
     `The Design Bees blog engine standard (${DOCS.length} documents, authoritative):\n\n` +
     DOCS.map((d) => `• ${d.file}\n  ${d.what}`).join('\n\n') +
