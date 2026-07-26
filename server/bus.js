@@ -17,6 +17,15 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 const MODEL = 'claude-opus-5';
 const MAX_DEPTH = 3;        // a finding may cascade at most three hops
 const MAX_JOBS_PER_TICK = 4;
+// Background work is OFF unless explicitly enabled. It ran up a bill on its
+// first outing, so the safe state is stopped: AJ turns it on when he wants it.
+export function autorunEnabled() {
+  return process.env.HIVE_AUTORUN === '1';
+}
+// After a question is asked, everything stops for this long so AJ can answer
+// before another teammate speaks.
+const QUIET_AFTER_QUESTION_MS = 5 * 60 * 1000;
+let quietUntil = 0;
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 
 // --- Spec registry -----------------------------------------------------------
@@ -158,6 +167,21 @@ function similar(a, b) {
   return hit / Math.min(A.size, B.size);
 }
 
+// --- Outbox -----------------------------------------------------------------
+// Six teammates each posting their own updates and questions turned into a wall
+// of notifications. Everything a tick produces is collected here and sent as a
+// single message instead.
+let outbox = [];
+function queueOut(line) {
+  outbox.push(line);
+}
+async function flushOutbox() {
+  if (!outbox.length) return;
+  const body = outbox.join('\n\n');
+  outbox = [];
+  await send(body).catch((e) => console.error('[bus] flush failed:', e.message));
+}
+
 // --- The context every worker gets ------------------------------------------
 function buildCtx(spec, depth) {
   return {
@@ -188,7 +212,7 @@ function buildCtx(spec, depth) {
       );
       return r.rows;
     },
-    notify: (text) => send(text, { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }),
+    notify: async (text) => queueOut(`${spec.emoji} *${spec.name}*\n${text}`),
     askAJ: async ({ question, why, assumption }) => {
       const log = await questionLog();
 
@@ -206,13 +230,17 @@ function buildCtx(spec, depth) {
           `record what the evidence plainly supports, leave the uncertain part unrecorded, and finish your work.`;
       }
 
+      // One question at a time, hive-wide, then everything waits for an answer.
+      if (log.some((q) => q.status === 'open')) {
+        return 'A question is already waiting with AJ. Do not ask another. Record what the evidence ' +
+          'plainly supports, leave the uncertain part out, and finish.';
+      }
       await askQuestion({ worker_key: spec.key, question });
-      await send(
-        `❓ *${spec.name}* needs a steer before recording this:\n\n${question}` +
-          (assumption ? `\n\n_What I'd otherwise assume:_ ${assumption}` : '') +
-          (why ? `\n_Why it matters:_ ${why}` : ''),
-        { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }
+      queueOut(
+        `❓ *${spec.name}* — ${question}` +
+          (assumption ? `\n_Otherwise I'll assume:_ ${assumption}` : '')
       );
+      quietUntil = Date.now() + QUIET_AFTER_QUESTION_MS;
       return 'Asked AJ — he answers everything, in his own time. Do NOT wait, do NOT ask again, and do NOT ' +
         'report yourself as blocked. Record what the evidence plainly supports, leave the uncertain part out, ' +
         'and finish the rest of your work now.';
@@ -335,6 +363,8 @@ async function runJob(job) {
 // --- The tick ----------------------------------------------------------------
 export async function processJobs(limit = MAX_JOBS_PER_TICK) {
   if (!client || !specs.size) return 0;
+  if (!autorunEnabled()) return 0;                 // stopped by default
+  if (Date.now() < quietUntil) return 0;           // AJ has a question pending
   let done = 0;
   for (let i = 0; i < limit; i++) {
     // Claim one job atomically so overlapping ticks can't double-run it.
@@ -357,6 +387,7 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
     }
     done += 1;
   }
+  await flushOutbox(); // one message for the whole tick, not one per teammate
   return done;
 }
 

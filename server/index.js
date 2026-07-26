@@ -20,7 +20,7 @@ import {
   hoursSinceReconcile,
 } from './workers/ledger.js';
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
-import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish } from './bus.js';
+import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autorunEnabled } from './bus.js';
 import { authUrl, completeAuth, googleConfigured, googleConnected } from './google.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,7 +109,6 @@ for (const [alias, key] of Object.entries(BUS_ALIASES)) {
     const spec = allSpecs().find((s) => s.key === key);
     if (!spec) return send(`🐝 That teammate isn't online yet.`);
     await queueJob(key, spec.daily?.prompt || `Do your standing job now and report what you find.`);
-    await send(`${spec.emoji} *${spec.name}* is on it — I'll post what he finds.`);
   };
 }
 
@@ -157,6 +156,16 @@ commands.skills = async () => {
   );
   await send('📡 *Ricky* is looking for skills worth adopting — he\'ll put candidates to you, and nothing gets installed without your say-so.');
 };
+commands.stop = async () => {
+  await _qJobs();
+  await send('🛑 Stopped. Queued work cleared and background running is off. Nothing will message you until you send `go`.');
+};
+commands.go = async () =>
+  send(
+    autorunEnabled()
+      ? '✅ Background running is on. Everything the team produces comes as one message per cycle.'
+      : '⏸ Background running is off at the service level. Set HIVE_AUTORUN=1 in Railway to enable it.'
+  );
 commands.clients = () => runLedgerClients();
 commands.refresh = () => runLedger();
 commands.reconcile = () => runLedgerReconcile({ notify: true });
@@ -185,6 +194,12 @@ commands.help = () =>
       '• *cascade <industry>* — run the whole chain: Ian → Tom → Sam\n' +
       '• *help* — this list'
   );
+
+// Clear anything queued — the emergency stop.
+async function _qJobs() {
+  const { query } = await import('./db.js');
+  await query(`UPDATE jobs SET status='skipped', finished_at=now() WHERE status='pending'`);
+}
 
 async function runWorker(name, res) {
   const key = String(name || '').toLowerCase();
@@ -323,7 +338,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v22-settled-facts | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v23-quiet | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know
