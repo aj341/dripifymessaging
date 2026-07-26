@@ -113,6 +113,37 @@ export async function publish({ worker_key, topic, title, body, data, confidence
   return sig;
 }
 
+// --- What AJ has already been asked -----------------------------------------
+// Questions are hive-wide, not per-worker. Without this, three teammates ask the
+// same thing in a row and a fourth re-asks something AJ already answered to
+// someone else — which is exactly what happened on the first real run.
+async function questionLog() {
+  const r = await _q(
+    `SELECT worker_key, question, status, answer, asked_at
+       FROM questions WHERE asked_at > now() - interval '7 days'
+      ORDER BY asked_at DESC LIMIT 40`
+  );
+  return r.rows;
+}
+
+const stop = new Set(['the','a','an','is','was','were','of','to','for','and','or','in','on','it','that','this','with','did','do','does','be','been','are','as','at','by','from','he','she','they','you','i','we','what','why','how','when','who','which','their','his','her']);
+function keywords(text) {
+  return new Set(
+    String(text || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter((w) => w.length > 2 && !stop.has(w))
+      // crude singularise so "3 months" matches "3 month"
+      .map((w) => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w))
+  );
+}
+/** Rough overlap — enough to catch "why did X churn" asked three ways. */
+function similar(a, b) {
+  const A = keywords(a), B = keywords(b);
+  if (!A.size || !B.size) return 0;
+  let hit = 0;
+  for (const w of A) if (B.has(w)) hit += 1;
+  return hit / Math.min(A.size, B.size);
+}
+
 // --- The context every worker gets ------------------------------------------
 function buildCtx(spec, depth) {
   return {
@@ -145,6 +176,22 @@ function buildCtx(spec, depth) {
     },
     notify: (text) => send(text, { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }),
     askAJ: async ({ question, why, assumption }) => {
+      const log = await questionLog();
+
+      // Already answered — to anyone. Hand back the answer instead of re-asking.
+      const answered = log.find((q) => q.status === 'answered' && q.answer && similar(question, q.question) >= 0.45);
+      if (answered) {
+        return `AJ has already answered this. He said: "${answered.answer}". Use that and carry on — do not ask again.`;
+      }
+
+      // Already open — from anyone. Don't queue a duplicate.
+      const pending = log.find((q) => q.status === 'open' && similar(question, q.question) >= 0.45);
+      if (pending) {
+        const who = getSpec(pending.worker_key)?.name || pending.worker_key;
+        return `${who} has already asked AJ this and is waiting. Don't ask again and don't say you're blocked — ` +
+          `record what the evidence plainly supports, leave the uncertain part unrecorded, and finish your work.`;
+      }
+
       await askQuestion({ worker_key: spec.key, question });
       await send(
         `❓ *${spec.name}* needs a steer before recording this:\n\n${question}` +
@@ -152,7 +199,9 @@ function buildCtx(spec, depth) {
           (why ? `\n_Why it matters:_ ${why}` : ''),
         { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }
       );
-      return 'Asked AJ. Do NOT record the assumption as fact — record only what you can see, note the open question, and move on.';
+      return 'Asked AJ — he answers everything, in his own time. Do NOT wait, do NOT ask again, and do NOT ' +
+        'report yourself as blocked. Record what the evidence plainly supports, leave the uncertain part out, ' +
+        'and finish the rest of your work now.';
     },
   };
 }
@@ -191,6 +240,21 @@ async function runJob(job) {
   const tools = [...(spec.tools || []), ASK_AJ];
   if (spec.useWebSearch) tools.push(WEB_SEARCH);
 
+  // Answers AJ gave anyone belong to everyone; open questions stop a second
+  // teammate asking the same thing while the first is still waiting.
+  const qlog = await questionLog().catch(() => []);
+  const answered = qlog.filter((q) => q.status === 'answered' && q.answer);
+  const open = qlog.filter((q) => q.status === 'open');
+  const qa =
+    (answered.length
+      ? `\n\n# What AJ has already told the team\nTreat these as settled — never ask them again.\n` +
+        answered.map((q) => `- Q (${getSpec(q.worker_key)?.name || q.worker_key}): ${q.question}\n  A: ${q.answer}`).join('\n')
+      : '') +
+    (open.length
+      ? `\n\n# Already asked, awaiting AJ\nDo not re-ask these or anything close to them, and do not report yourself blocked by them.\n` +
+        open.map((q) => `- ${getSpec(q.worker_key)?.name || q.worker_key}: ${q.question}`).join('\n')
+      : '');
+
   const system =
     `You are ${spec.name}, ${spec.title} at Design Bees, an Australian design subscription agency.\n\n` +
     `${spec.brief}\n\n` +
@@ -211,7 +275,11 @@ async function runJob(job) {
     `tell from the call alone. One good question beats five obvious ones — AJ is time-poor and being asked ` +
     `to confirm the obvious is worse than not asking at all.\n\n` +
     `When you find something another teammate should act on, publish it — that is how the hive compounds.\n\n` +
-    `Finish with two or three sentences on what you actually did and what you found.`;
+    `NEVER report yourself as blocked or held up waiting on AJ. He answers every question, in his own ` +
+    `time, and a pending answer is not a reason to stop. Do the parts you can, leave the uncertain part ` +
+    `unrecorded, and finish. Asking the same thing twice — or asking what a teammate has already asked — ` +
+    `wastes his time and is worse than not asking.\n\n` +
+    `Finish with two or three sentences on what you actually did and what you found.` + qa;
 
   const messages = [{ role: 'user', content: job.prompt }];
   let text = '';
