@@ -6,8 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { migrate } from './migrate.js';
-import { ping } from './db.js';
-import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, allKnowledge } from './brain.js';
+import { ping, query as dbQuery } from './db.js';
+import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, allKnowledge, getSetting, setSetting } from './brain.js';
 import { enrichmentSeed, applyKnowledge } from './wix.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
 import {
@@ -336,11 +336,31 @@ function scheduleWorkers() {
   }, 30000);
 }
 
+// One-time: AJ reset Sam's content on 2026-07-26 when the blog engine pack
+// became the standard. Every draft written before it is marked superseded so
+// Sam starts fresh against the pack — but ONLY knowledge rows are touched.
+// Signals, jobs and questions are left exactly as they are: the evidence that
+// triggered those drafts (pains, gaps, trends) must never be lost with them.
+async function resetSamContentOnce() {
+  const FLAG = 'sam_content_reset_v1';
+  if (await getSetting(FLAG)) return;
+  const r = await dbQuery(
+    `UPDATE knowledge
+        SET data = data || '{"status":"superseded-pre-blog-engine"}'::jsonb
+      WHERE entity_type = 'topic'
+        AND data->>'format' IN ('linkedin-post', 'blog-outline')
+        AND COALESCE(data->>'standard', '') <> 'blog-engine-pack-2026-07'`
+  );
+  await setSetting(FLAG, new Date().toISOString());
+  console.log(`[hive] Sam content reset: ${r.rowCount} pre-pack draft(s) marked superseded; signals untouched`);
+}
+
 async function boot() {
   console.log(
-    `[hive] build: hive-v24-one-at-a-time | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v25-blog-engine | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
+  await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
   // Seed the file-based enrichment once, then load everything the workers know
   // into the in-memory index the cohort builder reads.
   try {

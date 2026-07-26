@@ -3,13 +3,13 @@
   "updatedAt": "2026-07-26",
   "facts": [
     {
-      "topic": "Plan names",
-      "fact": "Honeycomb and Honeycomb Plus are the SAME plan. Treat them as one plan everywhere — never report them as two, never compare them against each other, never count a move between them as an upgrade or a change.",
+      "topic": "Plan names — billing vs copy",
+      "fact": "In BILLING DATA (Wix transactions, snapshots, cohorts), 'Honeycomb' and 'Honeycomb Plus' are the SAME plan — treat them as one everywhere, never report them as two, never count a move between them as an upgrade. In CUSTOMER-FACING COPY the canonical names are exactly: Worker Bee, Buzz Basics, Honey Comb (two words), Nectar Pro. There are FOUR plans, never 'three plans', and 'Honeycomb Plus' or 'Nectar' alone never appear in copy.",
       "statedBy": "AJ"
     },
     {
-      "topic": "Plans and prices",
-      "fact": "The monthly subscription plans are Worker Bee $545, Buzz Basics $995, Honeycomb (a.k.a. Honeycomb Plus) $1645, and Nectar $2645. Anything under $100 is not a plan payment.",
+      "topic": "Plans, prices and hours (confirmed 2026-07-26)",
+      "fact": "Worker Bee $545/mo (16 hrs, ~$34/hr), Buzz Basics $995/mo (30 hrs, ~$33/hr), Honey Comb $1,645/mo (53 hrs, ~$31/hr), Nectar Pro $2,645/mo (74 hrs, ~$36/hr). AUD inc GST. The old 20/33/55/88 hours ladder is RETIRED — any copy or draft quoting it is wrong. Anything under $100 is not a plan payment.",
       "statedBy": "AJ"
     },
     {
@@ -24,12 +24,22 @@
     },
     {
       "topic": "Subscription model",
-      "fact": "Design Bees is a design subscription agency: unlimited graphic design on a monthly plan. Clients running out of design work is a normal and expected reason to pause or cancel, not a failure of the service.",
+      "fact": "Design Bees is a design subscription agency: unlimited graphic design on a monthly plan, human designers only. Clients running out of design work is a normal and expected reason to pause or cancel, not a failure of the service.",
       "statedBy": "AJ"
     },
     {
       "topic": "Content gating",
-      "fact": "No LinkedIn post or blog post is written until there is verified search demand or clear buyer intent behind it. Volume is not the goal. A post nobody is searching for is not worth writing.",
+      "fact": "No LinkedIn post or blog post is written until there is verified search demand or clear buyer intent behind it — a Tom-assessed gap, a Ricky-evidenced pain, or an item AJ curated into the blog engine content queue. Volume is not the goal. The blog engine operator pack (in the repo at server/data/blog-engine/) is the authoritative content standard; its non-negotiables and five gates apply to everything.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Customer quotes and client-shaped hypotheticals",
+      "fact": "A direct customer quote may only be used in content if it genuinely adds value, is not revealing or negative, AND AJ has approved that specific use beforehand. The same approval applies to using a real client — or a thinly-veiled version of one, e.g. 'a furniture company' when we have exactly one furniture client — as a hypothetical or worked example. Raise the proposal with AJ first; draft without it while waiting. Generic hypotheticals that map to no real client are fine.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Analytics access",
+      "fact": "As at 2026-07-26 the hive has NO access to GA4, Google Search Console, Ahrefs or any keyword-volume tool — the only Google scope granted is Drive read-only. Nobody states a search volume, difficulty, impression, click, session or ranking number, ever. Demand evidence is qualitative (live SERP, autocomplete, People Also Ask, what AI engines answer) and is labelled as such.",
       "statedBy": "AJ"
     }
   ]

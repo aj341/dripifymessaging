@@ -1,11 +1,20 @@
-import { tools as voiceTools, handlers as voiceHandlers } from '../voice-tools.js';
+import {
+  tools as blogEngineTools,
+  handlers as blogEngineHandlers,
+  l99Warnings,
+  unsourcedFigures,
+  PLAN_LINE,
+  ANALYTICS_STATUS,
+} from '../blog-engine.js';
 // Sam — Socials & Content (worker key: voice). The output end of the cascade:
-// Tom's search gaps and Ricky's trends come in, drafts go out for AJ to approve.
+// Tom's search gaps and Ricky's demand evidence come in, drafts go out for AJ
+// to approve.
 //
-// Sam (the model) writes the words inside the tool call. The handlers below are
-// deliberately mechanical: they enforce the parts of AJ's voice doc that can be
-// checked by machine, refuse unsourced proof, file the draft as knowledge and
-// raise a content:draft signal. Nothing in this file can post anything.
+// Sam's standard is AJ's blog engine pack, shipped with the repo — the operator
+// pack, the content queue and the L99 voice spec. He reads them before writing,
+// every time. The handlers below enforce the machine-checkable slice of that
+// standard, refuse unsourced proof, file the draft as knowledge and raise a
+// content:draft signal. Nothing in this file can post or publish anything.
 
 const SLUG_MAX = 60;
 
@@ -18,78 +27,34 @@ const slug = (s) =>
 
 const clean = (s) => String(s == null ? '' : s).trim();
 
-// Plan prices are public facts from the website, so a figure that matches one of
-// these isn't an unsourced claim. Anything else numeric needs a source.
-const PLAN_PRICES = /\$\s?(545|995|1,?645|2,?645)\b/g;
-
-// Each entry: [pattern, why it fails AJ's voice doc]. Warnings, not blockers —
-// Sam gets told exactly what to rewrite and AJ still sees the draft.
-const VOICE_TRAPS = [
-  [/\bexcited to (share|announce)\b/i, 'Performative opener. Just say the thing.'],
-  [/\b(humbled|honoured|honored|thrilled|delighted to announce)\b/i, 'Performative announcement language.'],
-  [/\b(synergy|synergies|leverage|leveraging|disrupt|disruptive|seamless|game[-\s]?chang\w*)\b/i, 'Buzzword — plain language instead.'],
-  [/what do you (think|reckon)\s*\?/i, 'Engagement-bait close. Land a clear point of view instead.'],
+// LinkedIn is AJ's personal voice, not L99 website copy, so it carries its own
+// trap list on top of the shared hard bans. [pattern, why it fails].
+const LINKEDIN_TRAPS = [
+  [/\bwhat do you (think|reckon)\s*\?/i, 'Engagement-bait close. Land a clear point of view instead.'],
   [/\b(thoughts|agree)\s*\?\s*$/i, 'Engagement-bait close. End on the point, not a question.'],
   [/here'?s the thing/i, 'AI crutch phrase.'],
   [/\bthe truth is\b/i, 'AI crutch phrase.'],
-  [/\bit(?:'s| is) not\b[^.!?\n]{1,40}\bit(?:'s| is)\b/i, '"It\'s not X, it\'s Y" contrast flip — reads as AI.'],
   [/\bstop\b[^.!?\n]{1,40}\bstart\b/i, '"Stop doing X, start doing Y" command — reads as AI.'],
   [/\bi wish i (knew|had known) this earlier\b/i, 'Cliché.'],
   [/\bnobody (talks|is talking) about\b/i, 'Overclaim bait.'],
   [/\b(delve|unlock|harness|elevate|supercharge|revolutionis\w+|revolutioniz\w+)\b/i, 'AI-flavoured verb.'],
+  [/\b(synergy|synergies|leverage|leveraging|disrupt|disruptive|seamless|game[-\s]?chang\w*)\b/i, 'Buzzword — plain language instead.'],
   [/\bin today'?s (fast[-\s]paced|digital|competitive)\b/i, 'Filler opener.'],
   [/\bas a (seasoned|passionate)\b/i, 'Brand-persona voice, not AJ.'],
-  [/\b\d+\s+(proven|powerful)\s+\w+/i, 'Listicle framing AJ doesn\'t use.'],
+  [/\b\d+\s+(proven|powerful)\s+\w+/i, "Listicle framing AJ doesn't use."],
 ];
 
-// AJ is Australian and writes that way.
-const US_SPELLINGS = [
-  [/\bcolors?\b/i, 'colour'],
-  [/\bfavorite\b/i, 'favourite'],
-  [/\borganiz(e|ed|ing|ation)\b/i, 'organis-'],
-  [/\boptimiz(e|ed|ing|ation)\b/i, 'optimis-'],
-  [/\breali[z](e|ed|ing)\b/i, 'realis-'],
-  [/\bcenter(ed|s)?\b/i, 'centre'],
-  [/\bbehaviors?\b/i, 'behaviour'],
-  [/\bspecializ(e|ed|ing)\b/i, 'specialis-'],
-];
-
-/** Machine-checkable slice of AJ's tone doc. Returns an array of warning lines. */
-function voiceWarnings(text) {
-  const warn = [];
+function linkedinWarnings(text) {
+  const warn = l99Warnings(text); // hard bans, plan names, cadence, AU spelling
   const t = clean(text);
-  if (!t) return ['Empty text — nothing to check.'];
-
-  for (const [re, why] of VOICE_TRAPS) {
+  for (const [re, why] of LINKEDIN_TRAPS) {
     const hit = t.match(re);
     if (hit) warn.push(`"${hit[0].trim()}" — ${why}`);
-  }
-  for (const [re, better] of US_SPELLINGS) {
-    const hit = t.match(re);
-    if (hit) warn.push(`"${hit[0].trim()}" — AJ writes Australian English (${better}).`);
   }
   if (!/[a-z]'(s|t|re|ve|ll|m|d)\b/i.test(t)) {
     warn.push('No contractions found — AJ always writes "I\'m", "you\'ve", "it\'s".');
   }
-  const longest = t
-    .split(/[.!?\n]+/)
-    .map((s) => s.trim().split(/\s+/).filter(Boolean).length)
-    .reduce((a, b) => Math.max(a, b), 0);
-  if (longest > 30) warn.push(`Longest sentence is ${longest} words — AJ writes short sentences.`);
-
   return warn;
-}
-
-/** Numbers/outcomes that look like claims but carry no source. */
-function unsourcedClaims(text, sourced) {
-  if (sourced) return [];
-  const t = clean(text).replace(PLAN_PRICES, '');
-  const hits = [];
-  const pct = t.match(/\b\d+(\.\d+)?\s?%/g);
-  const money = t.match(/\$\s?\d[\d,]*/g);
-  const mult = t.match(/\b\d+(\.\d+)?x\b/gi);
-  for (const h of [...(pct || []), ...(money || []), ...(mult || [])]) hits.push(h.trim());
-  return [...new Set(hits)];
 }
 
 /** pg may hand back JSON as an object or a string; treat both the same. */
@@ -105,35 +70,61 @@ function asObject(v) {
 
 const oneLine = (s, n = 160) => clean(s).replace(/\s+/g, ' ').slice(0, n);
 
+// A client's words, or a client used as a worked example, never appears in a
+// draft without AJ approving that specific use first. Machine side of the rule:
+// spot the shapes a quote or a named-client hypothetical takes.
+function quoteFlags(text) {
+  const t = clean(text);
+  const flags = [];
+  const quoted = t.match(/["“][^"”]{25,}["”]/g) || [];
+  for (const q of quoted) {
+    flags.push(
+      `Quoted material found (${oneLine(q, 60)}…). If these are a customer's words, AJ has not approved ` +
+        'using them — pull the quote, and raise it with propose_customer_quote instead.'
+    );
+  }
+  if (/\b(one of our|a) clients?\b[^.!?\n]{0,60}\b(said|told|asked|mentioned)\b/i.test(t)) {
+    flags.push(
+      'Reads like a client anecdote. Real client stories, even anonymised, go through ' +
+        'propose_customer_quote for AJ to approve before they appear in a draft.'
+    );
+  }
+  return flags;
+}
+
 export default {
   key: 'voice',
   name: 'Sam',
   emoji: '📣',
   title: 'Socials & Content',
 
-  brief: `BEFORE YOU WRITE ANYTHING: read AJ's tone-of-voice messaging bible with list_voice_guides then read_voice_guide, every time. Do not write from memory of it. A post in the wrong voice costs AJ more than no post, because he has to rewrite it instead of approving it.
+  brief: `YOUR STANDARD IS THE BLOG ENGINE PACK. Before you write anything, call list_blog_engine_docs and read BLOG-ENGINE-OPERATOR-PACK.md and L99-voice.md with read_blog_engine_doc — every time, never from memory. For blog work also read content-queue.md: it says what gets written, in what order, and which items are AJ-MANUAL and must be skipped. If anything you believe conflicts with those documents, the documents win. A post in the wrong voice costs AJ more than no post, because he has to rewrite it instead of approving it.
 
-DO NOT DRAFT ON SPECULATION. You only write when there is verified search demand or clear buyer intent behind the topic — a query Tom has assessed, or a pain point Ricky evidenced from a real call or thread. If you have neither, do not produce content: say what you would need and stop. Volume is not the goal and AJ does not want posts nobody is searching for. Quality over quantity, always — one piece backed by evidence beats six written on a hunch.
+DO NOT DRAFT ON SPECULATION. You only write when there is verified demand or clear buyer intent behind the topic — a query Tom has assessed as a winnable gap, a pain point Ricky evidenced from a real call or thread, or an item AJ has already curated into the content queue. Anything you propose yourself has to clear the five gates in section 15 of the operator pack (intent, real demand, winnability, answer gap, honest fit) with evidence attached, and the demand evidence is qualitative: no search volumes, no difficulty scores, no traffic numbers — the tools that produce them are not connected. If you have neither a verified trigger nor a queue item, do not produce content: say what you would need and stop. One piece backed by evidence beats six written on a hunch.
 
-You are Sam, the Socials & Content bee in AJ's hive at Design Bees — an Australian unlimited-graphic-design subscription (Worker Bee $545, Buzz Basics $995, Honeycomb Plus $1,645, Nectar $2,645 a month, no lock-in). You own the top of the funnel: when Tom surfaces a search gap Design Bees can realistically win (seo:gap) or Ricky spots a trend worth riding (trend:*), you turn it into a LinkedIn post in AJ's own voice and/or a blog outline, aimed at the buyer — an in-house marketing decision-maker at an 11–200 staff company drowning in a design backlog, or a small-business founder still doing their own Canva work at 11pm.
+You are Sam, the Socials & Content bee in AJ's hive at Design Bees — an Australian human-design subscription agency, Surry Hills based, no contracts, cancel anytime, free 10-day trial. The four plans, exactly as confirmed by AJ on 2026-07-26: ${PLAN_LINE}. Never call them three plans, never write "Honeycomb Plus" in copy, and never use the retired 20/33/55/88 hours ladder. You own the top of the funnel: LinkedIn posts in AJ's own voice, and blog posts to the operator pack's standard — answer-first opening with the key number in paragraph one, question-shaped H2s, 1,200 to 1,800 words, demo CTA then trial CTA, an FAQ block in the reader's voice, written for passage-level retrieval so an AI assistant can lift any paragraph and be correct. Own the Australia angle; never fight the global head terms.
 
-AJ's voice in one line: useful first, warm always, always sounds like a person. Every post has to leave the reader better off — a reframe, a specific observation, something concrete they can use — not vague inspiration. Short sentences. Contractions always. First person, present tense. Say "you", not "businesses". The hook is lines 1–3 and it's the only part most people see, so make it true and interesting rather than clickbait; then one idea explored properly with real white space; then land the point instead of asking "What do you think?". Never performative ("excited to share", "humbled and honoured"), never buzzwords (synergy, leverage, disrupt, seamless, game-changer), never the AI tells ("Here's the thing", "It's not X, it's Y", "Stop doing X, start doing Y"). Under about 1,300 characters. Australian spelling. Rotate post types across drafts: proof of competence, contrarian take, practical tip or reframe, a thing you actually did, and the occasional soft sell.
+The non-negotiables from the pack, which are also enforced by your tools: human design only, never promote or imply AI does the design; never name a client in body copy; never name a competitor in body copy; no em dashes, no double hyphens, ever — the single most common failure; fact-check every figure; you draft, AJ publishes.
 
-Evidence rule, no exceptions: you never invent a client name, a result, a statistic or a testimonial. If you want a proof point, read it out of the hive with recall_hive_knowledge — real client industries, cohorts and wins live there — or ask AJ for it with request_proof_point and write the draft without it in the meantime. A post with no proof beats a post with a made-up one, and a fabricated client would cost AJ more than a quiet week.
+CLIENT QUOTES AND HYPOTHETICALS — AJ's standing rule: a direct customer quote may only be used if it genuinely adds value, isn't revealing or negative, AND AJ has approved that specific use beforehand. The same applies to using a real client, or a thinly-veiled version of one (say, "a furniture company" when we have exactly one furniture client), as a hypothetical or worked example. Raise these with propose_customer_quote BEFORE the draft relies on them, and write the draft without the quote in the meantime. Generic hypotheticals that map to no real client are fine.
 
-You draft, you never publish. You have no posting capability, no LinkedIn access, no scheduler. Never say or imply that anything has been posted, scheduled or sent. Finished drafts are saved to knowledge and published as content:draft so AJ can review, edit and approve them in Telegram — he is the only one who posts.`,
+Evidence rule, no exceptions: you never invent a client name, a result, a statistic or a testimonial, and you never state a search volume or analytics figure — nothing is connected that could produce one. If you want a proof point, read it out of the hive with recall_hive_knowledge or ask AJ with request_proof_point and write the draft without it in the meantime. A post with no proof beats a post with a made-up one.
+
+You draft, you never publish. You have no posting capability, no LinkedIn access, no Wix access, no scheduler. Never say or imply that anything has been posted, scheduled or sent. Finished drafts are saved to knowledge and published as content:draft so AJ can review, edit and approve them in Telegram — he is the only one who posts.
+
+${ANALYTICS_STATUS}`,
 
   subscribes: [
-    'pain:demo:*', 'pain:*','seo:gap', 'trend:*', 'content:request'],
+    'pain:demo:*', 'pain:*', 'seo:gap', 'trend:*', 'content:request'],
   emits: ['content:draft'],
   useWebSearch: true,
 
   tools: [
-    ...voiceTools,
+    ...blogEngineTools,
     {
       name: 'recall_hive_knowledge',
       description:
-        "Read what the hive already knows before you write, so you cite real clients, real industries and real wins instead of inventing them. Entity types include 'client', 'topic' (existing content drafts), 'query' and 'trend'. Use this every time you reach for a proof point, an industry example or a customer pain — and check it before drafting so you don't repeat a topic that's already been drafted.",
+        "Read what the hive already knows before you write, so you cite real clients, real industries and real wins instead of inventing them. Entity types include 'client', 'topic' (existing content drafts), 'query' and 'trend'. Use this every time you reach for a proof point, an industry example or a customer pain — and check it before drafting so you don't repeat a topic that's already been drafted. Drafts marked superseded-pre-blog-engine predate the operator pack: treat their topics as unwritten, but do not resurrect their text.",
       input_schema: {
         type: 'object',
         properties: {
@@ -152,7 +143,7 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
     {
       name: 'request_proof_point',
       description:
-        "Ask AJ for a fact you don't have — a client result, a testimonial, a number, permission to name a customer. Use this instead of inventing or estimating anything. Sam never fabricates evidence; if the hive doesn't hold it, AJ supplies it.",
+        "Ask AJ for a fact you don't have — a client result, a number, permission you're missing. Use this instead of inventing or estimating anything. Sam never fabricates evidence; if the hive doesn't hold it, AJ supplies it.",
       input_schema: {
         type: 'object',
         properties: {
@@ -164,15 +155,43 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
       },
     },
     {
+      name: 'propose_customer_quote',
+      description:
+        "AJ's standing rule: a direct customer quote, or a real client used as a hypothetical or worked example (even anonymised, even as 'a furniture company'), needs AJ's approval for that specific use BEFORE it appears in a draft. This tool raises the proposal with him. Only propose quotes that genuinely add value and aren't revealing or negative — if it fails either test, don't propose it. Draft without the quote while you wait; never treat a pending proposal as approval.",
+      input_schema: {
+        type: 'object',
+        properties: {
+          quote_or_example: {
+            type: 'string',
+            description: 'The exact quote verbatim, or the hypothetical framing you want to use.',
+          },
+          client: { type: 'string', description: 'Which customer it comes from or points at.' },
+          where_from: {
+            type: 'string',
+            description: 'Where the words come from — a transcript, a review, an email. Never from memory.',
+          },
+          value_added: {
+            type: 'string',
+            description: 'One sentence: why the piece is genuinely better with this than without it.',
+          },
+          intended_use: {
+            type: 'string',
+            description: 'Which draft and where in it — quoted directly, or as an anonymised hypothetical.',
+          },
+        },
+        required: ['quote_or_example', 'client', 'value_added', 'intended_use'],
+      },
+    },
+    {
       name: 'draft_linkedin_post',
       description:
-        "Draft a LinkedIn post in AJ's voice from a trigger (a search gap Tom found, a trend Ricky spotted, or a request from AJ) and save it for review. Write the finished words yourself — hook in the first 1–3 lines, one idea explored properly, short paragraphs, a close that lands a point of view. Under ~1,300 characters total. This tool stores the draft and raises content:draft for AJ; it does NOT post anything anywhere. Any client name, number, percentage or testimonial must come with proof_source naming where it came from.",
+        "Draft a LinkedIn post in AJ's voice from a verified trigger (a search gap Tom found, a pain Ricky evidenced, or a request from AJ) and save it for review. Write the finished words yourself — hook in the first 1–3 lines, one idea explored properly, short paragraphs, a close that lands a point of view. Under ~1,300 characters total. Hard bans apply: no em dashes or double hyphens, no client or competitor names, no AI-design framing, canonical plan names only. This tool stores the draft and raises content:draft for AJ; it does NOT post anything anywhere. Any client name, number, percentage or testimonial must come with proof_source naming where it came from.",
       input_schema: {
         type: 'object',
         properties: {
           trigger: {
             type: 'string',
-            description: "What sparked this, e.g. \"seo:gap 'unlimited graphic design agency australia'\" or \"trend:reddit designers vs AI briefs\".",
+            description: "What sparked this, e.g. \"seo:gap 'unlimited graphic design agency australia'\" or \"pain:theme=slow-turnaround\".",
           },
           angle: {
             type: 'string',
@@ -196,7 +215,7 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
           },
           proof_point: {
             type: 'string',
-            description: 'Optional. The concrete client name, result or number used in the post.',
+            description: 'Optional. The concrete result or number used in the post.',
           },
           proof_source: {
             type: 'string',
@@ -207,9 +226,48 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
       },
     },
     {
+      name: 'draft_blog_post',
+      description:
+        "Draft a full blog post to the operator pack's standard and save it for AJ's review. Only for a queue item from content-queue.md or a query that has cleared the five gates in section 15 with evidence. Read the operator pack and L99-voice.md first, every time. The body must be the finished post: answer-first opening with the key number in paragraph one, question-shaped H2s (markdown ##), 1,200–1,800 words, demo CTA (https://designbees.com.au/demo) and trial CTA (https://designbees.com.au/pricing-plans), 2–4 supporting internal links, an FAQ section at the end with 4–6 reader-voice questions. Canonical pricing only if cost appears. This tool saves the draft and raises content:draft; it cannot publish, and nothing goes near Wix without AJ's approval.",
+      input_schema: {
+        type: 'object',
+        properties: {
+          queue_number: {
+            type: 'integer',
+            description: 'The item number from content-queue.md, if this is a queue item. Omit for a gate-cleared query.',
+          },
+          query: { type: 'string', description: 'The primary buyer query, in full question form. This is the H1 and SEO title.' },
+          category: {
+            type: 'string',
+            enum: ['Outsourcing Design', 'Design Costs & Budgeting', 'Design Operations'],
+            description: 'One of the three approved categories from the pack.',
+          },
+          slug: { type: 'string', description: 'kebab-case URL slug, no stop-word padding.' },
+          meta_title: { type: 'string', description: 'Under 60 characters, query front-loaded, title case.' },
+          meta_description: { type: 'string', description: 'Under 155 characters. Lead with the answer, give a reason to click.' },
+          tags: { type: 'array', items: { type: 'string' }, description: '5–7 lowercase buyer-vocabulary tags.' },
+          long_tail_cluster: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'The 3–6 secondary phrasings this post structures into H2s and the FAQ, mined from real SERP/PAA/autocomplete — not invented.',
+          },
+          body: { type: 'string', description: 'The complete post in markdown, H1 first, FAQ section last.' },
+          demand_evidence: {
+            type: 'string',
+            description: "Why this query earns a post: the queue item, or the gate evidence (what you actually saw in the SERP, PAA, AI answers). Qualitative only — never a made-up volume.",
+          },
+          proof_source: {
+            type: 'string',
+            description: "Where any figure beyond plan pricing came from — a knowledge entity_key, a URL you fetched, or 'aj'.",
+          },
+        },
+        required: ['query', 'category', 'slug', 'meta_title', 'meta_description', 'body', 'demand_evidence'],
+      },
+    },
+    {
       name: 'draft_blog_outline',
       description:
-        'Draft a blog outline targeting one specific search query — normally a gap Tom flagged as winnable. Give it a working title, the intent behind the query, the H2 sections with what each covers, and one clear CTA. Saved as knowledge and raised as content:draft for AJ to approve. Same evidence rule: no invented clients, results or stats.',
+        'Draft a blog outline targeting one specific search query — use this when the angle is promising but not yet gate-cleared enough for a full post, so AJ can green-light the direction cheaply. Give it a working title, the intent behind the query, the H2 sections as buyer questions, and one clear CTA. Saved as knowledge and raised as content:draft for AJ to approve. Same evidence rule: no invented clients, results, stats or volumes.',
       input_schema: {
         type: 'object',
         properties: {
@@ -219,21 +277,21 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
             enum: ['informational', 'commercial', 'comparison', 'transactional'],
             description: 'What the searcher actually wants when they type it.',
           },
-          working_title: { type: 'string', description: 'Headline for the piece — written for a human, not a keyword slot.' },
+          working_title: { type: 'string', description: 'Headline for the piece — the full question form, written for a human.' },
           summary: { type: 'string', description: 'Two or three sentences on the argument the piece makes.' },
           sections: {
             type: 'array',
-            description: 'The H2 sections in order.',
+            description: 'The H2 sections in order. Each heading is a question a buyer would ask.',
             items: {
               type: 'object',
               properties: {
-                h2: { type: 'string', description: 'Section heading.' },
+                h2: { type: 'string', description: 'Section heading, question-shaped.' },
                 covers: { type: 'string', description: 'What this section actually says.' },
               },
               required: ['h2', 'covers'],
             },
           },
-          cta: { type: 'string', description: 'The single action the piece asks for at the end.' },
+          cta: { type: 'string', description: 'The single action the piece asks for at the end. Demo first.' },
           proof_source: {
             type: 'string',
             description: "Where any client example or number in the outline came from — a knowledge entity_key or 'aj'.",
@@ -246,7 +304,7 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
   ],
 
   handlers: {
-    ...voiceHandlers,
+    ...blogEngineHandlers,
     recall_hive_knowledge: async (input, ctx) => {
       try {
         const limit = Math.min(Math.max(Number(input?.limit) || 15, 1), 40);
@@ -293,6 +351,38 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
       }
     },
 
+    propose_customer_quote: async (input, ctx) => {
+      try {
+        const quote = clean(input?.quote_or_example);
+        const client = clean(input?.client);
+        const value = clean(input?.value_added);
+        const use = clean(input?.intended_use);
+        if (!quote || !client) return 'Need the exact quote/example and which client it points at. Nothing was raised.';
+        if (!value || !use) return "Say what value it adds and exactly where it would be used — AJ approves specific uses, not quotes in the abstract.";
+
+        await ctx.publish({
+          topic: 'content:quote-proposal',
+          title: `Quote/example proposal for AJ — ${oneLine(client, 60)}`,
+          body:
+            `Proposed: "${quote}"\n` +
+            `Client: ${client}\n` +
+            `From: ${clean(input?.where_from) || 'not stated'}\n` +
+            `Value: ${value}\n` +
+            `Use: ${use}\n\n` +
+            `Awaiting AJ's approval. Not used in any draft yet.`,
+          data: { quote, client, where_from: clean(input?.where_from) || null, value_added: value, intended_use: use, status: 'proposed' },
+          confidence: 'unknown',
+        });
+
+        return (
+          `Raised with AJ. Until he approves this specific use, the draft carries neither the quote nor a ` +
+          `hypothetical that points at ${client}. Write the piece so it stands without it.`
+        );
+      } catch (e) {
+        return `Couldn't raise the proposal (${e.message}). Leave the quote out entirely.`;
+      }
+    },
+
     draft_linkedin_post: async (input, ctx) => {
       try {
         const hook = clean(input?.hook);
@@ -312,8 +402,8 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
 
         const text = `${hook}\n\n${body}`;
         const chars = text.length;
-        const warnings = voiceWarnings(text);
-        const claims = unsourcedClaims(text, Boolean(proofSource));
+        const warnings = [...linkedinWarnings(text), ...quoteFlags(text)];
+        const claims = unsourcedFigures(text, Boolean(proofSource));
         if (claims.length) {
           warnings.push(`Unsourced figures in the post: ${claims.join(', ')}. Set proof_source or cut them.`);
         }
@@ -325,6 +415,7 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
         const data = {
           format: 'linkedin-post',
           status: 'draft-awaiting-aj',
+          standard: 'blog-engine-pack-2026-07',
           post_type: clean(input?.post_type) || 'practical-tip',
           audience: clean(input?.audience) || 'marketing-lead',
           angle,
@@ -366,6 +457,85 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
       }
     },
 
+    draft_blog_post: async (input, ctx) => {
+      try {
+        const query = clean(input?.query);
+        const body = clean(input?.body);
+        const category = clean(input?.category);
+        const demand = clean(input?.demand_evidence);
+        if (!query) return 'No primary query given. The query is the post — nothing was stored.';
+        if (!body) return 'No body given. This tool takes the finished post, not an intention to write one.';
+        if (!demand) return 'REJECTED — no demand_evidence. Say which queue item this is, or what you actually saw that clears the five gates. A post with no verified demand does not get drafted.';
+
+        const metaTitle = clean(input?.meta_title);
+        const metaDesc = clean(input?.meta_description);
+        const proofSource = clean(input?.proof_source);
+        const words = body.split(/\s+/).filter(Boolean).length;
+
+        const warnings = [...l99Warnings(body, { blog: true }), ...quoteFlags(body)];
+        const claims = unsourcedFigures(body, Boolean(proofSource));
+        if (claims.length) {
+          warnings.push(`Figures with no proof_source: ${claims.join(', ')}. Every figure is fact-checked this run — source them or cut them.`);
+        }
+        if (words < 1200 || words > 1800) warnings.push(`${words} words — the pack's range is 1,200 to 1,800.`);
+        if (metaTitle.length > 60) warnings.push(`Meta title is ${metaTitle.length} chars — pack says under 60.`);
+        if (metaDesc.length > 155) warnings.push(`Meta description is ${metaDesc.length} chars — pack says under 155.`);
+        if (!/^##\s/m.test(body)) warnings.push('No H2 sections found. Every section heading is a buyer question.');
+        if (!/faq/i.test(body)) warnings.push('No FAQ section found — the FAQ block feeds FAQPage schema and is non-negotiable.');
+        const h2s = body.match(/^##\s+(.+)$/gm) || [];
+        const nonQuestion = h2s.filter((h) => !/\?\s*$/.test(h) && !/faq/i.test(h));
+        if (nonQuestion.length) warnings.push(`${nonQuestion.length} H2(s) are statements, not buyer questions.`);
+
+        const key = `blogpost-${slug(input?.slug || query)}`;
+        const data = {
+          format: 'blog-post',
+          status: 'draft-awaiting-aj',
+          standard: 'blog-engine-pack-2026-07',
+          queue_number: Number.isInteger(input?.queue_number) ? input.queue_number : null,
+          query,
+          category,
+          slug: clean(input?.slug) || slug(query),
+          meta_title: metaTitle,
+          meta_description: metaDesc,
+          tags: Array.isArray(input?.tags) ? input.tags.map(clean).filter(Boolean) : [],
+          long_tail_cluster: Array.isArray(input?.long_tail_cluster) ? input.long_tail_cluster.map(clean).filter(Boolean) : [],
+          schema: 'Article + FAQPage',
+          author: 'AJ Kavanagh',
+          word_count: words,
+          body,
+          demand_evidence: demand,
+          proof_source: proofSource || null,
+          voice_warnings: warnings,
+          drafted_at: new Date().toISOString(),
+        };
+
+        await ctx.saveKnowledge({
+          entity_type: 'topic',
+          entity_key: key,
+          data,
+          source: { tool: 'draft_blog_post', demand_evidence: demand, proof_source: proofSource || null },
+          worker_key: ctx.workerKey,
+        });
+
+        await ctx.publish({
+          topic: 'content:draft',
+          title: `Blog draft${data.queue_number ? ` (queue #${data.queue_number})` : ''}: ${oneLine(query, 90)}`,
+          body:
+            `${query}\nCategory: ${category} · ${words} words · slug: ${data.slug}\n` +
+            `Meta: ${metaTitle} / ${metaDesc}\n` +
+            `Demand: ${demand}\n\n${body.slice(0, 1500)}${body.length > 1500 ? '\n…[full draft stored in knowledge]' : ''}` +
+            `${warnings.length ? `\n\nFlags: ${warnings.join(' | ')}` : ''}\n\nDraft only — AJ approves before anything goes near Wix.`,
+          data: { knowledge_key: key, query, category, word_count: words, queue_number: data.queue_number },
+          confidence: 'hypothesis',
+        });
+
+        const flags = warnings.length ? `\nFlags to fix:\n- ${warnings.join('\n- ')}` : '\nL99 machine checks passed — still run the full section 10 checklist yourself.';
+        return `Saved as knowledge topic "${key}" (${words} words) and raised as content:draft for AJ.${flags}\nNot published — AJ approves before anything goes near Wix.`;
+      } catch (e) {
+        return `Draft wasn't saved (${e.message}). Fix the input and call draft_blog_post again. Nothing has been published.`;
+      }
+    },
+
     draft_blog_outline: async (input, ctx) => {
       try {
         const query = clean(input?.query);
@@ -377,12 +547,14 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
 
         const proofSource = clean(input?.proof_source);
         const flat = [title, summary, ...sections.map((s) => `${clean(s?.h2)} ${clean(s?.covers)}`)].join('\n');
-        const warnings = voiceWarnings(flat);
-        const claims = unsourcedClaims(flat, Boolean(proofSource));
+        const warnings = [...l99Warnings(flat), ...quoteFlags(flat)];
+        const claims = unsourcedFigures(flat, Boolean(proofSource));
         if (claims.length) {
           warnings.push(`Unsourced figures in the outline: ${claims.join(', ')}. Source them or cut them.`);
         }
         if (sections.length < 3) warnings.push('Fewer than 3 sections — likely too thin to rank for anything.');
+        const nonQuestion = sections.filter((s) => !/\?\s*$/.test(clean(s?.h2)) && !/faq/i.test(clean(s?.h2)));
+        if (nonQuestion.length) warnings.push(`${nonQuestion.length} H2(s) are statements — the pack wants question-shaped headings.`);
 
         const key = `blog-${slug(query)}`;
         const outline = sections
@@ -391,6 +563,7 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
         const data = {
           format: 'blog-outline',
           status: 'draft-awaiting-aj',
+          standard: 'blog-engine-pack-2026-07',
           query,
           search_intent: clean(input?.search_intent) || 'informational',
           working_title: title,
@@ -430,6 +603,6 @@ You draft, you never publish. You have no posting capability, no LinkedIn access
 
   daily: {
     hourSydney: 7,
-    prompt: `Morning content pass. Check recall_hive_knowledge for topics already drafted so you don't repeat yourself, then look at the newest seo:gap and trend:* signals. Pick the single strongest angle for a buyer — a marketing lead with a design backlog, or a founder still doing their own Canva work — and draft one LinkedIn post in AJ's voice with draft_linkedin_post. If a search gap is genuinely winnable, add one blog outline with draft_blog_outline. If nothing new has landed overnight, say so plainly and draft nothing rather than filling the slot. Any client name, result or number must come from the hive or from request_proof_point — never from you. Drafts only: AJ reviews and posts.`,
+    prompt: `Morning content pass. Read the operator pack and L99-voice.md with read_blog_engine_doc first — never from memory — then check recall_hive_knowledge for topics already drafted so you don't repeat yourself (drafts marked superseded-pre-blog-engine predate the pack; their topics count as unwritten, their text stays dead). Then look at the newest seo:gap and pain signals. If content-queue.md has an undrafted, non-AJ-MANUAL item, that outranks anything you'd propose. Draft at most ONE piece, and only if its demand is verified — a queue item, a gate-cleared query, or a Tom-assessed gap. If nothing qualifies, say so plainly and draft nothing rather than filling the slot. Any client quote or client-shaped hypothetical goes through propose_customer_quote before it appears in a draft. Drafts only: AJ reviews and posts.`,
   },
 };
