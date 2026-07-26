@@ -35,7 +35,40 @@ function fmtRows(rows, dims, mets) {
     .join('\n');
 }
 
+// DataForSEO: metered keyword-volume API, basic-auth via env vars. The ONLY
+// legitimate source of a search-volume number in the entire hive.
+const DFS_LOGIN = process.env.DATAFORSEO_LOGIN;
+const DFS_PASSWORD = process.env.DATAFORSEO_PASSWORD;
+function dataForSeoConfigured() {
+  return Boolean(DFS_LOGIN && DFS_PASSWORD);
+}
+
 export const tools = [
+  {
+    name: 'keyword_volume',
+    description:
+      'Real Google search volumes for up to 20 keywords (Australia by default) via the DataForSEO API — ' +
+      'the ONLY place a search-volume number may come from. Each call costs money, so batch keywords and ' +
+      'call once per research pass, after you have mined the candidate phrasings, not while brainstorming. ' +
+      'Cite results as "DataForSEO, Google Ads data". If the tool reports it is not configured, volumes do ' +
+      'not exist — say so and stay qualitative.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        keywords: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Up to 20 exact keyword phrases.',
+        },
+        location: {
+          type: 'string',
+          enum: ['Australia', 'United States', 'United Kingdom', 'New Zealand'],
+          description: 'Market to measure. Default Australia — that is the market Design Bees competes in.',
+        },
+      },
+      required: ['keywords'],
+    },
+  },
   {
     name: 'get_analytics_status',
     description:
@@ -111,6 +144,57 @@ export const tools = [
 ];
 
 export const handlers = {
+  keyword_volume: async (input = {}) => {
+    try {
+      if (!dataForSeoConfigured()) {
+        return (
+          'Keyword volume is NOT available: DataForSEO is not configured (DATAFORSEO_LOGIN / ' +
+          'DATAFORSEO_PASSWORD are not set on the Railway service). No search volume exists — stay ' +
+          'qualitative and never estimate one.'
+        );
+      }
+      const keywords = (Array.isArray(input.keywords) ? input.keywords : [])
+        .map((k) => String(k || '').trim())
+        .filter(Boolean)
+        .slice(0, 20);
+      if (!keywords.length) return 'No keywords given — pass up to 20 exact phrases.';
+      const location = input.location || 'Australia';
+
+      const res = await fetch('https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Basic ' + Buffer.from(`${DFS_LOGIN}:${DFS_PASSWORD}`).toString('base64'),
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify([{ keywords, location_name: location, language_name: 'English' }]),
+      });
+      const data = await res.json();
+      if (!res.ok || data.status_code >= 40000) {
+        return `DataForSEO error ${data.status_code || res.status}: ${data.status_message || 'request failed'}. No volume data this run — stay qualitative.`;
+      }
+      const task = data.tasks?.[0];
+      if (task?.status_code >= 40000) {
+        return `DataForSEO task error ${task.status_code}: ${task.status_message}. No volume data this run — stay qualitative.`;
+      }
+      const rows = task?.result || [];
+      if (!rows.length) return `DataForSEO returned no rows for those keywords in ${location}. That is citable: no measurable volume recorded.`;
+
+      const lines = rows.map((r) => {
+        const vol = r.search_volume == null ? 'no data' : r.search_volume;
+        const comp = r.competition == null ? '' : `, competition=${r.competition}`;
+        const cpc = r.cpc == null ? '' : `, cpc=$${r.cpc}`;
+        return `• "${r.keyword}" — volume=${vol}/mo (${location})${comp}${cpc}`;
+      });
+      return (
+        `DataForSEO Google Ads data, ${location} — cite every figure as "DataForSEO":\n${lines.join('\n')}\n\n` +
+        `"no data" means Google reports nothing for that phrase — citable as such, not as zero interest in the topic ` +
+        `(question-form long-tails often show no data while the head term carries the volume).`
+      );
+    } catch (e) {
+      return `keyword_volume failed: ${e.message}. No volume data this run — stay qualitative.`;
+    }
+  },
+
   get_analytics_status: async () => {
     try {
       if (!(await googleConnected())) return NOT_CONNECTED;
@@ -151,7 +235,11 @@ export const handlers = {
         lines.push('Search Console scope NOT granted. AJ needs to re-consent at /auth/google. No GSC number exists until then.');
       }
 
-      lines.push('Keyword volume tools (Ahrefs etc.) remain unconnected — never state a search volume or difficulty.');
+      lines.push(
+        dataForSeoConfigured()
+          ? 'Keyword volumes: DataForSEO is configured — the keyword_volume tool is the only legitimate source of a volume figure.'
+          : 'Keyword volumes: DataForSEO is NOT configured — never state a search volume or difficulty.'
+      );
       return lines.join('\n\n');
     } catch (e) {
       return `Status check failed: ${e.message}. Treat analytics as unavailable and stay qualitative.`;

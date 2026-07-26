@@ -1,7 +1,7 @@
 // Ian — ICP & Sourcing. The hinge of the cascade: Ricky finds a pain point in
 // some industry, and Ian is the one who can say whether that industry has ever
 // been good business for Design Bees. Nothing downstream should run until he
-// has answered that, which is why he validates before Tom researches queries.
+// has answered that, which is why he validates before Ricky judges the queries.
 import { getCohorts, money } from '../../wix.js';
 
 const slug = (s) =>
@@ -57,7 +57,7 @@ answer and different from "bad fit".
 
 EVIDENCE RULE: every claim you make about a client, an industry or a number comes from
 the hive's records. You never invent a company, a spend figure or a retention story.`,
-  subscribes: ['pain:*', 'trend:*', 'request:icp', 'request:icp:*'],
+  subscribes: ['pain:*', 'trend:*', 'request:icp', 'request:icp:*', 'outreach:*'],
   emits: ['icp:validated', 'icp:rejected', 'icp:unknown'],
   useWebSearch: false,
   tools: [
@@ -77,7 +77,7 @@ the hive's records. You never invent a company, a spend figure or a retention st
       name: 'publish_verdict',
       description:
         'Record your judgement on an industry and wake the rest of the hive. verdict "validated" tells ' +
-        'Tom to go find search queries worth competing for there; "rejected" stops the team spending ' +
+        'Ricky to judge which search queries are worth competing for there; "rejected" stops the team spending ' +
         'effort on it; "unknown" records that we have no history either way. Always call check_industry_fit first.',
       input_schema: {
         type: 'object',
@@ -162,7 +162,7 @@ the hive's records. You never invent a company, a spend figure or a retention st
           confidence: verdict === 'unknown' ? 'unknown' : 'fact',
         });
         return verdict === 'validated'
-          ? `Validated "${industry}" and published — Tom will now look for search queries worth competing for there.`
+          ? `Validated "${industry}" and published — Ricky will now judge which search queries are worth competing for there.`
           : `Recorded "${industry}" as ${verdict}. The hive will not spend further effort on it unless you revisit.`;
       } catch (err) {
         return `Could not publish the verdict: ${err.message}`;

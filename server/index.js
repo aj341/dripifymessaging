@@ -22,12 +22,16 @@ import {
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
 import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autorunEnabled } from './bus.js';
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
+import { mountApprove } from './approve.js';
+import { mountIngest } from './ingest.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false })); // the approval dashboard's forms
+app.use(express.text({ type: ['text/csv', 'text/plain'], limit: '5mb' })); // Dripify CSV ingest
 
 // --- Optional write auth for workers ---------------------------------------
 function requireWorkerKey(req, res, next) {
@@ -255,6 +259,8 @@ const hiveWall = (_req, res) => res.sendFile(path.join(__dirname, 'public', 'hiv
 app.get('/', hiveWall);
 app.get('/hive', hiveWall);
 app.use('/public', express.static(path.join(__dirname, 'public')));
+mountApprove(app); // AJ's content approval dashboard (/approve?t=DASHBOARD_TOKEN)
+mountIngest(app); // weekly Dripify results (/ingest/dripify?t=DASHBOARD_TOKEN)
 
 // --- Boot ------------------------------------------------------------------
 // Retry the migration a few times: on a fresh deploy the private database DNS
@@ -363,7 +369,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v25-blog-engine | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v26-platform | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

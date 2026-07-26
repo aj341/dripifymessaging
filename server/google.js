@@ -16,6 +16,10 @@ const SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/analytics.readonly',
   'https://www.googleapis.com/auth/webmasters.readonly',
+  // Approved by AJ 2026-07-26 for Fred's churn work — reading client threads,
+  // never sending. Tools come later; the scope rides this consent so AJ only
+  // consents once.
+  'https://www.googleapis.com/auth/gmail.readonly',
 ];
 const SCOPE = SCOPES.join(' ');
 const REDIRECT = `${process.env.PUBLIC_URL || 'https://dripifymessaging-production.up.railway.app'}/auth/google/callback`;

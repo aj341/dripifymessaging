@@ -17,19 +17,29 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 const MODEL = 'claude-opus-5';
 const MAX_DEPTH = 3;        // a finding may cascade at most three hops
 const MAX_JOBS_PER_TICK = 4;
-// Background work is OFF unless explicitly enabled. It ran up a bill on its
-// first outing, so the safe state is stopped: AJ turns it on when he wants it.
+// Background work runs by default (AJ's call, 2026-07-26) — HIVE_AUTORUN=0
+// turns it off. The cost controls that made this safe to switch back on are
+// the reply gate and the quiet window below, not the off switch.
 export function autorunEnabled() {
-  return process.env.HIVE_AUTORUN === '1';
+  return process.env.HIVE_AUTORUN !== '0';
 }
-// The hive speaks once, then waits. Nothing else runs and nothing else is sent
-// until AJ has replied — his answer usually removes the need for the next
-// message anyway, so working on before hearing it wastes his money twice.
+// The hive speaks once, then waits. Nothing else is sent until AJ has replied —
+// his answer usually removes the need for the next message anyway.
 export async function awaitingReply() {
   return Boolean(await getSetting('hive_awaiting_reply'));
 }
+// When AJ replies, jobs resume immediately but the NEXT outbound message holds
+// for five minutes. That window is how his one answer reaches all six teammates
+// before anyone can ask a follow-up — the queued jobs run against the updated
+// question log first, and whatever still needs saying goes out as one message
+// after the window closes.
+const QUIET_MS = 5 * 60 * 1000;
 export async function clearAwaitingReply() {
   await setSetting('hive_awaiting_reply', '');
+  await setSetting('hive_quiet_until', String(Date.now() + QUIET_MS));
+}
+async function quietUntil() {
+  return Number(await getSetting('hive_quiet_until')) || 0;
 }
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 
@@ -182,6 +192,13 @@ function queueOut(line) {
 }
 async function flushOutbox() {
   if (!outbox.length) return;
+  // Inside the quiet window the outbox holds: jobs keep running and their
+  // output accumulates here, then goes out as one message once the window
+  // closes. Sending early would defeat the point of the window.
+  if (Date.now() < (await quietUntil())) {
+    console.log(`[bus] holding ${outbox.length} update(s) — quiet window after AJ's reply`);
+    return;
+  }
   const body = outbox.join('\n\n');
   outbox = [];
   await send(body).catch((e) => console.error('[bus] flush failed:', e.message));
