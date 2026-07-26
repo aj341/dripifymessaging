@@ -38,18 +38,15 @@ export function autorunEnabled() {
 export async function awaitingReply() {
   return Boolean(await getSetting('hive_awaiting_reply'));
 }
-// When AJ replies, jobs resume immediately but the NEXT outbound message holds
-// for five minutes. That window is how his one answer reaches all six teammates
-// before anyone can ask a follow-up — the queued jobs run against the updated
-// question log first, and whatever still needs saying goes out as one message
-// after the window closes.
-const QUIET_MS = 5 * 60 * 1000;
+// There used to be a five-minute hold on the next outbound message after AJ
+// replied, so his answer could reach all six teammates before anyone spoke
+// again. In practice it did the opposite of what he wanted: every message he
+// sent bought silence, and a draft landing on the dashboard could sit unsent
+// for five minutes. AJ removed it on 2026-07-26. Replies go out when they are
+// ready.
 export async function clearAwaitingReply() {
   await setSetting('hive_awaiting_reply', '');
-  await setSetting('hive_quiet_until', String(Date.now() + QUIET_MS));
-}
-async function quietUntil() {
-  return Number(await getSetting('hive_quiet_until')) || 0;
+  await setSetting('hive_quiet_until', '');
 }
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 
@@ -202,13 +199,6 @@ function queueOut(line) {
 }
 async function flushOutbox() {
   if (!outbox.length) return;
-  // Inside the quiet window the outbox holds: jobs keep running and their
-  // output accumulates here, then goes out as one message once the window
-  // closes. Sending early would defeat the point of the window.
-  if (Date.now() < (await quietUntil())) {
-    console.log(`[bus] holding ${outbox.length} update(s) — quiet window after AJ's reply`);
-    return;
-  }
   const body = outbox.join('\n\n');
   // Do NOT clear the outbox until the send succeeds. A failed send used to
   // discard the text AND still set the awaiting-reply flag, which left the hive

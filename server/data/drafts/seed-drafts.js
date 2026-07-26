@@ -14,15 +14,17 @@ const WEEK = '2026-W31';
 
 const COMPARE_BODY = `If you need design done every week and you do not have a designer, you have four realistic options in Australia. Hire someone in-house, brief a freelancer, retain an agency, or subscribe to a design team. The right answer depends less on your budget than on how predictable your workload is.
 
-Lumpy, always-on demand suits a subscription. One large project a year suits an agency. A designer on staff earns their seat when design is central to what you sell. Here is the honest version of each, including where we lose.
+Lumpy, always-on demand suits a subscription. One large project a year suits an agency. A designer on staff earns their seat when design is central to what you sell.
+
+Most people arrive holding two versions of the same question: design subscription vs freelancer, and in-house vs outsourced design underneath it. Both come down to volume and predictability, so this covers all four side by side rather than one matchup at a time. Here is the honest version of each, including where we lose.
 
 ## Who actually does the work in each model?
 
 With an in-house hire, one person does everything, and the range of your brand becomes the range of that person. That works while the work sits inside their strengths. It gets uncomfortable the week you need a pitch deck, a trade stand and a set of social templates from someone whose background is packaging.
 
-A freelancer gives you a specialist you chose deliberately. You get their taste and their judgement, and you also get their calendar. When they take on a bigger client or go on leave, your queue stops until they come back.
+A freelance designer gives you a specialist you chose deliberately. You get their taste and their judgement, and you also get their calendar. When they take on a bigger client or go on leave, your queue stops until they come back.
 
-An agency puts a team behind your account and an account manager in front of it. The work is usually strong. That layer between you and the designer is part of what you are paying for, and it is also what slows the small jobs down.
+A design agency puts a team behind your account and an account manager in front of it. The work is usually strong. That layer between you and the designer is part of what you are paying for, and it is also what slows the small jobs down.
 
 A design subscription sits between the freelancer and the agency. You brief a team directly, the team already holds your brand assets, and who picks up the request depends on what you asked for. Ours is human design, Australian, working in your time zone.
 
@@ -44,7 +46,7 @@ Speed is where these four separate most sharply, and it is rarely about how fast
 
 An in-house designer is the fastest for small changes because you can walk over and ask. They are the slowest for volume, because volume is bounded by one person's week.
 
-A freelancer's speed depends entirely on what else is in their queue that fortnight. You will get honest answers about it, which helps you plan, and it still means your timeline is set by someone else's other clients.
+A freelance designer's speed depends entirely on what else is in their queue that fortnight. You will get honest answers about it, which helps you plan, and it still means your timeline is set by someone else's other clients.
 
 Agencies are quick on the work they scoped and slow on everything else, because anything outside scope goes back through the account layer before a designer sees it. That round trip is where a two-hour job becomes a three-day job.
 
@@ -78,6 +80,9 @@ Then test the model before you commit to it. A freelancer will do a paid trial p
 
 ## FAQ
 
+**On design subscription vs freelancer, which works out cheaper?**
+It depends on how steady your work is. A freelance designer is cheaper in a quiet month and dearer in a busy one, while a design subscription is a flat figure you can budget against, which is why the in-house vs outsourced design maths above matters more than either headline rate.
+
 **Is a design subscription cheaper than hiring a designer?**
 On a straight monthly comparison, yes, at every plan level, once you add superannuation and software to a salary. The honest caveat is that a subscription buys you a set amount of design a month, so if you genuinely need a full-time person's output you should compare against the plan that matches that volume.
 
@@ -93,9 +98,9 @@ Expect the first fortnight to involve more feedback than usual while the team le
 **How much notice do I need to give to cancel?**
 None with us. No contracts, cancel anytime, and it is worth checking the same clause with any agency or freelancer before you start rather than when you want to leave.`;
 
-const OUTSOURCE_BODY = `Outsourcing graphic design in Australia works when you treat it as an operations decision rather than a hiring shortcut. The businesses that get it right define what they need before they go looking, brief in writing, and start with a small paid test. The ones that struggle send a vague request to the cheapest option and judge the whole model on the result.
+const OUTSOURCE_BODY = `Outsourcing graphic design in Australia works when you treat it as an operations decision rather than a hiring shortcut. Design outsourcing goes wrong for process reasons far more often than it goes wrong for talent reasons. The businesses that get it right define what they need before they go looking, brief in writing, and start with a small paid test. The ones that struggle send a vague request to the cheapest option and judge the whole model on the result.
 
-This is the practical version: what to sort out before you outsource, how to choose, and what the first month should actually look like.
+This is the practical version of how to outsource graphic design here: what to sort out first, how to choose, what to brief, and what the first month should actually look like.
 
 ## What should you sort out before you outsource anything?
 
@@ -171,7 +176,7 @@ Starting too big. A rebrand is the worst possible first job for a new relationsh
 
 ## FAQ
 
-**How quickly can outsourced design start?**
+**How quickly can design outsourcing start?**
 With a subscription you can usually brief your first job the same day you sign up. Per-project and retainer arrangements normally need a scoping conversation first, so allow a week.
 
 **Do I need a brand guide before I outsource?**
@@ -180,7 +185,7 @@ No. Send your logo files, fonts and colours plus a few examples of work you like
 **Who owns the design files?**
 You should, and it is worth confirming in writing before the first job. Ask for final artwork and source files, because source files are what let the next person pick up the work.
 
-**Is it better to outsource locally or overseas?**
+**Is it better to outsource graphic design locally or overseas?**
 Local providers cost more per hour and cost you less in delay, which matters most when your design cadence is weekly. Overseas works well for planned, low-urgency batches.
 
 **How many rounds of revisions should I expect?**
@@ -213,8 +218,10 @@ export const SEED_DRAFTS = [
       long_tail_cluster: [
         'design subscription vs freelancer',
         'in-house vs outsourced design',
-        'design agency vs subscription australia',
-        'freelance designer vs design subscription',
+        'design subscription',
+        'freelance designer',
+        'design agency',
+        'in-house designer',
       ],
       schema: 'Article + FAQPage',
       author: 'AJ Kavanagh',
@@ -280,9 +287,9 @@ export const SEED_DRAFTS = [
       tags: ['outsource graphic design', 'design outsourcing', 'design brief', 'australia', 'design operations'],
       long_tail_cluster: [
         'outsource graphic design australia',
-        'design outsourcing australia',
-        'how to outsource design',
-        'outsourcing design work',
+        'outsource graphic design',
+        'design outsourcing',
+        'design brief',
       ],
       schema: 'Article + FAQPage',
       author: 'AJ Kavanagh',
