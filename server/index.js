@@ -21,6 +21,7 @@ import {
 } from './workers/ledger.js';
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
 import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish } from './bus.js';
+import { authUrl, completeAuth, googleConfigured, googleConnected } from './google.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -166,6 +167,35 @@ async function runWorker(name, res) {
 app.post('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.params.worker, res));
 app.get('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.params.worker, res));
 
+
+// --- Google Drive consent ---------------------------------------------------
+// AJ visits /auth/google once; the refresh token is stored and the server
+// re-authorises itself from then on. Scope is drive.readonly — read, never write.
+app.get('/auth/google', async (_req, res) => {
+  if (!googleConfigured()) {
+    return res
+      .status(503)
+      .send('Google isn\'t configured yet — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the Railway service, then reload this page.');
+  }
+  res.redirect(authUrl());
+});
+
+app.get('/auth/google/callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error) return res.status(400).send(`Google returned an error: ${error}`);
+  if (!code) return res.status(400).send('No authorisation code returned.');
+  try {
+    await completeAuth(String(code));
+    res.send('<h2>Connected.</h2><p>The hive can now read your meeting transcripts. You can close this tab — nothing else to do.</p>');
+  } catch (err) {
+    res.status(500).send(`Could not complete Google auth: ${err.message}`);
+  }
+});
+
+app.get('/auth/google/status', async (_req, res) => {
+  res.json({ configured: googleConfigured(), connected: await googleConnected().catch(() => false) });
+});
+
 // --- Pages -----------------------------------------------------------------
 // The Hive Wall — the place to see everyone's thoughts — is the front door.
 const hiveWall = (_req, res) => res.sendFile(path.join(__dirname, 'public', 'hive.html'));
@@ -261,7 +291,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v16-roster | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v17-google-oauth | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know
