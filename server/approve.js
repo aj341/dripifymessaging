@@ -156,7 +156,11 @@ export function mountApprove(app) {
           `<p class="sub">${waitingAll.length} draft(s) waiting · approving marks a draft ready, it never posts anything</p>` +
           `<div class="tabs">${tab('all', 'All', waitingAll.length)}${tab('blog', 'Blog', blogWaiting)}${tab('social', 'Socials', socialWaiting)}</div>` +
           (pending.length
-            ? pending.map(card).join('')
+            ? pending.map(card).join('') +
+              `<form method="post" action="/approve/reject-all?t=${t}${view === 'all' ? '' : `&view=${view}`}" ` +
+              `onsubmit="return confirm('Reject all ${pending.length} waiting draft(s) and send Sam back to re-justify?')">` +
+              `<button class="btn b-no" style="margin-top:14px">Reject all ${pending.length} and require re-justification</button>` +
+              `</form><p class="meta">Rejecting keeps the drafts on record and tells Sam to run the cannibalisation check and build a full case before re-filing.</p>`
             : `<p class="meta">Nothing waiting in this view.</p>`) +
           (done.length
             ? `<div class="k" style="margin-top:28px">Already decided</div>${done.map(card).join('')}`
@@ -283,6 +287,70 @@ export function mountApprove(app) {
       res.redirect(`/approve?t=${t}`);
     } catch (e) {
       res.status(500).send(`Decision failed: ${esc(e.message)}`);
+    }
+  });
+
+  // Bulk reject with a re-justify instruction. AJ's call on the first batch:
+  // those drafts predate the justification gate, and several collided with
+  // pages the live blog already owns, so judging them as-is wastes his time.
+  // Rejecting sends Sam back to make the real case rather than deleting work —
+  // the drafts stay in knowledge as the record.
+  app.post('/approve/reject-all', async (req, res) => {
+    if (!authed(req)) return deny(res);
+    try {
+      const t = encodeURIComponent(req.query.t);
+      const view = ['blog', 'social'].includes(String(req.query.view)) ? req.query.view : 'all';
+      const formats =
+        view === 'social' ? ['linkedin-post'] : view === 'blog' ? ['blog-post', 'blog-outline'] : ['blog-post', 'blog-outline', 'linkedin-post'];
+
+      const r = await dbQuery(
+        `UPDATE knowledge
+            SET data = data || jsonb_build_object(
+              'status', 'rejected-by-aj',
+              'decided_at', now()::text,
+              'rejection_reason', 'Rejected in bulk by AJ: written before the justification gate. Re-justify from scratch.'
+            )
+          WHERE entity_type='topic'
+            AND data->>'status' = 'draft-awaiting-aj'
+            AND data->>'standard' = 'blog-engine-pack-2026-07'
+            AND data->>'format' = ANY($1::text[])
+          RETURNING entity_key, data`,
+        [formats]
+      );
+      const rejected = r.rows.map((row) => {
+        const d = asData(row);
+        return { key: row.entity_key, title: d.query || d.working_title || d.hook || row.entity_key, format: d.format };
+      });
+
+      if (rejected.length) {
+        await publish({
+          worker_key: 'forge',
+          topic: 'content:rejected',
+          title: `AJ rejected ${rejected.length} draft(s) — re-justify before re-filing`,
+          body:
+            `AJ rejected every draft awaiting his decision${view === 'all' ? '' : ` in the ${view} view`} ` +
+            `because they were written before the justification gate existed, and at least one targeted a query ` +
+            `a live page already owns.\n\n` +
+            rejected.map((x) => `• ${x.title} (${x.format})`).join('\n') +
+            `\n\nSam — what has to be different before any of these is re-filed:\n` +
+            `1. Run the cannibalisation check FIRST: read keyword-ownership-map.md and engine-content-map.md, ` +
+            `and call list_live_blog_posts. If a live page or engine draft owns the query or its cluster, the ` +
+            `answer is to propose strengthening THAT page to AJ, not to re-file this one.\n` +
+            `2. Only re-file what survives that check, and only with a full justification: what you checked and ` +
+            `what it said, the demand evidence with figures quoted to their source, who ranks today and the ` +
+            `specific weakness you are attacking, the commercial bridge to a demo or trial, and what the reader ` +
+            `can do afterwards that they could not before. A source per claim for every figure.\n` +
+            `3. Do NOT re-file the same text with a padded case. If the case does not genuinely hold, the post ` +
+            `should not exist — say so and move on.\n` +
+            `4. One at a time. A queue of six thin drafts is worse than one AJ can approve in two minutes.\n\n` +
+            `The rejected drafts stay on record; their topics count as unwritten.`,
+          data: { decision: 'rejected-by-aj', bulk: true, view, count: rejected.length, keys: rejected.map((x) => x.key) },
+          confidence: 'fact',
+        });
+      }
+      res.redirect(`/approve?t=${t}${view === 'all' ? '' : `&view=${view}`}`);
+    } catch (e) {
+      res.status(500).send(`Bulk reject failed: ${esc(e.message)}`);
     }
   });
 }
