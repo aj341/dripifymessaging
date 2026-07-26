@@ -1287,71 +1287,115 @@
       "from": "2026-03-01",
       "to": "2026-07-26"
     },
-    "source": "google-calendar:primary (299 events scanned, coverage 2026-03-02 → 2026-07-24)",
-    "builtAt": "2026-07-26T04:40:41.268Z",
+    "source": "google-calendar:primary — AJ-confirmed conversion list (identity aliases resolved by AJ)",
+    "builtAt": "2026-07-26T04:49:34.327Z",
+    "totalDemosInWindow": 41,
     "conversions": [
+      {
+        "client": "Richard Lowe",
+        "company": null,
+        "demoDate": "2026-03-19",
+        "paidDate": "2026-03-25",
+        "plan": "Buzz Basics",
+        "spend": 995,
+        "note": null
+      },
+      {
+        "client": "Steve Jenkins",
+        "company": "Humanova",
+        "demoDate": "2026-03-17",
+        "paidDate": "2026-04-02",
+        "plan": "Buzz Basics",
+        "spend": 1990,
+        "note": null
+      },
+      {
+        "client": "Steve Baldas",
+        "company": "SALAA (Little Athletics)",
+        "demoDate": "2026-04-08",
+        "paidDate": "2026-05-01",
+        "plan": "Buzz Basics",
+        "spend": 1990,
+        "note": "paid under the name Kainen Heath"
+      },
+      {
+        "client": "John",
+        "company": "Polaris",
+        "demoDate": "2026-05-11",
+        "paidDate": "2026-05-21",
+        "plan": "Buzz Basics",
+        "spend": 2985,
+        "note": null
+      },
+      {
+        "client": "Xavier Miller",
+        "company": "NextGen HR",
+        "demoDate": "2026-06-09",
+        "paidDate": "2026-06-19",
+        "plan": "Buzz Basics",
+        "spend": 1990,
+        "note": null
+      },
       {
         "client": "Anthony Rumble",
         "company": "Rejuvenation Clinics of Australia",
         "demoDate": "2026-06-04",
-        "demoEmail": "anthonyr@rejuvaustralia.com.au",
+        "paidDate": "2026-06-22",
         "plan": "Honeycomb",
         "spend": 3290,
-        "tenureMonths": 1.1,
-        "basis": "domain match",
-        "confidence": "fact"
+        "note": null
       },
       {
-        "client": "Helena Papaspyratos",
-        "company": "Cooper & Co.",
-        "demoDate": "2026-06-25",
-        "demoEmail": "helena@ugt.com.au",
-        "payingEmail": "helena@cooperandco.com.au",
-        "plan": "Honeycomb",
-        "spend": 1645,
-        "tenureMonths": 0.6,
-        "basis": "alias — demo booked under ugt.com.au, paid under Cooper & Co (AJ-confirmed)",
-        "confidence": "fact"
+        "client": "Peter Nittes",
+        "company": "MacroView",
+        "demoDate": "2026-07-02",
+        "paidDate": "2026-04-24",
+        "plan": "Nectar",
+        "spend": 7935,
+        "note": "AJ-run demo; payment predates the calendared session"
       },
       {
         "client": "Luke Starbuck",
         "company": "Education Perfect",
         "demoDate": "2026-07-02",
-        "demoEmail": "luke.starbuck@educationperfect.com",
+        "paidDate": "2026-07-21",
         "plan": "Nectar",
         "spend": 2645,
-        "tenureMonths": 0.2,
-        "basis": "domain match",
-        "confidence": "fact"
+        "note": null
       },
       {
-        "client": "Steve Baldas",
-        "company": "SALAA",
-        "demoDate": "2026-04-08",
-        "demoEmail": "ceo@salaa.org.au",
-        "payingName": "Kainen Heath",
-        "basis": "alias — paid under the name Kainen Heath (AJ-confirmed); not in the 3 cohorts so spend not attributed here",
-        "confidence": "reported"
-      }
-    ],
-    "existingCustomerMeetings": [
-      {
-        "client": "Peter Nittes",
-        "company": "MacroView",
-        "date": "2026-07-02",
-        "note": "already a customer (first payment ~Apr 2026) — this was a later meeting, not the converting demo"
+        "client": "Aimee Bannister",
+        "company": "Brentnalls SA",
+        "demoDate": "2026-05-06",
+        "paidDate": null,
+        "plan": "Buzz Basics",
+        "spend": 995,
+        "note": null
       },
       {
-        "client": "anzuk Education",
-        "date": "2026-06-25",
-        "attendees": [
-          "vesna.n@anzuk.education",
-          "chloe.c@anzuk.education"
-        ],
-        "note": "existing customer account (Ludi Wiggins); Vesna is not a client in her own right"
+        "client": "Helena Papaspyratos",
+        "company": "Cooper & Co.",
+        "demoDate": "2026-06-25",
+        "paidDate": "2026-07-09",
+        "plan": "Honeycomb",
+        "spend": 1645,
+        "note": "demo booked under ugt.com.au; paid as Cooper & Co"
       }
     ],
-    "totalDemosInWindow": 41,
-    "note": "Conversions are demos in-window whose booking predates the first payment. Demos booked under a different email/company than the payment only surface via AJ-confirmed aliases."
+    "excluded": [
+      {
+        "who": "Vesna / anzuk Education",
+        "reason": "AJ: not a client of his — that was an existing account, not a demo of his"
+      },
+      {
+        "who": "Miguel Gutierrez",
+        "reason": "internal — his own note said it was a test booking"
+      },
+      {
+        "who": "Bo Garcia",
+        "reason": "job seeker, not a prospect"
+      }
+    ],
+    "note": "AJ-confirmed. Identity aliases (Steve→Kainen Heath, Helena→Cooper & Co) and which bookings are genuine prospects need a human in the loop — domain matching alone misses them."
   }
 }
