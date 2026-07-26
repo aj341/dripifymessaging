@@ -102,7 +102,73 @@ function readDoc(name) {
   return body + (DRIFT[doc.file] || '');
 }
 
+// --- The live blog inventory ---------------------------------------------------
+// Cannibalisation guard (AJ, 2026-07-26): the site audit found duplicate pages
+// competing against each other, so nobody proposes a gap or drafts a post
+// without first knowing what is already live. The public RSS feed is the
+// source; the sitemap is the fallback. Wix blocks the default fetch UA, so a
+// real one is sent — same lesson as Reddit.
+const SITE_BASE = process.env.PUBLIC_SITE_URL || 'https://www.designbees.com.au';
+const BROWSER_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 designbees-hive/1.0';
+let _liveCache = null; // { at, posts } — one fetch an hour is plenty
+
+async function fetchText(url) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/xml,text/xml,*/*' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return res.text();
+}
+
+function decodeEntities(s) {
+  return String(s || '')
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+    .trim();
+}
+
+async function liveBlogPosts() {
+  if (_liveCache && Date.now() - _liveCache.at < 60 * 60 * 1000) return _liveCache.posts;
+  let posts = [];
+  try {
+    const rss = await fetchText(`${SITE_BASE}/blog-feed.xml`);
+    for (const item of rss.match(/<item>[\s\S]*?<\/item>/g) || []) {
+      const title = decodeEntities((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1]);
+      const link = decodeEntities((item.match(/<link>([\s\S]*?)<\/link>/) || [])[1]);
+      const date = decodeEntities((item.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1]);
+      if (title && link) posts.push({ title, url: link, published: date || null });
+    }
+  } catch {
+    /* fall through to sitemap */
+  }
+  if (!posts.length) {
+    // Sitemap fallback: the index names a blog-posts sitemap; its <loc>s are the post URLs.
+    const index = await fetchText(`${SITE_BASE}/sitemap.xml`);
+    const blogMap = (index.match(/<loc>([^<]*blog[^<]*sitemap[^<]*)<\/loc>/i) || [])[1];
+    const mapXml = blogMap ? await fetchText(decodeEntities(blogMap)) : index;
+    for (const m of mapXml.match(/<loc>([^<]*\/post\/[^<]+)<\/loc>/g) || []) {
+      const url = decodeEntities(m.replace(/<\/?loc>/g, ''));
+      posts.push({ title: decodeURIComponent(url.split('/post/')[1] || '').replace(/-/g, ' '), url, published: null });
+    }
+  }
+  _liveCache = { at: Date.now(), posts };
+  return posts;
+}
+
 export const tools = [
+  {
+    name: 'list_live_blog_posts',
+    description:
+      'Every post currently LIVE on the Design Bees blog (public feed/sitemap — no auth, always current). ' +
+      'THE CANNIBALISATION GUARD: call this before proposing a query as a gap and before drafting anything. ' +
+      'If a live post already targets the query or overlaps it heavily, the answer is to strengthen or ' +
+      'refresh that post (flag it to AJ), never to write a second page that competes with our own — the ' +
+      'site audit found exactly that mistake costing rankings.',
+    input_schema: { type: 'object', properties: {} },
+  },
   {
     name: 'list_blog_engine_docs',
     description:
@@ -131,6 +197,22 @@ export const tools = [
 ];
 
 export const handlers = {
+  list_live_blog_posts: async () => {
+    try {
+      const posts = await liveBlogPosts();
+      if (!posts.length) {
+        return 'The public feed and sitemap returned no posts. Do NOT treat this as "no blog exists" — report the fetch came back empty and check with AJ before assuming anything about live content.';
+      }
+      return (
+        `${posts.length} post(s) live on the Design Bees blog right now:\n` +
+        posts.map((p) => `• ${p.title}${p.published ? ` (${String(p.published).slice(0, 16)})` : ''}\n  ${p.url}`).join('\n') +
+        `\n\nBefore a gap verdict or a new draft: if any post above already targets the query, the move is to strengthen/refresh that post, not write a competitor to it.`
+      );
+    } catch (err) {
+      return `Could not fetch the live blog inventory (${err.message}). Do not guess what is live — say the check failed and treat cannibalisation as UNVERIFIED for this pass.`;
+    }
+  },
+
   list_blog_engine_docs: async () =>
     `The Design Bees blog engine standard (${DOCS.length} documents, authoritative):\n\n` +
     DOCS.map((d) => `• ${d.file}\n  ${d.what}`).join('\n\n') +
