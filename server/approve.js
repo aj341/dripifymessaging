@@ -69,11 +69,15 @@ function statusPill(status) {
   return `<span class="pill ${cls}">${esc(STATUS_LABELS[status] || status || 'unknown')}</span>`;
 }
 
+// Only drafts written to the blog engine pack's standard appear. Everything
+// Sam produced before the pack is superseded history — AJ confirmed it is not
+// up to scratch, so it never shows here and can never be approved.
 async function draftRows() {
   const r = await dbQuery(
     `SELECT entity_key, data, updated_at FROM knowledge
       WHERE entity_type = 'topic'
         AND data->>'format' IN ('blog-post', 'blog-outline', 'linkedin-post')
+        AND data->>'standard' = 'blog-engine-pack-2026-07'
       ORDER BY (data->>'status' = 'draft-awaiting-aj') DESC, updated_at DESC
       LIMIT 100`
   );
@@ -176,6 +180,7 @@ export function mountApprove(app) {
         `UPDATE knowledge
             SET data = data || jsonb_build_object('status', $1::text, 'decided_at', now()::text)
           WHERE entity_type='topic' AND entity_key=$2 AND data->>'status' = 'draft-awaiting-aj'
+            AND data->>'standard' = 'blog-engine-pack-2026-07'
           RETURNING data`,
         [status, req.params.key]
       );
