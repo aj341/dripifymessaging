@@ -1,0 +1,1285 @@
+{
+  "generatedAt": "2026-07-26T04:14:15Z",
+  "source": {
+    "tool": "wix:payments/v2/transactions (via owner session)",
+    "siteId": "aa112b96-b980-49fa-8f7f-202343661708",
+    "transactionsScanned": 890,
+    "enrichment": "Clay company+title enrichment (AJ-verified)"
+  },
+  "revenue": {
+    "fetched": 890,
+    "monthRevenue": 36076,
+    "monthCount": 32,
+    "lastMonthRevenue": 47497,
+    "lastMonthCount": 35,
+    "delta": -11421,
+    "ytd": 243167,
+    "ytdCount": 216,
+    "year": 2026,
+    "planRows": [
+      {
+        "plan": "Honeycomb",
+        "count": 5,
+        "revenue": 8225
+      },
+      {
+        "plan": "Nectar",
+        "count": 4,
+        "revenue": 7935
+      },
+      {
+        "plan": "Buzz Basics",
+        "count": 9,
+        "revenue": 6965
+      },
+      {
+        "plan": "Honeycomb Plus",
+        "count": 2,
+        "revenue": 3290
+      },
+      {
+        "plan": "Honeycomb Plus Prepaid 2 Months",
+        "count": 1,
+        "revenue": 2868
+      },
+      {
+        "plan": "Worker Bee",
+        "count": 6,
+        "revenue": 2725
+      },
+      {
+        "plan": "Payment for invoice 488",
+        "count": 1,
+        "revenue": 1645
+      },
+      {
+        "plan": "Payment for invoice 482",
+        "count": 1,
+        "revenue": 995
+      },
+      {
+        "plan": "Payment for invoice 481",
+        "count": 1,
+        "revenue": 995
+      },
+      {
+        "plan": "Payment for invoice 479",
+        "count": 1,
+        "revenue": 282
+      },
+      {
+        "plan": "Payment for invoice 483",
+        "count": 1,
+        "revenue": 150
+      }
+    ],
+    "activeClients90": 35,
+    "unattributed90": 31550,
+    "clientRows": [
+      {
+        "name": "Ludi Wiggins",
+        "email": "ludi.w@anzuk.education",
+        "total": 7935,
+        "payments": 3,
+        "plans": [
+          "Nectar"
+        ],
+        "last": "2026-07-24T01:26:36.416Z"
+      },
+      {
+        "name": "Ashleigh Craig",
+        "email": "ashleigh.craig@permaconn.com",
+        "total": 7935,
+        "payments": 3,
+        "plans": [
+          "Nectar"
+        ],
+        "last": "2026-07-04T06:13:03.400Z"
+      },
+      {
+        "name": "Peter Nittes",
+        "email": "peter.nittes@macroview.com.au",
+        "total": 5290,
+        "payments": 2,
+        "plans": [
+          "Nectar"
+        ],
+        "last": "2026-06-24T14:02:47.539Z"
+      },
+      {
+        "name": "Shanelle Clapham",
+        "email": "accounts@parachuteagency.com.au",
+        "total": 4935,
+        "payments": 3,
+        "plans": [
+          "Honeycomb"
+        ],
+        "last": "2026-07-22T01:24:17.370Z"
+      },
+      {
+        "name": "Natasha Sullivan",
+        "email": "natasha.sullivan@1cover.com.au",
+        "total": 4935,
+        "payments": 3,
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "last": "2026-07-06T02:05:03.619Z"
+      },
+      {
+        "name": "Kristina Charchalis-Rana",
+        "email": "kristina.charchalis@aldercon.com.au",
+        "total": 4558,
+        "payments": 4,
+        "plans": [
+          "Honeycomb Plus Prepaid 2 Months",
+          "Worker Bee"
+        ],
+        "last": "2026-07-22T02:20:11.846Z"
+      },
+      {
+        "name": "Amanda Young",
+        "email": "ayoung@atlasag.com",
+        "total": 3290,
+        "payments": 2,
+        "plans": [
+          "Honeycomb"
+        ],
+        "last": "2026-07-22T06:09:07.726Z"
+      },
+      {
+        "name": "Anthony Rumble",
+        "email": "anthonyr@rejuvaustralia.com.au",
+        "total": 3290,
+        "payments": 3,
+        "plans": [
+          "Honeycomb"
+        ],
+        "last": "2026-07-22T05:52:23.773Z"
+      },
+      {
+        "name": "Rebecca Magill",
+        "email": "rebecca.magill@readytech.io",
+        "total": 3290,
+        "payments": 2,
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "last": "2026-06-13T14:01:04.069Z"
+      },
+      {
+        "name": "Rachel Korbel",
+        "email": "rachel.korbel@qsrfoodies.com.au",
+        "total": 3290,
+        "payments": 2,
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "last": "2026-06-01T23:26:14.377Z"
+      },
+      {
+        "name": "Jessica Roberts",
+        "email": "jessica@pivotpl.com",
+        "total": 2985,
+        "payments": 3,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-07-24T04:49:13.240Z"
+      },
+      {
+        "name": "John Critchley",
+        "email": "john@polaris.au",
+        "total": 2985,
+        "payments": 4,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-07-21T06:40:37.080Z"
+      },
+      {
+        "name": "Matt Gudge",
+        "email": "matt@grpl.com.au",
+        "total": 2985,
+        "payments": 3,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-07-08T00:21:10.678Z"
+      },
+      {
+        "name": "Luke Starbuck",
+        "email": "luke.starbuck@educationperfect.com",
+        "total": 2645,
+        "payments": 2,
+        "plans": [
+          "Nectar"
+        ],
+        "last": "2026-07-21T00:57:04.387Z"
+      },
+      {
+        "name": "Xavier Miller",
+        "email": "xavier@nextgenhr.com.au",
+        "total": 1990,
+        "payments": 3,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-07-19T07:57:32.977Z"
+      },
+      {
+        "name": "Kainen Heath",
+        "email": "kheath@salaa.org.au",
+        "total": 1990,
+        "payments": 2,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-06-02T23:46:30.735Z"
+      },
+      {
+        "name": "Jonathan Sharp",
+        "email": "jon@themarketingroom.com",
+        "total": 1690,
+        "payments": 3,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-07-06T03:21:09.442Z"
+      },
+      {
+        "name": "Helena Papaspyratos",
+        "email": "helena@cooperandco.com.au",
+        "total": 1645,
+        "payments": 2,
+        "plans": [
+          "Honeycomb",
+          "Buzz Basics"
+        ],
+        "last": "2026-07-09T00:40:04.184Z"
+      },
+      {
+        "name": "Matthew Farnham",
+        "email": "marketing@heartlandbank.com.au",
+        "total": 1645,
+        "payments": 1,
+        "plans": [
+          "Honeycomb"
+        ],
+        "last": "2026-07-07T06:00:12.976Z"
+      },
+      {
+        "name": "Ana Belgun",
+        "email": "ana.belgun@terria.io",
+        "total": 1635,
+        "payments": 3,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-07-26T04:03:59.026Z"
+      },
+      {
+        "name": "Samuel Whitaker",
+        "email": "alison@blugibbon.com.au",
+        "total": 1635,
+        "payments": 3,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-07-12T01:14:05.493Z"
+      },
+      {
+        "name": "Abasone",
+        "email": "abasone@atlascarbon.ag",
+        "total": 1495,
+        "payments": 1,
+        "plans": [
+          "Honeycomb"
+        ],
+        "last": "2026-05-20T03:03:09.597Z"
+      },
+      {
+        "name": "Shawna Lim",
+        "email": "slim@endotx.com.au",
+        "total": 1495,
+        "payments": 1,
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "last": "2026-04-28T13:01:34.565Z"
+      },
+      {
+        "name": "James G",
+        "email": "jgmktgwork@gmail.com",
+        "total": 1090,
+        "payments": 3,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-07-15T06:07:09.062Z"
+      },
+      {
+        "name": "Cain Cooke",
+        "email": "cain@lekielectric.com",
+        "total": 1090,
+        "payments": 2,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-06-27T00:47:03.563Z"
+      },
+      {
+        "name": "Utsav",
+        "email": "utsav@horizonx.com.au",
+        "total": 1090,
+        "payments": 2,
+        "plans": [
+          "Worker Bee"
+        ],
+        "last": "2026-06-14T00:18:04.569Z"
+      },
+      {
+        "name": "Andrea Heading",
+        "email": "andrea.heading@reisa.com.au",
+        "total": 995,
+        "payments": 2,
+        "plans": [
+          "Buzz Basics",
+          "Worker Bee"
+        ],
+        "last": "2026-07-22T03:22:19.702Z"
+      },
+      {
+        "name": "Amalia Caporella",
+        "email": "marketing@brentnalls-sa.com.au",
+        "total": 995,
+        "payments": 2,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-07-19T05:28:03.792Z"
+      },
+      {
+        "name": "Jennifer Moglia",
+        "email": "jennifer@enterpriseworks.com.au",
+        "total": 995,
+        "payments": 2,
+        "plans": [
+          "Buzz Basics"
+        ],
+        "last": "2026-06-23T02:33:02.678Z"
+      }
+    ]
+  },
+  "reconcile": {
+    "scanned": 112,
+    "standard": 92,
+    "from": "2026-04-01",
+    "prepayments": [
+      {
+        "client": "Unknown (invoice 432)",
+        "email": null,
+        "plan": "Nectar",
+        "amount": 13489.5,
+        "months": 6,
+        "discountPct": 15,
+        "basis": "inferred",
+        "date": "2026-06-12T11:02:18.970Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "plan": "Nectar",
+        "amount": 5290.01,
+        "months": 2,
+        "discountPct": 0,
+        "basis": "inferred",
+        "date": "2026-04-17T11:11:11.631Z"
+      },
+      {
+        "client": "Kristina Charchalis-Rana",
+        "email": "kristina.charchalis@aldercon.com.au",
+        "plan": "Honeycomb Plus Prepaid 2 Months",
+        "amount": 2868.06,
+        "months": 2,
+        "discountPct": null,
+        "basis": "named",
+        "date": "2026-07-22T02:20:11.846Z"
+      }
+    ],
+    "oneOffs": [
+      {
+        "client": "Abasone",
+        "email": "abasone@atlascarbon.ag",
+        "label": "Honeycomb",
+        "amount": 1495,
+        "date": "2026-05-20T03:03:09.597Z"
+      },
+      {
+        "client": "Shawna Lim",
+        "email": "slim@endotx.com.au",
+        "label": "Honeycomb Plus",
+        "amount": 1495,
+        "date": "2026-04-28T13:01:34.565Z"
+      },
+      {
+        "client": "Abasone",
+        "email": "abasone@atlascarbon.ag",
+        "label": "Honeycomb",
+        "amount": 1495,
+        "date": "2026-04-20T03:03:03.972Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 403",
+        "amount": 1314.44,
+        "date": "2026-04-24T02:16:25.653Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 465",
+        "amount": 638,
+        "date": "2026-06-16T06:04:22.442Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 444",
+        "amount": 600.01,
+        "date": "2026-05-28T06:42:36.635Z"
+      },
+      {
+        "client": "Kristina Charchalis-Rana",
+        "email": "kristina.charchalis@aldercon.com.au",
+        "label": "Worker Bee",
+        "amount": 599.5,
+        "date": "2026-06-11T00:15:13.938Z"
+      },
+      {
+        "client": "Jonathan Sharp",
+        "email": "jon@themarketingroom.com",
+        "label": "Worker Bee",
+        "amount": 599.5,
+        "date": "2026-06-06T03:21:13.281Z"
+      },
+      {
+        "client": "Nathan Azouz (Verandah Brands)",
+        "email": "nathan.azouz@verandahbrands.com.au",
+        "label": "Worker Bee",
+        "amount": 499,
+        "date": "2026-04-09T00:05:21.346Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 479",
+        "amount": 282.49,
+        "date": "2026-07-01T05:04:05.618Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 472",
+        "amount": 280.5,
+        "date": "2026-06-24T00:49:38.394Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 456",
+        "amount": 250,
+        "date": "2026-06-12T06:40:12.066Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 460",
+        "amount": 200,
+        "date": "2026-06-12T06:39:45.734Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 451",
+        "amount": 200,
+        "date": "2026-06-07T13:02:45.515Z"
+      },
+      {
+        "client": "Unknown",
+        "email": null,
+        "label": "Payment for invoice 423",
+        "amount": 165,
+        "date": "2026-05-06T10:31:50.599Z"
+      }
+    ],
+    "oneOffsTotal": 17
+  },
+  "cohorts": {
+    "totalClients": 27,
+    "nectar2025": [
+      {
+        "name": "Ashleigh Craig",
+        "email": "ashleigh.craig@permaconn.com",
+        "domain": "permaconn.com",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar",
+          "Nectar Pro"
+        ],
+        "tenureMonths": 11.7,
+        "spend": 38025,
+        "title": "Marketing & Events Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Security & Investigations",
+        "subIndustry": "IoT / connected security hardware",
+        "employeeCount": 86,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Natasha Sullivan",
+        "email": "natasha.sullivan@1cover.com.au",
+        "domain": "1cover.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Nectar"
+        ],
+        "tenureMonths": 15.6,
+        "spend": 25520,
+        "title": "Senior Manager, Digital Marketing",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Insurance",
+        "subIndustry": "Travel insurance",
+        "employeeCount": 32,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Rachel Korbel",
+        "email": "rachel.korbel@qsrfoodies.com.au",
+        "domain": "qsrfoodies.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Nectar Pro",
+          "Buzz Basics"
+        ],
+        "tenureMonths": 24,
+        "spend": 23919,
+        "title": "Chief Marketing Officer",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Food & Beverage Services",
+        "subIndustry": "Multi-brand QSR / franchising group",
+        "employeeCount": null,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Ludi Wiggins",
+        "email": "ludi.w@anzuk.education",
+        "domain": "anzuk.education",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 6,
+        "spend": 18065,
+        "title": "Director, Growth Marketing ANZ",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Education Administration",
+        "subIndustry": "Education recruitment agency",
+        "employeeCount": 2215,
+        "sizeBand": "201-500"
+      },
+      {
+        "name": "Alison Hedger",
+        "email": "alison.hedger@aldercon.com.au",
+        "domain": "aldercon.com.au",
+        "cohorts": [
+          "Nectar2025+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 15.3,
+        "spend": 17465,
+        "title": "Editor-in-Chief",
+        "roleType": "Other",
+        "companyType": "In-house",
+        "industry": "Construction",
+        "subIndustry": "Construction & property development",
+        "employeeCount": 123,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Peter Nittes",
+        "email": "peter.nittes@macroview.com.au",
+        "domain": "macroview.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 3,
+        "spend": 7935,
+        "title": "Marketing Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "IT Services & Consulting",
+        "subIndustry": "Document/email management software",
+        "employeeCount": 21,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Dave Timm",
+        "email": "d.timm@redmarble.ai",
+        "domain": "redmarble.ai",
+        "cohorts": [
+          "Nectar2025+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 10.9,
+        "spend": 4990,
+        "title": "Co-CEO",
+        "roleType": "Founder",
+        "companyType": "In-house",
+        "industry": "IT & Services",
+        "subIndustry": "Enterprise AI consultancy",
+        "employeeCount": 15,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Gwatkins",
+        "email": "gwatkins@ausjudo.com.au",
+        "domain": "ausjudo.com.au",
+        "cohorts": [
+          "Nectar2025+"
+        ],
+        "plans": [
+          "Nectar Pro"
+        ],
+        "tenureMonths": 8.1,
+        "spend": 3743,
+        "title": "General Manager – Participation",
+        "roleType": "Other",
+        "companyType": "In-house",
+        "industry": "Spectator Sports",
+        "subIndustry": "National sporting body",
+        "employeeCount": 26,
+        "sizeBand": "2-10"
+      },
+      {
+        "name": "Luke Starbuck",
+        "email": "luke.starbuck@educationperfect.com",
+        "domain": "educationperfect.com",
+        "cohorts": [
+          "Nectar2025+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 0.2,
+        "spend": 2645,
+        "title": "Fractional CMO",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "E-Learning",
+        "subIndustry": "EdTech platform",
+        "employeeCount": 877,
+        "sizeBand": "201-500"
+      }
+    ],
+    "honeycomb2026": [
+      {
+        "name": "Natasha Sullivan",
+        "email": "natasha.sullivan@1cover.com.au",
+        "domain": "1cover.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Nectar"
+        ],
+        "tenureMonths": 15.6,
+        "spend": 25520,
+        "title": "Senior Manager, Digital Marketing",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Insurance",
+        "subIndustry": "Travel insurance",
+        "employeeCount": 32,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Rachel Korbel",
+        "email": "rachel.korbel@qsrfoodies.com.au",
+        "domain": "qsrfoodies.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Nectar Pro",
+          "Buzz Basics"
+        ],
+        "tenureMonths": 24,
+        "spend": 23919,
+        "title": "Chief Marketing Officer",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Food & Beverage Services",
+        "subIndustry": "Multi-brand QSR / franchising group",
+        "employeeCount": null,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Rebecca Magill",
+        "email": "rebecca.magill@readytech.io",
+        "domain": "readytech.io",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "tenureMonths": 9.4,
+        "spend": 13905,
+        "title": "Head of Brand, Communications & Experience",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "IT & Services",
+        "subIndustry": "B2B/govtech SaaS (ASX-listed)",
+        "employeeCount": 533,
+        "sizeBand": "501-1000"
+      },
+      {
+        "name": "Shanelle Clapham",
+        "email": "accounts@parachuteagency.com.au",
+        "domain": "parachuteagency.com.au",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb",
+          "Buzz Basics"
+        ],
+        "tenureMonths": 7.9,
+        "spend": 11305,
+        "title": "Managing Director",
+        "roleType": "Founder",
+        "companyType": "Agency",
+        "industry": "Fundraising",
+        "subIndustry": "Charity fundraising agency",
+        "employeeCount": 13,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Abasone",
+        "email": "abasone@atlascarbon.ag",
+        "domain": "atlascarbon.ag",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 8.1,
+        "spend": 9718,
+        "title": "VP of Revenue",
+        "roleType": "Exec",
+        "companyType": "In-house",
+        "industry": "Agriculture / Machinery",
+        "subIndustry": "Carbon farming / AgTech",
+        "employeeCount": 30,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Shawna Lim",
+        "email": "slim@endotx.com.au",
+        "domain": "endotx.com.au",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Honeycomb"
+        ],
+        "tenureMonths": 10.2,
+        "spend": 9718,
+        "title": "Marketing Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Hospitals & Health Care",
+        "subIndustry": "Medical device distribution",
+        "employeeCount": 89,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Ajita Joshi",
+        "email": "ajita.joshi@zipline.io",
+        "domain": "zipline.io",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 10.5,
+        "spend": 7475,
+        "title": "Fractional Marketing Leader",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Software Development",
+        "subIndustry": "Care-economy B2B SaaS",
+        "employeeCount": 51,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Kristina Charchalis-Rana",
+        "email": "kristina.charchalis@aldercon.com.au",
+        "domain": "aldercon.com.au",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus Prepaid 2 Months",
+          "Worker Bee"
+        ],
+        "tenureMonths": 5.9,
+        "spend": 6147,
+        "title": "Brand and Communications Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Construction",
+        "subIndustry": "Construction & property development",
+        "employeeCount": 123,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Nonny Evans",
+        "email": "nonny@zipline.io",
+        "domain": "zipline.io",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "tenureMonths": 5.4,
+        "spend": 4635,
+        "title": "Chief Revenue Officer",
+        "roleType": "Exec",
+        "companyType": "In-house",
+        "industry": "Software Development",
+        "subIndustry": "Care-economy B2B SaaS",
+        "employeeCount": 51,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Amanda Young",
+        "email": "ayoung@atlasag.com",
+        "domain": "atlasag.com",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 1.1,
+        "spend": 3290,
+        "title": "Senior Events, Community and PR Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Agriculture / Machinery",
+        "subIndustry": "Carbon farming / AgTech",
+        "employeeCount": 30,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Anthony Rumble",
+        "email": "anthonyr@rejuvaustralia.com.au",
+        "domain": "rejuvaustralia.com.au",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 1.1,
+        "spend": 3290,
+        "title": "Marketing Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Cosmetics",
+        "subIndustry": "Medical aesthetics clinics",
+        "employeeCount": 29,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Patricia Rodriguez",
+        "email": "patricia.rodriguez@netstrategy.net",
+        "domain": "netstrategy.net",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb",
+          "Logo Design + Brand Guidelines"
+        ],
+        "tenureMonths": 5.6,
+        "spend": 2544,
+        "title": "Marketing & Admin Coordinator",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "IT Services & Consulting",
+        "subIndustry": "IT services for schools",
+        "employeeCount": 44,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Helena Papaspyratos",
+        "email": "helena@cooperandco.com.au",
+        "domain": "cooperandco.com.au",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 0.6,
+        "spend": 1645,
+        "title": "Marketing Coordinator",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Furniture / Home Furnishings",
+        "subIndustry": "Homewares wholesale",
+        "employeeCount": 10,
+        "sizeBand": "2-10"
+      },
+      {
+        "name": "Matthew Farnham",
+        "email": "marketing@heartlandbank.com.au",
+        "domain": "heartlandbank.com.au",
+        "cohorts": [
+          "Honeycomb2026+"
+        ],
+        "plans": [
+          "Honeycomb"
+        ],
+        "tenureMonths": 0.6,
+        "spend": 1645,
+        "title": "Head of Marketing",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Banking",
+        "subIndustry": "Specialist / digital bank",
+        "employeeCount": 97,
+        "sizeBand": "201-500"
+      }
+    ],
+    "active3mo": [
+      {
+        "name": "Ashleigh Craig",
+        "email": "ashleigh.craig@permaconn.com",
+        "domain": "permaconn.com",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar",
+          "Nectar Pro"
+        ],
+        "tenureMonths": 11.7,
+        "spend": 38025,
+        "title": "Marketing & Events Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Security & Investigations",
+        "subIndustry": "IoT / connected security hardware",
+        "employeeCount": 86,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Natasha Sullivan",
+        "email": "natasha.sullivan@1cover.com.au",
+        "domain": "1cover.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus",
+          "Nectar"
+        ],
+        "tenureMonths": 15.6,
+        "spend": 25520,
+        "title": "Senior Manager, Digital Marketing",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Insurance",
+        "subIndustry": "Travel insurance",
+        "employeeCount": 32,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Ludi Wiggins",
+        "email": "ludi.w@anzuk.education",
+        "domain": "anzuk.education",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 6,
+        "spend": 18065,
+        "title": "Director, Growth Marketing ANZ",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Education Administration",
+        "subIndustry": "Education recruitment agency",
+        "employeeCount": 2215,
+        "sizeBand": "201-500"
+      },
+      {
+        "name": "Rebecca Magill",
+        "email": "rebecca.magill@readytech.io",
+        "domain": "readytech.io",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus"
+        ],
+        "tenureMonths": 9.4,
+        "spend": 13905,
+        "title": "Head of Brand, Communications & Experience",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "IT & Services",
+        "subIndustry": "B2B/govtech SaaS (ASX-listed)",
+        "employeeCount": 533,
+        "sizeBand": "501-1000"
+      },
+      {
+        "name": "Shanelle Clapham",
+        "email": "accounts@parachuteagency.com.au",
+        "domain": "parachuteagency.com.au",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb",
+          "Buzz Basics"
+        ],
+        "tenureMonths": 7.9,
+        "spend": 11305,
+        "title": "Managing Director",
+        "roleType": "Founder",
+        "companyType": "Agency",
+        "industry": "Fundraising",
+        "subIndustry": "Charity fundraising agency",
+        "employeeCount": 13,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Peter Nittes",
+        "email": "peter.nittes@macroview.com.au",
+        "domain": "macroview.com.au",
+        "cohorts": [
+          "Nectar2025+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Nectar"
+        ],
+        "tenureMonths": 3,
+        "spend": 7935,
+        "title": "Marketing Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "IT Services & Consulting",
+        "subIndustry": "Document/email management software",
+        "employeeCount": 21,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Matt Gudge",
+        "email": "matt@grpl.com.au",
+        "domain": "grpl.com.au",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Buzz Basics"
+        ],
+        "tenureMonths": 7.6,
+        "spend": 7760,
+        "title": "Founder",
+        "roleType": "Founder",
+        "companyType": "In-house",
+        "industry": "Business Consulting",
+        "subIndustry": "Growth / positioning strategy",
+        "employeeCount": 3,
+        "sizeBand": "2-10"
+      },
+      {
+        "name": "Ana Belgun",
+        "email": "ana.belgun@terria.io",
+        "domain": "terria.io",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Worker Bee"
+        ],
+        "tenureMonths": 15,
+        "spend": 7669,
+        "title": "Co-founder / CEO",
+        "roleType": "Founder",
+        "companyType": "In-house",
+        "industry": "Software Development",
+        "subIndustry": "Geospatial / digital twin",
+        "employeeCount": 24,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Kristina Charchalis-Rana",
+        "email": "kristina.charchalis@aldercon.com.au",
+        "domain": "aldercon.com.au",
+        "cohorts": [
+          "Honeycomb2026+",
+          "Active3mo+"
+        ],
+        "plans": [
+          "Honeycomb Plus Prepaid 2 Months",
+          "Worker Bee"
+        ],
+        "tenureMonths": 5.9,
+        "spend": 6147,
+        "title": "Brand and Communications Manager",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Construction",
+        "subIndustry": "Construction & property development",
+        "employeeCount": 123,
+        "sizeBand": "51-200"
+      },
+      {
+        "name": "Samuel Whitaker",
+        "email": "alison@blugibbon.com.au",
+        "domain": "blugibbon.com.au",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Worker Bee",
+          "Buzz Basics"
+        ],
+        "tenureMonths": 6.4,
+        "spend": 5465,
+        "title": "Managing Director",
+        "roleType": "Founder",
+        "companyType": "In-house",
+        "industry": "Hospitals & Health Care",
+        "subIndustry": "Medical recruitment",
+        "employeeCount": 35,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Utsav",
+        "email": "utsav@horizonx.com.au",
+        "domain": "horizonx.com.au",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Worker Bee"
+        ],
+        "tenureMonths": 9.4,
+        "spend": 4629,
+        "title": "Founder and CEO",
+        "roleType": "Founder",
+        "companyType": "In-house",
+        "industry": "IT Services & Consulting",
+        "subIndustry": "Cloud / Data / AI consultancy",
+        "employeeCount": 12,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Jessica Roberts",
+        "email": "jessica@pivotpl.com",
+        "domain": "pivotpl.com",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Buzz Basics"
+        ],
+        "tenureMonths": 3,
+        "spend": 3980,
+        "title": "Marketing Coordinator",
+        "roleType": "Marketing",
+        "companyType": "In-house",
+        "industry": "Education Administration",
+        "subIndustry": "EdTech / teacher analytics",
+        "employeeCount": 23,
+        "sizeBand": "11-50"
+      },
+      {
+        "name": "Jonathan Sharp",
+        "email": "jon@themarketingroom.com",
+        "domain": "themarketingroom.com",
+        "cohorts": [
+          "Active3mo+"
+        ],
+        "plans": [
+          "Worker Bee"
+        ],
+        "tenureMonths": 3.6,
+        "spend": 2235,
+        "title": "Group CEO",
+        "roleType": "Founder",
+        "companyType": "Agency",
+        "industry": "Marketing Services",
+        "subIndustry": "Fractional marketing consultancy",
+        "employeeCount": 52,
+        "sizeBand": "51-200"
+      }
+    ],
+    "builtAt": "2026-07-26T04:14:00.000Z"
+  }
+}

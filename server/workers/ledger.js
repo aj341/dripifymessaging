@@ -6,9 +6,8 @@ import { writeSignal, setMemory, getMemory, getSetting, setSetting } from '../br
 import { send } from '../telegram.js';
 import {
   wixReady,
-  fetchAllTransactions,
-  summarizeRevenue,
-  reconcilePayments,
+  getRevenue,
+  getReconcile,
   money,
   WIX_SITE_ID,
   WIX_CURRENCY,
@@ -75,10 +74,10 @@ function reconcileText(r) {
 // ---- data ------------------------------------------------------------------
 async function computeAndStore() {
   const now = new Date();
-  const txns = await fetchAllTransactions();
-  const s = summarizeRevenue(txns, now);
+  const { data: s, live, asOf } = await getRevenue(now);
   const source = {
-    tool: 'wix:payments/api/merchant/v2/transactions',
+    tool: live ? 'wix:payments/v2/transactions' : `snapshot@${asOf}`,
+    live,
     siteId: WIX_SITE_ID,
     transactionsScanned: s.fetched,
     monthRevenueAud: s.monthRevenue,
@@ -97,6 +96,8 @@ async function computeAndStore() {
   });
   await setMemory({ worker_key: 'ledger', key: 'latest', value: s, source });
   await setSetting('ledger_last_run', now.toISOString());
+  // Label snapshot-sourced figures so a cached number never reads as live.
+  if (!live) s._asOf = `snapshot ${String(asOf).slice(0, 10)} · Wix key can't read Payments`;
   return s;
 }
 
@@ -104,7 +105,7 @@ async function computeAndStore() {
 export async function runLedger() {
   if (!ledgerReady()) { console.warn('[fred] WIX_API_KEY not set.'); return { skipped: 'no WIX_API_KEY' }; }
   const s = await computeAndStore();
-  await send(pulseText(s), { worker: WORKER }).catch((e) => console.error('[fred] send failed:', e.message));
+  await send(pulseText(s, s._asOf), { worker: WORKER }).catch((e) => console.error('[fred] send failed:', e.message));
   console.log(`[fred] pulse refreshed: $${s.monthRevenue} MTD, YTD $${s.ytd}`);
   return s;
 }
@@ -126,8 +127,7 @@ export async function sendPulse() {
 
 export async function runLedgerClients() {
   if (!ledgerReady()) return { skipped: 'no WIX_API_KEY' };
-  const now = new Date();
-  const s = summarizeRevenue(await fetchAllTransactions(), now);
+  const { data: s } = await getRevenue(new Date());
   await send(clientsText(s), { worker: WORKER }).catch((e) => console.error('[fred] send failed:', e.message));
   return s;
 }
@@ -136,9 +136,10 @@ export async function runLedgerClients() {
 export async function runLedgerReconcile({ notify = true } = {}) {
   if (!ledgerReady()) return { skipped: 'no WIX_API_KEY' };
   const now = new Date();
-  const r = reconcilePayments(await fetchAllTransactions());
+  const { data: r, live, asOf } = await getReconcile();
   const source = {
-    tool: 'wix:payments/api/merchant/v2/transactions',
+    tool: live ? 'wix:payments/v2/transactions' : `snapshot@${asOf}`,
+    live,
     siteId: WIX_SITE_ID,
     scanned: r.scanned,
     standard: r.standard,

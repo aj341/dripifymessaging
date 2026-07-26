@@ -4,7 +4,7 @@
 // need enrichment (Clay) and Google Calendar respectively.
 import { writeSignal, setMemory, getSetting, setSetting } from '../brain.js';
 import { send } from '../telegram.js';
-import { wixReady, fetchAllTransactions, buildCohorts, money, WIX_SITE_ID } from '../wix.js';
+import { wixReady, getCohorts, money, WIX_SITE_ID } from '../wix.js';
 
 const WORKER = { key: 'scout', name: 'Ian', emoji: '🔭' };
 
@@ -13,7 +13,11 @@ export function scoutReady() {
 }
 
 function line(m) {
-  return `• *${m.name}* — ${m.domain || 'no email'} · ${m.tenureMonths}mo · $${money(m.spend)}`;
+  // Enriched members (from the Clay-verified snapshot) carry a title and
+  // industry; raw Wix members don't. Show whatever we actually have.
+  const who = m.title ? ` · ${m.title}` : '';
+  const firmo = m.industry ? ` · ${m.industry}${m.employeeCount ? ` (${m.employeeCount})` : ''}` : '';
+  return `• *${m.name}* — ${m.domain || 'no email'}${who}${firmo} · ${m.tenureMonths}mo · $${money(m.spend)}`;
 }
 function block(title, arr) {
   const rows = arr.slice(0, 6).map(line).join('\n') || '• _none_';
@@ -36,9 +40,10 @@ export async function runScout({ notify = true } = {}) {
     return { skipped: 'no WIX_API_KEY' };
   }
   const now = new Date();
-  const c = buildCohorts(await fetchAllTransactions(), now);
+  const { data: c, live, asOf } = await getCohorts(now);
   const source = {
-    tool: 'wix:payments/api/merchant/v2/transactions',
+    tool: live ? 'wix:payments/v2/transactions' : `snapshot@${asOf}`,
+    live,
     siteId: WIX_SITE_ID,
     totalClients: c.totalClients,
     nectar2025: c.nectar2025.length,
