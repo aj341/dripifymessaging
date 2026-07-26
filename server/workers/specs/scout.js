@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getCohorts, money } from '../../wix.js';
+import { wixOauthConnected, planOrders, getContact } from '../../wix-oauth.js';
 
 const PACK_PATH = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -91,6 +92,18 @@ ran one yourself.`,
       input_schema: { type: 'object', properties: {} },
     },
     {
+      name: 'wix_client_firmographics',
+      description:
+        'LIVE from Wix (read-only app): every pricing-plan subscriber joined to their contact record — ' +
+        'plan, status, start/cancel dates, and the location Wix holds for them (city, state, country). ' +
+        'Use this to profile who actually pays us and WHERE they are, then sharpen the Sales Navigator ' +
+        'filters: geography weighting from real client locations, plan mix by segment, active vs ' +
+        'cancelled shape. Join industry and headcount from hive knowledge with recall — Wix does not ' +
+        'hold those. Report coverage honestly: a contact with no address is "location unknown", never ' +
+        'assumed. If Wix is not connected this says so; nothing is estimated.',
+      input_schema: { type: 'object', properties: {} },
+    },
+    {
       name: 'check_industry_fit',
       description:
         'Look up our real client history in an industry and get the evidence back: how many clients, ' +
@@ -134,6 +147,77 @@ ran one yourself.`,
     },
   ],
   handlers: {
+    wix_client_firmographics: async (_input, _ctx) => {
+      try {
+        if (!(await wixOauthConnected())) {
+          return 'Wix live access is not connected — profile from cohort/enrichment records instead, and say the location view is unavailable.';
+        }
+        const orders = await planOrders({ limit: 300 });
+        if (!orders.length) return 'Wix returned no plan orders. That is the real answer — report it as such.';
+
+        // One row per buyer: their plans, latest status, and where they are.
+        const byBuyer = new Map();
+        for (const o of orders) {
+          const key = o.buyerContactId || `unknown-${o.id}`;
+          const b = byBuyer.get(key) || { contactId: o.buyerContactId, orders: [] };
+          b.orders.push(o);
+          byBuyer.set(key, b);
+        }
+
+        const rows = [];
+        for (const b of byBuyer.values()) {
+          let c = null;
+          if (b.contactId) c = await getContact(b.contactId).catch(() => null);
+          const newest = b.orders.sort((x, y) => String(y.createdDate).localeCompare(String(x.createdDate)))[0];
+          const hasActive = b.orders.some((o) => o.status === 'ACTIVE');
+          rows.push({
+            name: c?.name || c?.email || 'unknown contact',
+            email: c?.email || null,
+            company: c?.company || null,
+            city: c?.city || null,
+            state: c?.state || null,
+            country: c?.country || null,
+            plans: [...new Set(b.orders.map((o) => o.planName).filter(Boolean))],
+            status: hasActive ? 'ACTIVE' : newest?.status || 'unknown',
+            firstStart: b.orders.map((o) => o.startDate || o.createdDate).sort()[0] || null,
+            canceled: newest?.canceledDate || null,
+          });
+        }
+
+        const withLoc = rows.filter((r) => r.city || r.state || r.country);
+        const tally = (list, fn) => {
+          const m = {};
+          for (const r of list) {
+            const k = fn(r) || 'unknown';
+            m[k] = (m[k] || 0) + 1;
+          }
+          return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ×${n}`).join('; ');
+        };
+
+        const lines = rows.map(
+          (r) =>
+            `• ${r.name}${r.company ? ` (${r.company})` : ''} — ${r.plans.join('/') || 'plan unknown'} — ${r.status}` +
+            ` — ${[r.city, r.state, r.country].filter(Boolean).join(', ') || 'location unknown'}` +
+            ` — since ${String(r.firstStart || '').slice(0, 10)}${r.canceled ? ` — cancelled ${String(r.canceled).slice(0, 10)}` : ''}`
+        );
+
+        return (
+          `Source: Wix live — ${rows.length} subscriber(s) from ${orders.length} plan order(s).\n` +
+          `LOCATION COVERAGE: ${withLoc.length} of ${rows.length} contacts carry an address in Wix — ` +
+          `treat the rest as unknown, never assumed.\n\n` +
+          `By state: ${tally(withLoc, (r) => r.state)}\n` +
+          `By city: ${tally(withLoc, (r) => r.city)}\n` +
+          `By status: ${tally(rows, (r) => r.status)}\n\n` +
+          `${lines.join('\n')}\n\n` +
+          `Next: recall enrichment knowledge for industry/headcount per company, then say which Sales ` +
+          `Navigator filters this evidence supports changing — and which it cannot support because of the ` +
+          `coverage gap above.`
+        );
+      } catch (err) {
+        return `wix_client_firmographics failed: ${err.message}. Profile from cohort records instead and say the live view failed.`;
+      }
+    },
+
     read_salesnav_pack: async () => {
       try {
         return fs.readFileSync(PACK_PATH, 'utf8');
