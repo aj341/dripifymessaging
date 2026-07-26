@@ -434,7 +434,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v38-content-library | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v39-justification-gate | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

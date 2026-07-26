@@ -60,6 +60,11 @@ const PAGE_CSS = `
   a{color:#8a5a0b} .btn{display:inline-block;border:0;border-radius:8px;padding:10px 22px;font-size:15px;font-weight:700;cursor:pointer;margin-right:10px}
   .b-ok{background:#3d7a44;color:#fff}.b-no{background:#a64b2a;color:#fff}
   .meta{font-size:13px;color:#6e6553}
+  .case{background:#f9f6ef;border:1px solid #e6dfcf;border-left:4px solid #b97a0e;border-radius:0 10px 10px 0;padding:6px 18px 16px;margin:14px 0}
+  .case-head{font-size:15px;font-weight:750;margin:12px 0 2px}
+  .reason{font-size:14.5px;line-height:1.6;margin:2px 0 4px}
+  ul.src{margin:4px 0 0;padding-left:20px;font-size:14px}
+  ul.src li{margin:6px 0}
   form{display:inline}
 `;
 
@@ -129,7 +134,34 @@ export function mountApprove(app) {
 
       const sections = [];
       sections.push(`<div class="k">Status</div>${statusPill(d.status)}`);
-      if (d.demand_evidence) sections.push(`<div class="k">Why this earns a post (demand evidence)</div><div>${esc(d.demand_evidence)}</div>`);
+
+      // The case for the post, first — AJ decides from this before reading a word
+      // of the draft, so it gets the top of the page and the most space.
+      const j = d.justification && typeof d.justification === 'object' ? d.justification : null;
+      if (j) {
+        const field = (label, value) =>
+          value ? `<div class="k">${esc(label)}</div><div class="reason">${esc(value)}</div>` : '';
+        sections.push(
+          '<div class="case">' +
+            '<div class="case-head">The case for this post</div>' +
+            field('Cannibalisation check', j.ownership_check) +
+            field('Demand evidence', j.demand) +
+            field('Why we can win it', j.winnability) +
+            field('Value to Design Bees', j.value_to_design_bees) +
+            field('Value to the reader', j.value_to_reader) +
+            `<div class="k">Sources</div>` +
+            (Array.isArray(j.sources) && j.sources.length
+              ? `<ul class="src">${j.sources
+                  .map((s) => `<li><b>${esc(s.claim)}</b><br><span class="meta">${esc(s.source)}</span></li>`)
+                  .join('')}</ul>`
+              : '<div class="meta">No outside figures used beyond Design Bees plan pricing.</div>') +
+            '</div>'
+        );
+      } else if (d.why_this_lands) {
+        sections.push(`<div class="case"><div class="case-head">Why this lands</div><div class="reason">${esc(d.why_this_lands)}</div></div>`);
+      } else if (d.demand_evidence) {
+        sections.push(`<div class="k">Demand evidence (pre-justification format)</div><div class="reason">${esc(d.demand_evidence)}</div>`);
+      }
       if (d.queue_number) sections.push(`<div class="k">Queue item</div><div>#${esc(d.queue_number)} from content-queue.md</div>`);
       if (Array.isArray(d.long_tail_cluster) && d.long_tail_cluster.length)
         sections.push(`<div class="k">Keyword cluster</div><div>${d.long_tail_cluster.map(esc).join(' · ')}</div>`);
@@ -142,7 +174,6 @@ export function mountApprove(app) {
           }</div>`
         );
       }
-      if (d.proof_source) sections.push(`<div class="k">Proof source</div><div>${esc(d.proof_source)}</div>`);
       const flags = Array.isArray(d.voice_warnings) ? d.voice_warnings : [];
       sections.push(
         `<div class="k">Voice check</div>` +

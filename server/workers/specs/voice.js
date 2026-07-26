@@ -71,6 +71,99 @@ function asObject(v) {
 
 const oneLine = (s, n = 160) => clean(s).replace(/\s+/g, ' ').slice(0, n);
 
+// The justification gate (AJ, 2026-07-26: a proof source that "doesn't even
+// make sense and then just has 2 urls" is not a case for publishing). AJ makes
+// the approve/reject call from this block, so it has to be reasoning he can act
+// on: what was checked, why the demand is real, why we can win it, what it earns
+// Design Bees commercially, and what the reader leaves with. Thin or generic
+// prose is refused at the tool boundary rather than queued for him to unpick.
+const JUSTIFICATION_FIELDS = [
+  ['ownership_check', 'what you checked for cannibalisation and what it said', 120],
+  ['demand', 'the evidence buyers ask this, with figures and their source', 120],
+  ['winnability', 'who ranks today and the specific weakness you are attacking', 120],
+  ['value_to_design_bees', 'the commercial bridge — who it reaches and how it leads to a demo or trial', 120],
+  ['value_to_reader', 'what the reader can do afterwards that they could not before', 100],
+];
+
+// Sentences that would fit any article on any topic. A justification made of
+// these says nothing, however long it is.
+const GENERIC_JUSTIFICATION = [
+  /^(this|it) (post|piece|article) (will|would) (be )?(help|useful|valuable|good|great)/i,
+  /\b(high|good) (search )?(volume|intent)\b(?![^.]*\b(gsc|search console|dataforseo|impressions|position)\b)/i,
+  /\bdrives? (traffic|awareness|engagement)\b/i,
+  /\bbuilds? (trust|authority|credibility)\b(?![^.]*\bbecause\b)/i,
+  /\bgood for (seo|aeo)\b/i,
+];
+
+/**
+ * Validate a justification block. Returns { ok, message } — a refusal names the
+ * field and what is missing, so the next attempt is better rather than longer.
+ */
+function checkJustification(j, { bodyText = '', requireSources = true } = {}) {
+  if (!j || typeof j !== 'object') {
+    return {
+      ok: false,
+      message:
+        'REJECTED — no justification. AJ approves from your reasoning, not from a link: give ownership_check, ' +
+        'demand, winnability, value_to_design_bees and value_to_reader, each as real prose, plus a source per ' +
+        'figure. Nothing was saved.',
+    };
+  }
+  const missing = [];
+  const thin = [];
+  const generic = [];
+  for (const [field, what, min] of JUSTIFICATION_FIELDS) {
+    const v = clean(j[field]);
+    if (!v) missing.push(`${field} (${what})`);
+    else if (v.length < min) thin.push(`${field}: ${v.length} chars, needs ${min}+ — ${what}`);
+    else if (GENERIC_JUSTIFICATION.some((re) => re.test(v))) {
+      generic.push(`${field}: reads as boilerplate that would fit any post. Say what is true of THIS query.`);
+    }
+  }
+  if (missing.length || thin.length || generic.length) {
+    return {
+      ok: false,
+      message:
+        'REJECTED — the justification is not strong enough for AJ to decide from. Nothing was saved.\n' +
+        (missing.length ? `\nMissing:\n- ${missing.join('\n- ')}` : '') +
+        (thin.length ? `\nToo thin:\n- ${thin.join('\n- ')}` : '') +
+        (generic.length ? `\nToo generic:\n- ${generic.join('\n- ')}` : '') +
+        '\n\nWrite each field as you would explain it to AJ in person, then call this again.',
+    };
+  }
+
+  // Every figure in the body needs a claim-level source. Plan prices are public
+  // and exempt; anything else has to be traceable.
+  const sources = Array.isArray(j.sources) ? j.sources.filter((s) => clean(s?.claim) && clean(s?.source)) : [];
+  if (requireSources) {
+    const figures = unsourcedFigures(bodyText, false);
+    if (figures.length && !sources.length) {
+      return {
+        ok: false,
+        message:
+          `REJECTED — the post states figures (${figures.slice(0, 6).join(', ')}) with no per-claim sources. ` +
+          'Add a sources entry for each one naming the claim and exactly where it came from, or cut the figures. ' +
+          'Nothing was saved.',
+      };
+    }
+  }
+  return { ok: true, sources };
+}
+
+/** The justification as readable prose, for the signal body and the dashboard. */
+function justificationText(j, sources = []) {
+  return [
+    `Ownership check: ${clean(j.ownership_check)}`,
+    `Demand: ${clean(j.demand)}`,
+    `Winnability: ${clean(j.winnability)}`,
+    `Value to Design Bees: ${clean(j.value_to_design_bees)}`,
+    `Value to the reader: ${clean(j.value_to_reader)}`,
+    sources.length
+      ? `Sources:\n${sources.map((s) => `  • ${clean(s.claim)} → ${clean(s.source)}`).join('\n')}`
+      : 'Sources: no outside figures used beyond Design Bees plan pricing.',
+  ].join('\n\n');
+}
+
 // A client's words, or a client used as a worked example, never appears in a
 // draft without AJ approving that specific use first. Machine side of the rule,
 // tuned after the first live run flagged Sam's own definitional prose as a
@@ -241,6 +334,13 @@ ${ANALYTICS_STATUS}`,
             type: 'string',
             description: 'What the reader walks away with. If you cannot state it plainly, the post is not ready.',
           },
+          why_this_lands: {
+            type: 'string',
+            description:
+              'The case for the post, for AJ to decide from: which buyer this speaks to, what evidence says ' +
+              'they feel it (name the signal, pain or Dripify reply data), and what the reader takes away. ' +
+              'Real reasoning, not a label — a thin one is refused.',
+          },
           proof_point: {
             type: 'string',
             description: 'Optional. The concrete result or number used in the post.',
@@ -250,7 +350,7 @@ ${ANALYTICS_STATUS}`,
             description: "Required whenever proof_point is set: the knowledge entity_key it came from, or 'aj' if AJ supplied it directly. Never leave this blank to get a claim through.",
           },
         },
-        required: ['trigger', 'angle', 'post_type', 'hook', 'body', 'takeaway'],
+        required: ['trigger', 'angle', 'post_type', 'hook', 'body', 'takeaway', 'why_this_lands'],
       },
     },
     {
@@ -280,16 +380,69 @@ ${ANALYTICS_STATUS}`,
             description: 'The 3–6 secondary phrasings this post structures into H2s and the FAQ, mined from real SERP/PAA/autocomplete — not invented.',
           },
           body: { type: 'string', description: 'The complete post in markdown, H1 first, FAQ section last.' },
-          demand_evidence: {
-            type: 'string',
-            description: "Why this query earns a post: the queue item, or the gate evidence (what you actually saw in the SERP, PAA, AI answers). Qualitative only — never a made-up volume.",
-          },
-          proof_source: {
-            type: 'string',
-            description: "Where any figure beyond plan pricing came from — a knowledge entity_key, a URL you fetched, or 'aj'.",
+          justification: {
+            type: 'object',
+            description:
+              'THE CASE FOR THIS POST, written for AJ to make a decision from. He reads this before the ' +
+              'draft, and a thin or hand-wavy case is refused rather than queued: every field is prose he ' +
+              'can act on, not a label. Two bare URLs is not a justification.',
+            properties: {
+              ownership_check: {
+                type: 'string',
+                description:
+                  'What you actually checked and what it said. Name the documents (keyword-ownership-map.md, ' +
+                  'engine-content-map.md) and the live-post list, state whether any page or draft owns this ' +
+                  'query or its cluster, and if something is adjacent say why this post targets a genuinely ' +
+                  'different intent. If a term is on the contested list, say so.',
+              },
+              demand: {
+                type: 'string',
+                description:
+                  'The evidence that buyers ask this. Real figures with their source where you have them ' +
+                  "(Ricky's GSC or DataForSEO numbers, quoted as such), plus the phrasings you saw in " +
+                  'autocomplete, People Also Ask or AI answers. Never a volume you did not receive from a tool.',
+              },
+              winnability: {
+                type: 'string',
+                description:
+                  'Who ranks or answers today, what kind of pages they are, and the specific reason Design ' +
+                  'Bees can beat them on this query — the Australia angle, a wrong price in the current ' +
+                  'answers, a question nobody answers directly. Be concrete about the weakness you are attacking.',
+              },
+              value_to_design_bees: {
+                type: 'string',
+                description:
+                  'The commercial case. Which buyer this reaches, where they are in the decision, how the ' +
+                  'post bridges to a demo or trial, and what it wins or defends (a citation in AI answers, ' +
+                  'a wrong competitor price corrected, an entry-plan buyer who lands on the right number). ' +
+                  'If you cannot state the commercial bridge, the post should not be written.',
+              },
+              value_to_reader: {
+                type: 'string',
+                description:
+                  'What a reader can do after reading that they could not before — the decision it settles, ' +
+                  'the number they leave with, the mistake it saves them. Specific to this post; a sentence ' +
+                  'that would fit any article means the post has no reason to exist.',
+              },
+              sources: {
+                type: 'array',
+                description:
+                  'Per-claim sourcing for every figure, statistic or outside fact in the post beyond Design ' +
+                  "Bees' own plan pricing. One entry per claim — the claim itself and exactly where it came from.",
+                items: {
+                  type: 'object',
+                  properties: {
+                    claim: { type: 'string', description: 'The claim or figure as it appears in the post.' },
+                    source: { type: 'string', description: "URL you fetched, hive knowledge entity_key, Ricky's signal, or 'aj'." },
+                  },
+                  required: ['claim', 'source'],
+                },
+              },
+            },
+            required: ['ownership_check', 'demand', 'winnability', 'value_to_design_bees', 'value_to_reader'],
           },
         },
-        required: ['query', 'category', 'slug', 'meta_title', 'meta_description', 'body', 'demand_evidence'],
+        required: ['query', 'category', 'slug', 'meta_title', 'meta_description', 'body', 'justification'],
       },
     },
     {
@@ -320,13 +473,32 @@ ${ANALYTICS_STATUS}`,
             },
           },
           cta: { type: 'string', description: 'The single action the piece asks for at the end. Demo first.' },
-          proof_source: {
-            type: 'string',
-            description: "Where any client example or number in the outline came from — a knowledge entity_key or 'aj'.",
+          justification: {
+            type: 'object',
+            description:
+              'The case for this direction, for AJ to green-light from. Same standard as a full post: real ' +
+              'reasoning in every field, not labels.',
+            properties: {
+              ownership_check: { type: 'string', description: 'What you checked (ownership maps, live posts) and what it said about this query.' },
+              demand: { type: 'string', description: 'Evidence buyers ask this, with figures and their source where you have them.' },
+              winnability: { type: 'string', description: 'Who answers today and the specific weakness this piece attacks.' },
+              value_to_design_bees: { type: 'string', description: 'Who it reaches, and how it bridges to a demo or trial.' },
+              value_to_reader: { type: 'string', description: 'What the reader can do afterwards that they could not before.' },
+              sources: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { claim: { type: 'string' }, source: { type: 'string' } },
+                  required: ['claim', 'source'],
+                },
+                description: 'Per-claim sourcing for any figure named in the outline.',
+              },
+            },
+            required: ['ownership_check', 'demand', 'winnability', 'value_to_design_bees', 'value_to_reader'],
           },
           trigger: { type: 'string', description: 'The signal this came from, e.g. the seo:gap topic.' },
         },
-        required: ['query', 'search_intent', 'working_title', 'summary', 'sections'],
+        required: ['query', 'search_intent', 'working_title', 'summary', 'sections', 'justification'],
       },
     },
   ],
@@ -421,6 +593,13 @@ ${ANALYTICS_STATUS}`,
         const trigger = clean(input?.trigger) || 'unprompted';
         if (!hook || !body) return 'Need both a hook and a body before this can be saved. Nothing was stored.';
         if (!takeaway) return 'No takeaway stated, so the post is not ready. Say what the reader walks away with, then call this again.';
+        const whyLands = clean(input?.why_this_lands);
+        if (whyLands.length < 120) {
+          return (
+            `REJECTED — why_this_lands is ${whyLands.length} chars. AJ decides from your reasoning: name the ` +
+            'buyer, the evidence they feel this, and what they take away. Nothing was saved.'
+          );
+        }
 
         const proofPoint = clean(input?.proof_point);
         const proofSource = clean(input?.proof_source);
@@ -453,6 +632,7 @@ ${ANALYTICS_STATUS}`,
           body,
           text,
           characters: chars,
+          why_this_lands: whyLands,
           proof_point: proofPoint || null,
           proof_source: proofSource || null,
           voice_warnings: warnings,
@@ -470,7 +650,7 @@ ${ANALYTICS_STATUS}`,
         await ctx.publish({
           topic: 'content:draft',
           title: `LinkedIn draft: ${oneLine(hook, 90)}`,
-          body: `${text}\n\n— Takeaway: ${takeaway}\n— Type: ${data.post_type} · for ${data.audience} · ${chars} chars\n— From: ${trigger}${
+          body: `${text}\n\n— Why it lands: ${whyLands}\n— Takeaway: ${takeaway}\n— Type: ${data.post_type} · for ${data.audience} · ${chars} chars\n— From: ${trigger}${
             proofPoint ? `\n— Proof: ${proofPoint} (source: ${proofSource})` : ''
           }${warnings.length ? `\n— Voice flags: ${warnings.join(' | ')}` : ''}\n\nDraft only — not posted. Approve or edit before it goes anywhere.`,
           data: { ...data, knowledge_key: key },
@@ -491,21 +671,21 @@ ${ANALYTICS_STATUS}`,
         const query = clean(input?.query);
         const body = clean(input?.body);
         const category = clean(input?.category);
-        const demand = clean(input?.demand_evidence);
         if (!query) return 'No primary query given. The query is the post — nothing was stored.';
         if (!body) return 'No body given. This tool takes the finished post, not an intention to write one.';
-        if (!demand) return 'REJECTED — no demand_evidence. Say which queue item this is, or what you actually saw that clears the five gates. A post with no verified demand does not get drafted.';
+
+        // The case for the post is gated before anything is stored: AJ decides
+        // from this, so a thin one is a refusal, not a warning on a queued draft.
+        const gate = checkJustification(input?.justification, { bodyText: body });
+        if (!gate.ok) return gate.message;
+        const j = input.justification;
+        const sources = gate.sources;
 
         const metaTitle = clean(input?.meta_title);
         const metaDesc = clean(input?.meta_description);
-        const proofSource = clean(input?.proof_source);
         const words = body.split(/\s+/).filter(Boolean).length;
 
         const warnings = [...l99Warnings(body, { blog: true }), ...quoteFlags(body)];
-        const claims = unsourcedFigures(body, Boolean(proofSource));
-        if (claims.length) {
-          warnings.push(`Figures with no proof_source: ${claims.join(', ')}. Every figure is fact-checked this run — source them or cut them.`);
-        }
         if (words < 1200 || words > 1800) warnings.push(`${words} words — the pack's range is 1,200 to 1,800.`);
         if (metaTitle.length > 60) warnings.push(`Meta title is ${metaTitle.length} chars — pack says under 60.`);
         if (metaDesc.length > 155) warnings.push(`Meta description is ${metaDesc.length} chars — pack says under 155.`);
@@ -532,8 +712,17 @@ ${ANALYTICS_STATUS}`,
           author: 'AJ Kavanagh',
           word_count: words,
           body,
-          demand_evidence: demand,
-          proof_source: proofSource || null,
+          // The full case, structured for the dashboard and kept as the record
+          // of why this post was written.
+          justification: {
+            ownership_check: clean(j.ownership_check),
+            demand: clean(j.demand),
+            winnability: clean(j.winnability),
+            value_to_design_bees: clean(j.value_to_design_bees),
+            value_to_reader: clean(j.value_to_reader),
+            sources: sources.map((s) => ({ claim: clean(s.claim), source: clean(s.source) })),
+          },
+          demand_evidence: clean(j.demand), // kept for anything reading the old field
           voice_warnings: warnings,
           drafted_at: new Date().toISOString(),
         };
@@ -542,7 +731,7 @@ ${ANALYTICS_STATUS}`,
           entity_type: 'topic',
           entity_key: key,
           data,
-          source: { tool: 'draft_blog_post', demand_evidence: demand, proof_source: proofSource || null },
+          source: { tool: 'draft_blog_post', justification: data.justification },
           worker_key: ctx.workerKey,
         });
 
@@ -551,8 +740,8 @@ ${ANALYTICS_STATUS}`,
           title: `Blog draft${data.queue_number ? ` (queue #${data.queue_number})` : ''}: ${oneLine(query, 90)}`,
           body:
             `${query}\nCategory: ${category} · ${words} words · slug: ${data.slug}\n` +
-            `Meta: ${metaTitle} / ${metaDesc}\n` +
-            `Demand: ${demand}\n\n${body.slice(0, 1500)}${body.length > 1500 ? '\n…[full draft stored in knowledge]' : ''}` +
+            `Meta: ${metaTitle} / ${metaDesc}\n\n${justificationText(j, sources)}\n\n` +
+            `${body.slice(0, 1200)}${body.length > 1200 ? '\n…[full draft on /approve]' : ''}` +
             `${warnings.length ? `\n\nFlags: ${warnings.join(' | ')}` : ''}\n\nDraft only — AJ approves before anything goes near Wix.`,
           data: { knowledge_key: key, query, category, word_count: words, queue_number: data.queue_number },
           confidence: 'hypothesis',
@@ -574,10 +763,13 @@ ${ANALYTICS_STATUS}`,
         if (!query) return 'No target query given — a blog outline without one is guesswork. Nothing was stored.';
         if (!title || !sections.length) return 'Need a working title and at least one section before this can be saved.';
 
-        const proofSource = clean(input?.proof_source);
         const flat = [title, summary, ...sections.map((s) => `${clean(s?.h2)} ${clean(s?.covers)}`)].join('\n');
+        const gate = checkJustification(input?.justification, { bodyText: flat });
+        if (!gate.ok) return gate.message;
+        const j = input.justification;
+        const sources = gate.sources;
         const warnings = [...l99Warnings(flat), ...quoteFlags(flat)];
-        const claims = unsourcedFigures(flat, Boolean(proofSource));
+        const claims = [];
         if (claims.length) {
           warnings.push(`Unsourced figures in the outline: ${claims.join(', ')}. Source them or cut them.`);
         }
@@ -599,7 +791,14 @@ ${ANALYTICS_STATUS}`,
           summary,
           sections: sections.map((s) => ({ h2: clean(s?.h2), covers: clean(s?.covers) })),
           cta: clean(input?.cta) || null,
-          proof_source: proofSource || null,
+          justification: {
+            ownership_check: clean(j.ownership_check),
+            demand: clean(j.demand),
+            winnability: clean(j.winnability),
+            value_to_design_bees: clean(j.value_to_design_bees),
+            value_to_reader: clean(j.value_to_reader),
+            sources: sources.map((x) => ({ claim: clean(x.claim), source: clean(x.source) })),
+          },
           voice_warnings: warnings,
           drafted_at: new Date().toISOString(),
         };
@@ -608,14 +807,14 @@ ${ANALYTICS_STATUS}`,
           entity_type: 'topic',
           entity_key: key,
           data,
-          source: { tool: 'draft_blog_outline', trigger: clean(input?.trigger) || `query:${query}`, proof_source: proofSource || null },
+          source: { tool: 'draft_blog_outline', trigger: clean(input?.trigger) || `query:${query}`, justification: data.justification },
           worker_key: ctx.workerKey,
         });
 
         await ctx.publish({
           topic: 'content:draft',
           title: `Blog outline: ${title}`,
-          body: `Target query: "${query}" (${data.search_intent})\n\n${summary}\n\n${outline}\n\nCTA: ${
+          body: `Target query: "${query}" (${data.search_intent})\n\n${justificationText(j, sources)}\n\n${summary}\n\n${outline}\n\nCTA: ${
             data.cta || 'none set'
           }${warnings.length ? `\n\nFlags: ${warnings.join(' | ')}` : ''}\n\nOutline only — nothing written or published yet.`,
           data: { ...data, knowledge_key: key },
