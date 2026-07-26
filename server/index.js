@@ -158,7 +158,16 @@ commands.transcripts = async (text) => {
   );
 };
 commands.reddit = async () => {
-  const s = await sweepReddit();
+  const s = await sweepReddit({ force: true });
+  if (s.blocked) {
+    return send(
+      '📡 Reddit watch is *standing down*. Reddit closed self-service API registration in late 2025, so ' +
+        'credentials now need approval via their support ticket form, and commercial use needs written ' +
+        'sign-off. Nothing is broken and nothing is being faked — Ricky and Sam use web search against ' +
+        'reddit.com for community language in the meantime. Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET ' +
+        'in Railway if approval comes through and the watch resumes on its own.'
+    );
+  }
   await send(
     `📡 Reddit sweep: ${s.scanned} new post(s) across the watched subs, ${s.breakouts} outperforming, ` +
       `${s.mentions} on our topics, ${s.published} raised to the team.` +
@@ -451,7 +460,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v44-community-watch | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v45-reddit-gated | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

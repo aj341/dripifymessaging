@@ -79,7 +79,23 @@ async function rememberSeen(seen, added) {
  * the point is the exceptional, so a pass that finds nothing is the normal
  * outcome and says so in the log rather than manufacturing interest.
  */
-export async function sweepReddit({ subs = HOME_SUBS, notify = true } = {}) {
+export async function sweepReddit({ subs = HOME_SUBS, force = false } = {}) {
+  // Reddit closed self-service app registration in late 2025 and blocks
+  // anonymous reads, so without approved credentials there is nothing to sweep.
+  // Report that once and stand down rather than erroring on the hour forever —
+  // a monitor that cannot see anything should say so and stop, not pretend.
+  if (!redditAuthed()) {
+    const already = await getSetting('reddit_monitor_blocked').catch(() => null);
+    if (already && !force) return { blocked: true, scanned: 0, breakouts: 0, mentions: 0, published: 0, errors: [], authed: false };
+    await setSetting('reddit_monitor_blocked', new Date().toISOString()).catch(() => {});
+    console.warn(
+      '[reddit] no REDDIT_CLIENT_ID/SECRET — Reddit API access now requires approval ' +
+        '(self-service registration closed late 2025). Standing down; the team uses web search for ' +
+        'Reddit content in the meantime.'
+    );
+    return { blocked: true, scanned: 0, breakouts: 0, mentions: 0, published: 0, errors: ['no credentials'], authed: false };
+  }
+  await setSetting('reddit_monitor_blocked', '').catch(() => {});
   const seen = await seenIds();
   const fresh = [];
   const breakouts = [];
