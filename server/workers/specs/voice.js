@@ -262,6 +262,7 @@ ${ANALYTICS_STATUS}`,
   subscribes: [
     'pain:demo:*', 'pain:*', 'seo:gap', 'trend:*', 'content:request',
     'outreach:*', // Dripify results — which messaging actually got replies
+    'community:mention:*', // someone describing our problem in their own words
   ],
   emits: ['content:draft'],
   useWebSearch: true,

@@ -25,6 +25,7 @@ import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
 import { ensureLibrary, contentLibraryWritable } from './content-library.js';
+import { sweepReddit } from './workers/reddit-monitor.js';
 import {
   wixOauthConfigured,
   wixOauthConnected,
@@ -154,6 +155,15 @@ commands.transcripts = async (text) => {
   await send(
     `📡 *Ricky* is reading your demo transcripts${all ? ' (full backfill)' : ''}. ` +
       "He'll post what he finds, and each one wakes Ian to check it against who actually pays."
+  );
+};
+commands.reddit = async () => {
+  const s = await sweepReddit();
+  await send(
+    `📡 Reddit sweep: ${s.scanned} new post(s) across the watched subs, ${s.breakouts} outperforming, ` +
+      `${s.mentions} on our topics, ${s.published} raised to the team.` +
+      (s.authed ? '' : '\n⚠️ Running unauthenticated — set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET, Reddit now blocks anonymous reads.') +
+      (s.errors.length ? `\nErrors: ${s.errors[0]}` : '')
   );
 };
 commands.skills = async () => {
@@ -382,6 +392,13 @@ async function scoutTick() {
 }
 
 function scheduleWorkers() {
+  // The community watch runs on its own clock — hourly is often enough to catch
+  // a post while it is still climbing, and cheap: it is HTTP, not model calls.
+  setInterval(() => {
+    sweepReddit().catch((e) => console.error('[reddit] sweep:', e.message));
+  }, 60 * 60 * 1000);
+  setTimeout(() => sweepReddit().catch(() => {}), 45000); // one shortly after boot
+
   setInterval(() => {
     ledgerTick().catch(() => {});
     reconcileTick().catch(() => {});
@@ -434,7 +451,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v43-two-way-content | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v44-community-watch | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

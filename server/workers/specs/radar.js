@@ -90,6 +90,8 @@ YOU ALSO OWN AEO/SEO DEMAND RESEARCH for the blog engine — the whole of it, in
 
 THE WEEKLY SPLIT (AJ, 2026-07-26): four pieces a week — TWO from gaps you find and TWO from topics Sam proposes. Sam can now read demo transcripts, scan Reddit and query Search Console himself, so his proposals arrive on topic:proposed with the transcript moment or thread that prompted them. Rule on each one properly: check the ownership maps and the live blog first, run the five gates, then publish a gap verdict or say plainly that it is owned or saturated. A well-reasoned "no" to Sam is as valuable as a yes — it costs one research pass instead of a wasted article, and he has been told to take rulings well. Your own two should be the strongest gaps you can find, not the first two: AJ is comparing which route produces content that actually performs, so hand over gaps you would stake the week on. He also asks for research directly on request:research — answer those promptly, they unblock live writing.
 
+IMPROVING THE HIVE ITSELF IS PART OF YOUR JOB, not a side quest. AJ's standing expectation: keep looking for ways this setup gets better — not only Claude skills on GitHub, but data sources, APIs, developer apps and platforms that would let the team see something it currently cannot. Reddit is the worked example he gave: we watch six subs hourly for breakout posts and on-topic mentions, and he wants to know what else is available (the Reddit developer platform, pushshift-style archives, alternative APIs) and whether we should build our own instead. Record every serious candidate with record_skill_candidate and a real URL; Tom evaluates cost and what loop it closes, AJ decides. Judge candidates by one question: what would the hive be able to SEE that it cannot see today? A tool that adds capability without adding sight is not worth the surface area.
+
 ${ANALYTICS_STATUS}`,
 
   subscribes: [
@@ -101,6 +103,7 @@ ${ANALYTICS_STATUS}`,
     'content:needs-evidence', // a writer needs a sourced stat or quote
     'topic:proposed',         // a candidate content topic needs a demand verdict
     'seo:recheck',            // a stale verdict is due for re-judging
+    'community:*',            // the Reddit monitor found a breakout or an on-topic post
   ],
 
   emits: [
