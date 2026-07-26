@@ -7,6 +7,7 @@ import {
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
 import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
+import { tools as feedTools, handlers as feedHandlers } from '../feeds.js';
 import { tools as analyticsTools, handlers as analyticsHandlers } from '../analytics-tools.js';
 import { tools as queryTools, handlers as queryHandlers } from '../query-tools.js';
 import { tools as redditTools, handlers as redditHandlers, HOME_SUBS } from '../reddit-tools.js';
@@ -103,7 +104,8 @@ ${ANALYTICS_STATUS}`,
     'content:needs-evidence', // a writer needs a sourced stat or quote
     'topic:proposed',         // a candidate content topic needs a demand verdict
     'seo:recheck',            // a stale verdict is due for re-judging
-    'community:*',            // the Reddit monitor found a breakout or an on-topic post
+    'community:*',            // an on-topic post in a watched community
+    'world:*',                // industry press or news matching our topics
   ],
 
   emits: [
@@ -124,6 +126,7 @@ ${ANALYTICS_STATUS}`,
     ...skillTools,
     ...blogEngineTools,
     ...libraryTools,
+    ...feedTools,
     ...analyticsTools,
     ...queryTools,
     ...redditTools,
@@ -258,6 +261,7 @@ ${ANALYTICS_STATUS}`,
     ...skillHandlers,
     ...blogEngineHandlers,
     ...libraryHandlers,
+    ...feedHandlers,
     ...analyticsHandlers,
     ...queryHandlers,
     ...redditHandlers,

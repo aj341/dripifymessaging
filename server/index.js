@@ -26,6 +26,7 @@ import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
 import { ensureLibrary, contentLibraryWritable } from './content-library.js';
 import { sweepReddit } from './workers/reddit-monitor.js';
+import { sweepFeeds } from './workers/feeds.js';
 import {
   wixOauthConfigured,
   wixOauthConnected,
@@ -173,6 +174,41 @@ commands.reddit = async () => {
       `${s.mentions} on our topics, ${s.published} raised to the team.` +
       (s.authed ? '' : '\n⚠️ Running unauthenticated — set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET, Reddit now blocks anonymous reads.') +
       (s.errors.length ? `\nErrors: ${s.errors[0]}` : '')
+  );
+};
+commands.feeds = async () => {
+  await send('📰 Sweeping the watchlist — subreddits, trade press and news queries. Reddit is paced to one request a minute, so this takes a few minutes.');
+  const s = await sweepFeeds();
+  await send(
+    `📰 Feeds: ${s.scanned} item(s) across ${s.feeds} source(s), ${s.newItems} new, ${s.matched} on our topics, ${s.raised} raised to the team.` +
+      (s.errors.length ? `\nUnread sources (failures, not silence): ${s.errors.slice(0, 3).join('; ')}` : '')
+  );
+};
+
+// AJ wants one proposal from each route, side by side — the 2+2 experiment in
+// miniature. Ricky brings a gap he found; Sam brings one he proposed himself.
+commands.proposals = async () => {
+  await queueJob(
+    'radar',
+    'AJ wants ONE strong content proposal from you, now. Use read_feeds to see what the communities and the ' +
+      'trade press are actually talking about, and gsc_search_analytics for the questions people already ' +
+      'reach us with. Pick the single best candidate query, check it against keyword-ownership-map.md, ' +
+      'engine-content-map.md and list_live_blog_posts so it does not collide with anything we own, run it ' +
+      'through the five gates, then publish your verdict with assess_query. One well-evidenced gap, not a ' +
+      'list. If nothing clears the gates honestly, say so plainly instead of lowering the bar.'
+  );
+  await queueJob(
+    'voice',
+    'AJ wants ONE topic proposal from YOU, now — your own idea, not a gap handed to you. Read a demo ' +
+      'transcript you have not read and use read_feeds to hear how buyers are talking this week. Find the ' +
+      'question people keep circling that nobody answers properly, then put it to Ricky with propose_topic, ' +
+      'quoting the transcript moment or the thread that prompted it. Do NOT draft it yet — he rules on demand ' +
+      'and ownership first. Report to AJ what you proposed and why you believe in it.'
+  );
+  await send(
+    '🐝 Asked for one proposal each: *Ricky* is hunting a gap from the feeds and Search Console, ' +
+      '*Sam* is looking for his own idea in the transcripts and community language. ' +
+      'Sam proposes to Ricky rather than drafting, so you will see the reasoning before any words get written.'
   );
 };
 commands.skills = async () => {
@@ -408,6 +444,13 @@ function scheduleWorkers() {
   }, 60 * 60 * 1000);
   setTimeout(() => sweepReddit().catch(() => {}), 45000); // one shortly after boot
 
+  // The feed watchlist — subreddits, trade press and news queries. Paced to
+  // each host's limits, so a full sweep takes minutes and runs quietly.
+  setInterval(() => {
+    sweepFeeds().catch((e) => console.error('[feeds] sweep:', e.message));
+  }, 60 * 60 * 1000);
+  setTimeout(() => sweepFeeds().catch(() => {}), 90000);
+
   setInterval(() => {
     ledgerTick().catch(() => {});
     reconcileTick().catch(() => {});
@@ -460,7 +503,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v45-reddit-gated | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v46-feeds | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
