@@ -6,6 +6,7 @@ import {
   PLAN_LINE,
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
+import { tools as analyticsTools, handlers as analyticsHandlers } from '../analytics-tools.js';
 // Ricky — Research (worker key: radar). The entry point of the hive's cascade:
 // he goes looking for pain in the market, and every finding he records is
 // published as a signal so the teammates downstream (Ian on ICP, then the rest)
@@ -161,6 +162,7 @@ ${ANALYTICS_STATUS}`,
     ...transcriptTools,
     ...skillTools,
     ...blogEngineTools,
+    ...analyticsTools,
     {
       name: 'reddit_scan',
       description:
@@ -328,6 +330,7 @@ ${ANALYTICS_STATUS}`,
     ...transcriptHandlers,
     ...skillHandlers,
     ...blogEngineHandlers,
+    ...analyticsHandlers,
     reddit_scan: async (input = {}) => {
       try {
         const sub = slug(input.subreddit).replace(/-/g, '_');

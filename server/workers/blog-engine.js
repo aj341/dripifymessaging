@@ -36,19 +36,19 @@ export const PLAN_LINE = PLAN_LADDER.map(
  * Update this the day the connections land — not before.
  */
 export const ANALYTICS_STATUS =
-  'ANALYTICS ACCESS, AS AT 2026-07-26 — read this before you cite anything: this service has NO ' +
-  'connection to Google Analytics 4, NO connection to Google Search Console, and NO connection to ' +
-  'Ahrefs, SEMrush or any keyword volume tool. The only Google scope AJ has granted is Drive ' +
-  'read-only. Section 16.1 of the operator pack records the same state from the June audit: Ahrefs ' +
-  'installed but unauthed, and the site-wide designbees.com.au Search Console property still pending ' +
-  'DNS verification with only a /our-work/ prefix verified showing zero data. Perplexity sonar-pro, ' +
-  'which the pack names for the research pass, is also not available to this service — use web ' +
-  'search instead and say which you used. So: NEVER state a search volume, keyword difficulty, ' +
-  'impression count, click count, session count, ranking position or traffic figure. Not as a number, ' +
-  'not as a range, not as "roughly". Your demand evidence is qualitative and comes from what you ' +
-  'actually fetched — live SERP results, autocomplete and People Also Ask phrasings, Reddit threads, ' +
-  'what the AI answer engines already say. Label it as qualitative every time. If a decision genuinely ' +
-  'needs a real volume figure, ask AJ to connect GA4 and Search Console rather than filling the gap.';
+  'ANALYTICS ACCESS — read this before you cite anything. GA4 and Search Console are wired into this ' +
+  'service read-only, through the same Google OAuth as Drive, but access is real ONLY once AJ has ' +
+  'consented to the new scopes and the properties are verified. If you have analytics tools, call ' +
+  'get_analytics_status FIRST and believe what it says: a number exists only if gsc_search_analytics ' +
+  'or ga4_report returned it this run, cited as such. Note the site-wide designbees.com.au Search ' +
+  'Console property was still pending DNS verification at the June audit — zero rows may simply mean ' +
+  'the property is not verified yet, and get_analytics_status will say so. Ahrefs, SEMrush and every ' +
+  'keyword-volume tool remain UNCONNECTED, and Perplexity sonar-pro (named in the pack) is not ' +
+  'available here — use web search instead and say which you used. So: NEVER state a search volume or ' +
+  'keyword difficulty, and never state an impression, click, session or position figure unless one of ' +
+  'your analytics tools returned it this run. Not as a range, not as "roughly". Everything else stays ' +
+  'qualitative — live SERP results, autocomplete and People Also Ask phrasings, Reddit threads, what ' +
+  'the AI answer engines already say — and is labelled as qualitative every time.';
 
 // The pack itself says live files win and drift gets flagged. L99-voice.md still
 // carries the retired hours framing, so anyone reading it gets told on the way in

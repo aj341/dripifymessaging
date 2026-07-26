@@ -21,7 +21,7 @@ import {
 } from './workers/ledger.js';
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
 import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autorunEnabled } from './bus.js';
-import { authUrl, completeAuth, googleConfigured, googleConnected } from './google.js';
+import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -215,9 +215,11 @@ app.post('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.param
 app.get('/api/run/:worker', requireWorkerKey, (req, res) => runWorker(req.params.worker, res));
 
 
-// --- Google Drive consent ---------------------------------------------------
+// --- Google consent -----------------------------------------------------------
 // AJ visits /auth/google once; the refresh token is stored and the server
-// re-authorises itself from then on. Scope is drive.readonly — read, never write.
+// re-authorises itself from then on. Scopes are drive.readonly plus
+// analytics.readonly and webmasters.readonly — read, never write. Re-visiting
+// after a scope change re-consents and replaces the stored token.
 app.get('/auth/google', async (_req, res) => {
   if (!googleConfigured()) {
     return res
@@ -233,14 +235,18 @@ app.get('/auth/google/callback', async (req, res) => {
   if (!code) return res.status(400).send('No authorisation code returned.');
   try {
     await completeAuth(String(code));
-    res.send('<h2>Connected.</h2><p>The hive can now read your meeting transcripts. You can close this tab — nothing else to do.</p>');
+    res.send('<h2>Connected.</h2><p>The hive can now read your Drive transcripts, GA4 and Search Console — all read-only. You can close this tab — nothing else to do.</p>');
   } catch (err) {
     res.status(500).send(`Could not complete Google auth: ${err.message}`);
   }
 });
 
 app.get('/auth/google/status', async (_req, res) => {
-  res.json({ configured: googleConfigured(), connected: await googleConnected().catch(() => false) });
+  res.json({
+    configured: googleConfigured(),
+    connected: await googleConnected().catch(() => false),
+    scopes: await grantedScopes().catch(() => ''),
+  });
 });
 
 // --- Pages -----------------------------------------------------------------

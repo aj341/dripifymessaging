@@ -39,7 +39,7 @@
     },
     {
       "topic": "Analytics access",
-      "fact": "As at 2026-07-26 the hive has NO access to GA4, Google Search Console, Ahrefs or any keyword-volume tool — the only Google scope granted is Drive read-only. Nobody states a search volume, difficulty, impression, click, session or ranking number, ever. Demand evidence is qualitative (live SERP, autocomplete, People Also Ask, what AI engines answer) and is labelled as such.",
+      "fact": "GA4 and Search Console are wired read-only via Google OAuth, live only once AJ consents to the new scopes at /auth/google. An impression, click, session or position number may be stated ONLY when an analytics tool returned it this run, cited as GA4 or GSC. Ahrefs and all keyword-volume tools remain unconnected — nobody ever states a search volume or difficulty. Everything else stays qualitative and labelled as such.",
       "statedBy": "AJ"
     }
   ]
