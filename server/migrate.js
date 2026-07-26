@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- What the hive knows, as opposed to what it has said. Any worker can write
+-- here, which is the point: a teammate who learns something should be able to
+-- keep it without a human editing a file and redeploying.
+CREATE TABLE IF NOT EXISTS knowledge (
+  id          BIGSERIAL PRIMARY KEY,
+  entity_type TEXT NOT NULL,              -- company | person | industry | query | topic
+  entity_key  TEXT NOT NULL,              -- domain | email | slug — the join key
+  data        JSONB NOT NULL,             -- merged facts about the entity
+  source      JSONB NOT NULL,             -- evidence: who learned it, from where, when
+  confidence  TEXT NOT NULL DEFAULT 'fact',
+  worker_key  TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (entity_type, entity_key)
+);
+CREATE INDEX IF NOT EXISTS knowledge_type_idx ON knowledge(entity_type, updated_at DESC);
+
 CREATE TABLE IF NOT EXISTS settings (
   key        TEXT PRIMARY KEY,
   value      TEXT,

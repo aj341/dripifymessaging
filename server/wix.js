@@ -471,6 +471,46 @@ function enrichmentIndex() {
 const COMPANY_FIELDS = ['company', 'companyType', 'industry', 'subIndustry', 'employeeCount', 'sizeBand'];
 const PERSON_FIELDS = ['title', 'roleType'];
 
+/**
+ * Merge knowledge the workers have written into the in-memory index. The
+ * enrichment path is synchronous and runs inside cohort building, so the
+ * database is read once here rather than per client. Anything a worker learns
+ * takes precedence over the seed file.
+ */
+export function applyKnowledge(rows) {
+  const idx = enrichmentIndex();
+  for (const row of rows) {
+    const rec = { ...(row.data || {}) };
+    const key = row.entity_key;
+    if (row.entity_type === 'person') {
+      idx.byEmail[key] = { ...(idx.byEmail[key] || {}), ...rec };
+      const dom = rec.domain || (key.includes('@') ? key.split('@')[1] : null);
+      if (dom) idx.byEmail[key].domain = dom;
+    } else if (row.entity_type === 'company') {
+      idx.byDomain[key] = { ...(idx.byDomain[key] || {}), ...rec, domain: key };
+    }
+  }
+  // Rebuild domain lookups from any person records that carry a domain.
+  for (const rec of Object.values(idx.byEmail)) {
+    if (rec.domain && !idx.byDomain[rec.domain]) idx.byDomain[rec.domain] = rec;
+  }
+  return idx;
+}
+
+/** The seed records, shaped for the knowledge table. */
+export function enrichmentSeed() {
+  const idx = enrichmentIndex();
+  const source = { tool: 'clay+aj', note: 'seeded from server/data/enrichment.json' };
+  return Object.entries(idx.byEmail).map(([key, rec]) => ({
+    entity_type: key.includes('@') ? 'person' : 'company',
+    entity_key: key,
+    data: rec,
+    source,
+    confidence: 'fact',
+    worker_key: 'scout',
+  }));
+}
+
 /** Attach known firmographics to a cohort member. Never overwrites Wix facts. */
 export function enrich(m) {
   const idx = enrichmentIndex();

@@ -7,8 +7,8 @@
 // source of numbers, so "I don't have that" is the only honest answer when a
 // figure isn't in the briefing.
 import Anthropic from '@anthropic-ai/sdk';
-import { getRevenue, getReconcile, getCohorts, getDemos, money } from './wix.js';
-import { setMemory, getMemory, writeSignal } from './brain.js';
+import { getRevenue, getReconcile, getCohorts, getDemos, money, applyKnowledge } from './wix.js';
+import { setMemory, getMemory, writeSignal, saveKnowledge, allKnowledge } from './brain.js';
 import { query as _q } from './db.js';
 
 const MODEL = 'claude-opus-5';
@@ -172,6 +172,35 @@ function normalise(turns) {
 // --- Tools -------------------------------------------------------------------
 const TOOLS = [
   {
+    name: 'save_knowledge',
+    description:
+      'Persist a FACT about a company or person so the whole hive has it from now on — ' +
+      'job title, industry, headcount, size band, company type. Use this whenever AJ tells you ' +
+      'something factual about a client or prospect, or you learn it from a source. ' +
+      'This is different from remember: remember stores how AJ wants you to work, ' +
+      'save_knowledge stores what is true about the world. Always save what you learn — ' +
+      "don't ask AJ to repeat it later.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        entity_type: { type: 'string', enum: ['person', 'company'], description: 'person when you have an email, company when you only have a domain' },
+        entity_key: { type: 'string', description: 'Their email for a person, or the company domain (e.g. lekielectric.com) for a company.' },
+        name: { type: 'string', description: 'Person or company name.' },
+        domain: { type: 'string', description: 'Company domain, always include it — it is how this joins to payments.' },
+        company: { type: 'string' },
+        title: { type: 'string', description: 'Job title (person only).' },
+        roleType: { type: 'string', description: 'Marketing | Founder | Exec | Other (person only).' },
+        companyType: { type: 'string', description: 'In-house | Agency.' },
+        industry: { type: 'string' },
+        subIndustry: { type: 'string' },
+        employeeCount: { type: 'number' },
+        sizeBand: { type: 'string', description: 'e.g. 2-10, 11-50, 51-200, 201-500, 500+' },
+        heardFrom: { type: 'string', description: 'Where this came from — "AJ in Telegram", "Clay", a URL. Required: nothing is stored without a source.' },
+      },
+      required: ['entity_type', 'entity_key', 'heardFrom'],
+    },
+  },
+  {
     name: 'remember',
     description:
       "Save a standing instruction or decision AJ has given you, so it survives restarts and " +
@@ -189,6 +218,29 @@ const TOOLS = [
     },
   },
 ];
+
+async function storeKnowledge(workerKey, input) {
+  const { entity_type, entity_key, heardFrom, ...facts } = input;
+  const data = Object.fromEntries(Object.entries(facts).filter(([, v]) => v != null && v !== ''));
+  const row = await saveKnowledge({
+    entity_type,
+    entity_key,
+    data,
+    source: { tool: 'telegram:aj', heardFrom, capturedAt: new Date().toISOString() },
+    worker_key: workerKey,
+  });
+  // Make it usable immediately rather than at the next restart.
+  applyKnowledge(await allKnowledge());
+  await writeSignal({
+    worker_key: workerKey,
+    kind: 'finding',
+    title: `Learned: ${data.name || entity_key} — ${[data.title, data.industry, data.employeeCount && `${data.employeeCount} staff`].filter(Boolean).join(', ') || 'details'}`,
+    body: `${entity_type} ${entity_key}\n${JSON.stringify(data, null, 2)}\nHeard from: ${heardFrom}`,
+    confidence: 'fact',
+    source: row.source,
+  });
+  return `Saved and live now — ${entity_key} is in the hive's knowledge, so every teammate has it.`;
+}
 
 async function remember(workerKey, note) {
   const existing = (await getMemory(workerKey, 'directives').catch(() => null))?.value || [];
@@ -272,10 +324,10 @@ export async function converse({ text, replyToText }) {
     for (const c of calls) {
       let out;
       try {
-        out =
-          c.name === 'remember'
-            ? await remember((worker || TEAM.scout).key, c.input.note)
-            : `Unknown tool ${c.name}`;
+        const wk = (worker || TEAM.scout).key;
+        if (c.name === 'remember') out = await remember(wk, c.input.note);
+        else if (c.name === 'save_knowledge') out = await storeKnowledge(wk, c.input);
+        else out = `Unknown tool ${c.name}`;
       } catch (err) {
         out = `Failed: ${err.message}`;
       }
