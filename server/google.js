@@ -9,7 +9,15 @@ import { getSetting, setSetting } from './brain.js';
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
+// Read-only across the board: Drive for transcripts and brand docs, GA4 and
+// Search Console for the blog engine's scoreboard. None of these scopes can
+// write, delete or configure anything in AJ's Google account.
+const SCOPES = [
+  'https://www.googleapis.com/auth/drive.readonly',
+  'https://www.googleapis.com/auth/analytics.readonly',
+  'https://www.googleapis.com/auth/webmasters.readonly',
+];
+const SCOPE = SCOPES.join(' ');
 const REDIRECT = `${process.env.PUBLIC_URL || 'https://dripifymessaging-production.up.railway.app'}/auth/google/callback`;
 
 // Where the Gemini meeting notes land. Overridable without a deploy.
@@ -57,7 +65,22 @@ export async function completeAuth(code) {
   await setSetting('google_refresh_token', data.refresh_token);
   await setSetting('google_access_token', data.access_token);
   await setSetting('google_token_expiry', String(Date.now() + (data.expires_in - 60) * 1000));
+  // Google reports which scopes were actually granted — AJ can untick boxes on
+  // the consent screen, so never assume a scope from the request alone.
+  await setSetting('google_granted_scopes', data.scope || SCOPE);
   return true;
+}
+
+export async function grantedScopes() {
+  return String((await getSetting('google_granted_scopes')) || '');
+}
+
+export async function analyticsGranted() {
+  return (await grantedScopes()).includes('analytics.readonly');
+}
+
+export async function searchConsoleGranted() {
+  return (await grantedScopes()).includes('webmasters.readonly');
 }
 
 /** A valid access token, refreshed on demand. */
@@ -123,4 +146,87 @@ export async function readDriveFile(fileId, mimeType) {
 export async function readTranscript(fileId) {
   const res = await driveGet(`files/${fileId}/export`, { mimeType: 'text/plain' });
   return res.text();
+}
+
+// --- GA4 and Search Console (read-only) ---------------------------------------
+// Both APIs ride the same OAuth connection as Drive. Every number the hive
+// quotes about search or site traffic must come from these calls — they are the
+// only line between "measured" and "made up".
+
+async function googleApi(url, { method = 'GET', body } = {}) {
+  const token = await accessToken();
+  const res = await fetch(url, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`google api ${res.status}: ${text.slice(0, 300)}`);
+  return text ? JSON.parse(text) : {};
+}
+
+/** Every GA4 property this Google account can see. How we find the property id. */
+export async function ga4Properties() {
+  const data = await googleApi('https://analyticsadmin.googleapis.com/v1beta/accountSummaries?pageSize=50');
+  const out = [];
+  for (const acc of data.accountSummaries || []) {
+    for (const p of acc.propertySummaries || []) {
+      out.push({
+        property: p.property, // "properties/123456789"
+        displayName: p.displayName,
+        account: acc.displayName,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * A GA4 report. `property` is "properties/<id>"; if omitted, the stored setting
+ * ga4_property is used (set once via the hive after ga4Properties confirms it).
+ */
+export async function ga4RunReport({ property, dimensions = [], metrics = [], startDate, endDate, dimensionFilter, limit = 50 }) {
+  const prop = property || (await getSetting('ga4_property'));
+  if (!prop) throw new Error('No GA4 property selected — run ga4Properties and store one first.');
+  const body = {
+    dateRanges: [{ startDate: startDate || '28daysAgo', endDate: endDate || 'today' }],
+    dimensions: dimensions.map((name) => ({ name })),
+    metrics: metrics.map((name) => ({ name })),
+    limit: String(Math.min(Math.max(Number(limit) || 50, 1), 250)),
+  };
+  if (dimensionFilter) body.dimensionFilter = dimensionFilter;
+  return googleApi(`https://analyticsdata.googleapis.com/v1beta/${prop}:runReport`, { method: 'POST', body });
+}
+
+/** The sites this account can read in Search Console, with permission level. */
+export async function gscSites() {
+  const data = await googleApi('https://www.googleapis.com/webmasters/v3/sites');
+  return (data.siteEntry || []).map((s) => ({ siteUrl: s.siteUrl, permissionLevel: s.permissionLevel }));
+}
+
+/**
+ * Search analytics for a property. `siteUrl` may be a URL-prefix property
+ * ("https://designbees.com.au/") or a domain property ("sc-domain:designbees.com.au");
+ * if omitted, the stored setting gsc_site is used.
+ */
+export async function gscQuery({ siteUrl, startDate, endDate, dimensions = ['query'], rowLimit = 50, dimensionFilterGroups }) {
+  const site = siteUrl || (await getSetting('gsc_site'));
+  if (!site) throw new Error('No Search Console site selected — run gscSites and store one first.');
+  const body = {
+    startDate: startDate || isoDaysAgo(28),
+    endDate: endDate || isoDaysAgo(1),
+    dimensions,
+    rowLimit: Math.min(Math.max(Number(rowLimit) || 50, 1), 500),
+  };
+  if (dimensionFilterGroups) body.dimensionFilterGroups = dimensionFilterGroups;
+  const data = await googleApi(
+    `https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site)}/searchAnalytics/query`,
+    { method: 'POST', body }
+  );
+  return { site, rows: data.rows || [] };
+}
+
+function isoDaysAgo(n) {
+  const d = new Date(Date.now() - n * 86400000);
+  return d.toISOString().slice(0, 10);
 }
