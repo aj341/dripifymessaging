@@ -21,6 +21,11 @@ const esc = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+const oneLine = (v, n) => {
+  const t = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  return t.length > n ? `${t.slice(0, n)}…` : t;
+};
+
 function authed(req) {
   return Boolean(TOKEN) && req.query.t === TOKEN;
 }
@@ -65,6 +70,13 @@ const PAGE_CSS = `
   .reason{font-size:14.5px;line-height:1.6;margin:2px 0 4px}
   ul.src{margin:4px 0 0;padding-left:20px;font-size:14px}
   ul.src li{margin:6px 0}
+  .tabs{display:flex;gap:8px;margin:0 0 18px;border-bottom:1px solid #e6dfcf;padding-bottom:10px}
+  .tab{display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-size:14px;font-weight:650;color:#6e6553;padding:7px 14px;border-radius:99px}
+  .tab:hover{background:#f3efe6}
+  .tab.on{background:#26221a;color:#faf8f3}
+  .badge{font-size:11.5px;font-weight:700;background:#f6e8cc;color:#8a5a0b;border-radius:99px;padding:1px 8px}
+  .tab.on .badge{background:#b97a0e;color:#fff}
+  .why{font-size:13.5px;color:#4a4436;margin-top:7px;padding-left:10px;border-left:2px solid #e6dfcf}
   form{display:inline}
 `;
 
@@ -93,27 +105,63 @@ export function mountApprove(app) {
   app.get('/approve', async (req, res) => {
     if (!authed(req)) return deny(res);
     try {
+      const t = encodeURIComponent(req.query.t);
       const rows = await draftRows();
-      const waiting = rows.filter((r) => asData(r).status === 'draft-awaiting-aj');
-      const items = rows
-        .map((row) => {
-          const d = asData(row);
-          const title = d.query || d.working_title || d.hook || row.entity_key;
-          const flags = Array.isArray(d.voice_warnings) ? d.voice_warnings.length : 0;
-          return (
-            `<div class="card"><b><a href="/approve/${encodeURIComponent(row.entity_key)}?t=${encodeURIComponent(req.query.t)}">${esc(title)}</a></b>` +
-            statusPill(d.status) +
-            `<div class="meta">${esc(d.format || '')}${d.category ? ` · ${esc(d.category)}` : ''}${d.word_count ? ` · ${d.word_count} words` : ''}${
-              flags ? ` · ${flags} voice flag(s)` : ' · voice-clean'
-            } · updated ${esc(String(row.updated_at).slice(0, 16))}</div></div>`
-          );
-        })
-        .join('');
+
+      // Blog and social are different decisions — a blog post is a ranking
+      // commitment, a LinkedIn post is a day's voice — so the page splits them.
+      const isSocial = (d) => d.format === 'linkedin-post';
+      const view = ['blog', 'social'].includes(String(req.query.view)) ? req.query.view : 'all';
+      const decided = (d) => d.status !== 'draft-awaiting-aj';
+
+      const inView = rows.filter((row) => {
+        const d = asData(row);
+        if (view === 'blog') return !isSocial(d);
+        if (view === 'social') return isSocial(d);
+        return true;
+      });
+      const waitingAll = rows.filter((r) => !decided(asData(r)));
+      const blogWaiting = waitingAll.filter((r) => !isSocial(asData(r))).length;
+      const socialWaiting = waitingAll.filter((r) => isSocial(asData(r))).length;
+
+      const card = (row) => {
+        const d = asData(row);
+        const title = d.query || d.working_title || d.hook || row.entity_key;
+        const flags = Array.isArray(d.voice_warnings) ? d.voice_warnings.length : 0;
+        const kind = isSocial(d) ? 'LinkedIn' : d.format === 'blog-outline' ? 'Blog outline' : 'Blog post';
+        // A one-line reason at list level, so the queue is scannable without
+        // opening every draft.
+        const why = d.justification?.value_to_design_bees || d.why_this_lands || d.demand_evidence || '';
+        return (
+          `<div class="card"><b><a href="/approve/${encodeURIComponent(row.entity_key)}?t=${t}">${esc(title)}</a></b>` +
+          statusPill(d.status) +
+          `<div class="meta">${esc(kind)}${d.category ? ` · ${esc(d.category)}` : ''}${d.word_count ? ` · ${d.word_count} words` : ''}${
+            flags ? ` · <b>${flags} voice flag(s)</b>` : ' · voice-clean'
+          } · ${esc(String(row.updated_at).slice(0, 10))}</div>` +
+          (why ? `<div class="why">${esc(oneLine(why, 190))}</div>` : '') +
+          `</div>`
+        );
+      };
+
+      const tab = (key, label, count) =>
+        `<a class="tab${view === key ? ' on' : ''}" href="/approve?t=${t}${key === 'all' ? '' : `&view=${key}`}">${label}` +
+        `${count ? `<span class="badge">${count}</span>` : ''}</a>`;
+
+      const pending = inView.filter((r) => !decided(asData(r)));
+      const done = inView.filter((r) => decided(asData(r)));
+
       res.send(
         `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Approvals — Design Bees hive</title><style>${PAGE_CSS}</style>` +
-          `<div class="wrap"><h1>Content approvals</h1><p class="sub">${waiting.length} draft(s) waiting · approving marks a draft ready, it never posts anything</p>${
-            items || '<p>No drafts yet. When Sam files one, it lands here with its full justification.</p>'
-          }</div>`
+          `<div class="wrap"><h1>Content approvals</h1>` +
+          `<p class="sub">${waitingAll.length} draft(s) waiting · approving marks a draft ready, it never posts anything</p>` +
+          `<div class="tabs">${tab('all', 'All', waitingAll.length)}${tab('blog', 'Blog', blogWaiting)}${tab('social', 'Socials', socialWaiting)}</div>` +
+          (pending.length
+            ? pending.map(card).join('')
+            : `<p class="meta">Nothing waiting in this view.</p>`) +
+          (done.length
+            ? `<div class="k" style="margin-top:28px">Already decided</div>${done.map(card).join('')}`
+            : '') +
+          `</div>`
       );
     } catch (e) {
       res.status(500).send(`Dashboard error: ${esc(e.message)}`);
