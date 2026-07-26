@@ -190,6 +190,23 @@ export async function ecomOrders({ limit = 100 } = {}) {
   }));
 }
 
+function mapContact(c) {
+  const addr = c.info?.addresses?.items?.[0]?.address || {};
+  return {
+    id: c.id,
+    name: [c.info?.name?.first, c.info?.name?.last].filter(Boolean).join(' ') || null,
+    email: c.primaryInfo?.email || c.info?.emails?.items?.[0]?.email || null,
+    phone: c.primaryInfo?.phone || c.info?.phones?.items?.[0]?.phone || null,
+    company: c.info?.company || null,
+    jobTitle: c.info?.jobTitle || null,
+    city: addr.city || null,
+    state: addr.subdivision || null,
+    country: addr.country || null,
+    postcode: addr.postalCode || null,
+    createdDate: c.createdDate,
+  };
+}
+
 /** Contacts lookup by email or name fragment — for joining money to people. */
 export async function findContacts({ search, limit = 20 } = {}) {
   const data = await wixApi('/contacts/v4/contacts/query', {
@@ -199,11 +216,11 @@ export async function findContacts({ search, limit = 20 } = {}) {
       search: search ? String(search) : undefined,
     },
   });
-  return (data.contacts || []).map((c) => ({
-    id: c.id,
-    name: [c.info?.name?.first, c.info?.name?.last].filter(Boolean).join(' ') || null,
-    email: c.primaryInfo?.email || c.info?.emails?.items?.[0]?.email || null,
-    company: c.info?.company || null,
-    createdDate: c.createdDate,
-  }));
+  return (data.contacts || []).map(mapContact);
+}
+
+/** One contact by id — used to join plan orders to people and places. */
+export async function getContact(contactId) {
+  const data = await wixApi(`/contacts/v4/contacts/${encodeURIComponent(contactId)}`);
+  return data.contact ? mapContact(data.contact) : null;
 }

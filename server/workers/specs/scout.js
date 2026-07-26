@@ -2,7 +2,16 @@
 // some industry, and Ian is the one who can say whether that industry has ever
 // been good business for Design Bees. Nothing downstream should run until he
 // has answered that, which is why he validates before Ricky judges the queries.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getCohorts, money } from '../../wix.js';
+import { wixOauthConnected, planOrders, getContact } from '../../wix-oauth.js';
+
+const PACK_PATH = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..', '..', 'data', 'salesnav', 'SALES-NAV-OPERATOR-PACK.md'
+);
 
 const slug = (s) =>
   String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -56,11 +65,44 @@ no history in an industry, say exactly that — "no evidence either way" is a re
 answer and different from "bad fit".
 
 EVIDENCE RULE: every claim you make about a client, an industry or a number comes from
-the hive's records. You never invent a company, a spend figure or a retention story.`,
+the hive's records. You never invent a company, a spend figure or a retention story.
+
+YOUR CRAFT STANDARD IS THE SALES NAVIGATOR OPERATOR PACK. Read it with read_salesnav_pack
+before building any search, split or sequence recommendation — every time, never from
+memory. It holds the settled ICP, which filters and spotlights matter and what each
+signal really means for our buyers, the tier doctrine (followers → changed jobs / news →
+posted recently → cold, deduped forward), the 500-contact drill, Dripify's ~100
+invites/week ceiling and the 25% acceptance safety line, and the rule that every split
+is a recorded hypothesis until Dripify results score it. When AJ asks for contacts or a
+split, your answer follows the pack's shape: filters per tier, pool sizes only if a
+search was actually run, the hypothesis each tier tests, and a messaging note per tier
+for Sam. You design the searches; AJ executes them in Sales Navigator — never claim you
+ran one yourself.`,
   subscribes: ['pain:*', 'trend:*', 'request:icp', 'request:icp:*', 'outreach:*'],
   emits: ['icp:validated', 'icp:rejected', 'icp:unknown'],
   useWebSearch: false,
   tools: [
+    {
+      name: 'read_salesnav_pack',
+      description:
+        'Read the Sales Navigator operator pack — your authoritative playbook for ICP targeting, ' +
+        'filters, spotlights, the tier doctrine, the 500-contact drill and Dripify safety limits. ' +
+        'Read it before building any search or split, every time. If it conflicts with what you ' +
+        'believe, the pack wins.',
+      input_schema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'wix_client_firmographics',
+      description:
+        'LIVE from Wix (read-only app): every pricing-plan subscriber joined to their contact record — ' +
+        'plan, status, start/cancel dates, and the location Wix holds for them (city, state, country). ' +
+        'Use this to profile who actually pays us and WHERE they are, then sharpen the Sales Navigator ' +
+        'filters: geography weighting from real client locations, plan mix by segment, active vs ' +
+        'cancelled shape. Join industry and headcount from hive knowledge with recall — Wix does not ' +
+        'hold those. Report coverage honestly: a contact with no address is "location unknown", never ' +
+        'assumed. If Wix is not connected this says so; nothing is estimated.',
+      input_schema: { type: 'object', properties: {} },
+    },
     {
       name: 'check_industry_fit',
       description:
@@ -105,6 +147,87 @@ the hive's records. You never invent a company, a spend figure or a retention st
     },
   ],
   handlers: {
+    wix_client_firmographics: async (_input, _ctx) => {
+      try {
+        if (!(await wixOauthConnected())) {
+          return 'Wix live access is not connected — profile from cohort/enrichment records instead, and say the location view is unavailable.';
+        }
+        const orders = await planOrders({ limit: 300 });
+        if (!orders.length) return 'Wix returned no plan orders. That is the real answer — report it as such.';
+
+        // One row per buyer: their plans, latest status, and where they are.
+        const byBuyer = new Map();
+        for (const o of orders) {
+          const key = o.buyerContactId || `unknown-${o.id}`;
+          const b = byBuyer.get(key) || { contactId: o.buyerContactId, orders: [] };
+          b.orders.push(o);
+          byBuyer.set(key, b);
+        }
+
+        const rows = [];
+        for (const b of byBuyer.values()) {
+          let c = null;
+          if (b.contactId) c = await getContact(b.contactId).catch(() => null);
+          const newest = b.orders.sort((x, y) => String(y.createdDate).localeCompare(String(x.createdDate)))[0];
+          const hasActive = b.orders.some((o) => o.status === 'ACTIVE');
+          rows.push({
+            name: c?.name || c?.email || 'unknown contact',
+            email: c?.email || null,
+            company: c?.company || null,
+            city: c?.city || null,
+            state: c?.state || null,
+            country: c?.country || null,
+            plans: [...new Set(b.orders.map((o) => o.planName).filter(Boolean))],
+            status: hasActive ? 'ACTIVE' : newest?.status || 'unknown',
+            firstStart: b.orders.map((o) => o.startDate || o.createdDate).sort()[0] || null,
+            canceled: newest?.canceledDate || null,
+          });
+        }
+
+        const withLoc = rows.filter((r) => r.city || r.state || r.country);
+        const tally = (list, fn) => {
+          const m = {};
+          for (const r of list) {
+            const k = fn(r) || 'unknown';
+            m[k] = (m[k] || 0) + 1;
+          }
+          return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ×${n}`).join('; ');
+        };
+
+        const lines = rows.map(
+          (r) =>
+            `• ${r.name}${r.company ? ` (${r.company})` : ''} — ${r.plans.join('/') || 'plan unknown'} — ${r.status}` +
+            ` — ${[r.city, r.state, r.country].filter(Boolean).join(', ') || 'location unknown'}` +
+            ` — since ${String(r.firstStart || '').slice(0, 10)}${r.canceled ? ` — cancelled ${String(r.canceled).slice(0, 10)}` : ''}`
+        );
+
+        return (
+          `Source: Wix live — ${rows.length} subscriber(s) from ${orders.length} plan order(s).\n` +
+          `LOCATION COVERAGE: ${withLoc.length} of ${rows.length} contacts carry an address in Wix — ` +
+          `treat the rest as unknown, never assumed.\n\n` +
+          `By state: ${tally(withLoc, (r) => r.state)}\n` +
+          `By city: ${tally(withLoc, (r) => r.city)}\n` +
+          `By status: ${tally(rows, (r) => r.status)}\n\n` +
+          `${lines.join('\n')}\n\n` +
+          `Next: recall enrichment knowledge for industry/headcount per company, then say which Sales ` +
+          `Navigator filters this evidence supports changing — and which it cannot support because of the ` +
+          `coverage gap above.`
+        );
+      } catch (err) {
+        return `wix_client_firmographics failed: ${err.message}. Profile from cohort records instead and say the live view failed.`;
+      }
+    },
+
+    read_salesnav_pack: async () => {
+      try {
+        return fs.readFileSync(PACK_PATH, 'utf8');
+      } catch (err) {
+        return (
+          `Could not read the Sales Navigator pack (${err.message}). Do NOT build splits from memory ` +
+          `of it — say the pack is unreadable and report it to AJ.`
+        );
+      }
+    },
     check_industry_fit: async ({ industry }, ctx) => {
       try {
         const list = await clients();
