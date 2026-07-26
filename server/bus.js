@@ -206,8 +206,18 @@ async function flushOutbox() {
     return;
   }
   const body = outbox.join('\n\n');
+  // Do NOT clear the outbox until the send succeeds. A failed send used to
+  // discard the text AND still set the awaiting-reply flag, which left the hive
+  // holding every job while waiting for a reply to a message AJ never received.
+  // That deadlock is silent and only visible in the logs, so: keep the content,
+  // and only stop work if AJ actually has something to reply to.
+  try {
+    await send(body);
+  } catch (err) {
+    console.error(`[bus] flush FAILED, keeping ${outbox.length} update(s) for the next tick:`, err.message);
+    return; // outbox intact, awaiting_reply not set — work continues
+  }
   outbox = [];
-  await send(body).catch((e) => console.error('[bus] flush failed:', e.message));
   await setSetting('hive_awaiting_reply', new Date().toISOString());
   console.log('[bus] message sent — holding all work until AJ replies');
 }

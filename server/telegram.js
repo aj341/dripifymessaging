@@ -49,29 +49,50 @@ export async function send(text, { worker } = {}) {
     return null;
   }
   const prefix = worker ? `${worker.emoji || ''} *${worker.name}*\n` : '';
-  // Send as Markdown, but fall back to plain text if Telegram can't parse the
-  // entities. Error messages often carry stray underscores/braces (e.g. a Wix
-  // "permission_denied" payload) that break Markdown — without this fallback the
-  // reply fails silently and looks like the bot ignored you.
-  let result;
-  try {
-    result = await api('sendMessage', {
-      chat_id: id,
-      text: prefix + text,
-      parse_mode: 'Markdown',
-    });
-  } catch (err) {
-    // Retry once as plain text — a Markdown parse failure must not swallow the
-    // whole reply.
-    result = await api('sendMessage', { chat_id: id, text: prefix + text });
+  // Telegram hard-caps a message at 4096 characters and rejects the whole thing
+  // if you exceed it. A busy tick easily writes more than that, and the failure
+  // used to lose the entire message — so split on paragraph boundaries and send
+  // in parts rather than dropping the lot.
+  const parts = chunk(prefix + text, 3900);
+  let result = null;
+  for (let i = 0; i < parts.length; i++) {
+    const body = parts.length > 1 ? `${parts[i]}${i < parts.length - 1 ? '\n…' : ''}` : parts[i];
+    // Send as Markdown, but fall back to plain text if Telegram can't parse the
+    // entities. Error messages often carry stray underscores/braces (e.g. a Wix
+    // "permission_denied" payload) that break Markdown — without this fallback
+    // the reply fails silently and looks like the bot ignored you.
+    try {
+      result = await api('sendMessage', { chat_id: id, text: body, parse_mode: 'Markdown' });
+    } catch (err) {
+      result = await api('sendMessage', { chat_id: id, text: body });
+    }
   }
   await logMessage({
     direction: 'out',
     worker_key: worker?.key || null,
     text,
-    telegram_message_id: result.message_id,
+    telegram_message_id: result?.message_id,
   });
   return result;
+}
+
+/** Split text into Telegram-sized pieces, preferring paragraph then line breaks. */
+function chunk(text, max) {
+  const s = String(text || '');
+  if (s.length <= max) return [s];
+  const out = [];
+  let rest = s;
+  while (rest.length > max) {
+    const window = rest.slice(0, max);
+    // Break at the last paragraph gap, then the last newline, then hard-cut.
+    let cut = window.lastIndexOf('\n\n');
+    if (cut < max * 0.5) cut = window.lastIndexOf('\n');
+    if (cut < max * 0.5) cut = max;
+    out.push(rest.slice(0, cut).trimEnd());
+    rest = rest.slice(cut).trimStart();
+  }
+  if (rest) out.push(rest);
+  return out;
 }
 
 async function handleUpdate(update) {

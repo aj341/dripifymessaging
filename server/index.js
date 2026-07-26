@@ -503,10 +503,21 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v46-feeds | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v47-message-split | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
+  // If the hive was holding work for a reply when it restarted, release it. The
+  // flag only sticks when a message failed to reach AJ, and waiting forever for
+  // an answer to something he never saw is the worst of both worlds.
+  try {
+    if (await getSetting('hive_awaiting_reply')) {
+      await setSetting('hive_awaiting_reply', '');
+      console.log('[hive] cleared a stale awaiting-reply hold from before the restart');
+    }
+  } catch (e) {
+    console.error('[boot] awaiting-reply check:', e.message);
+  }
   // Seed the file-based enrichment once, then load everything the workers know
   // into the in-memory index the cohort builder reads.
   try {
