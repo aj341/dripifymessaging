@@ -109,7 +109,7 @@ async function accessToken() {
   return data.access_token;
 }
 
-async function wixApi(path, { method = 'GET', body } = {}) {
+export async function wixApi(path, { method = 'GET', body } = {}) {
   const token = await accessToken();
   const res = await fetch(`https://www.wixapis.com${path}`, {
     method,

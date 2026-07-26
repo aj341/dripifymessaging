@@ -11,6 +11,8 @@
 // service; without it the page refuses to serve.
 import { query as dbQuery } from './db.js';
 import { publish } from './bus.js';
+import { publishDraft } from './wix-blog.js';
+import { wixOauthConnected } from './wix-oauth.js';
 
 const TOKEN = process.env.DASHBOARD_TOKEN;
 
@@ -49,6 +51,7 @@ const STATUS_LABELS = {
   'draft-awaiting-aj': 'Awaiting your call',
   'approved-by-aj': 'Approved',
   'rejected-by-aj': 'Rejected',
+  published: 'Live on the blog',
   'superseded-pre-blog-engine': 'Superseded (pre-pack)',
 };
 
@@ -82,7 +85,109 @@ const PAGE_CSS = `
   .weekbar b{font-size:16px}
   .why{font-size:13.5px;color:#4a4436;margin-top:7px;padding-left:10px;border-left:2px solid #e6dfcf}
   form{display:inline}
+  .b-go{background:#26221a;color:#faf8f3}
+  .p-live{background:#26221a;color:#faf8f3}
+  mark{background:#ffe9a8;color:#26221a;border-radius:3px;padding:0 1px}
+  table.kw{border-collapse:collapse;width:100%;font-size:14px;margin-top:4px}
+  table.kw th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6e6553;padding:4px 8px 4px 0;font-weight:700}
+  table.kw td{padding:5px 8px 5px 0;border-top:1px solid #efe9dc;vertical-align:top}
+  .cnt{font-weight:750}
+  .miss{color:#a64b2a;font-weight:750}
+  .where{font-size:12.5px;color:#6e6553}
+  .banner{background:#e4efe2;color:#2f5f36;border:1px solid #cfe0cc;border-radius:8px;padding:12px 16px;margin:0 0 16px;font-size:14.5px}
+  .banner.bad{background:#f5e4dc;color:#8f3f22;border-color:#eccdc0}
 `;
+
+
+// --- Keyword coverage --------------------------------------------------------
+// AJ's rule: do not just tell me what the keywords should be, show me you used
+// them. A draft that names a cluster and never uses it is not targeting
+// anything, and that is invisible until someone counts. So every target phrase
+// is counted where it actually matters (title, meta, headings, body) and every
+// occurrence is highlighted in the draft below.
+
+/** Every phrase this draft claims to target, primary first, de-duplicated. */
+function targetPhrases(d) {
+  const seen = new Set();
+  const out = [];
+  const add = (phrase, role) => {
+    const p = String(phrase || '').trim();
+    const k = p.toLowerCase();
+    if (!p || seen.has(k)) return;
+    seen.add(k);
+    out.push({ phrase: p, role });
+  };
+  add(d.query, 'primary');
+  (Array.isArray(d.long_tail_cluster) ? d.long_tail_cluster : []).forEach((p) => add(p, 'cluster'));
+  // Tags are Wix hashtags, not ranking targets, so they are deliberately not
+  // counted here. Holding copy hostage to a tag list would be padding.
+  return out;
+}
+
+const reEsc = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Exact phrase, whitespace-tolerant. */
+const rx = (phrase) => new RegExp(reEsc(phrase.trim()).replace(/\s+/g, '\\s+'), 'gi');
+
+/**
+ * The same phrase allowing ordinary word endings, so "outsourcing graphic
+ * design" counts as a use of "outsource graphic design". Google resolves that
+ * morphology; pretending it doesn't would report a well-optimised post as
+ * missing its own target. Short words stay literal so "vs" can't match "very".
+ */
+const rxLoose = (phrase) =>
+  new RegExp(
+    phrase
+      .trim()
+      .split(/\s+/)
+      .map((w) => (w.length >= 5 ? `${reEsc(w.replace(/(ings|ing|ed|es|s|e)$/i, ''))}\\w*` : `${reEsc(w)}\\w*`))
+      // One short connective may sit between the terms: "design outsourcing in
+      // Australia" is a use of "design outsourcing australia", and a writer who
+      // had to omit the "in" to satisfy a counter would be writing for the
+      // counter rather than the reader.
+      .join('\\s+(?:\\w{1,3}\\s+)?'),
+    'gi'
+  );
+
+const countIn = (text, phrase) => (String(text || '').match(rx(phrase)) || []).length;
+const countLoose = (text, phrase) => (String(text || '').match(rxLoose(phrase)) || []).length;
+
+/**
+ * Where each phrase is used. Headings and the opening paragraph carry the most
+ * weight for AEO, so they are reported separately rather than lumped into a
+ * single body count.
+ */
+function keywordUsage(d) {
+  const body = String(d.body || d.text || '');
+  const headings = (body.match(/^#{1,3}\s+.+$/gm) || []).join('\n');
+  const opening = body.split(/\n\s*\n/).slice(0, 2).join('\n');
+  return targetPhrases(d).map(({ phrase, role }) => {
+    const where = [];
+    if (countIn(d.query, phrase)) where.push('H1');
+    if (countIn(d.meta_title, phrase)) where.push('meta title');
+    if (countIn(d.meta_description, phrase)) where.push('meta description');
+    if (countIn(d.slug ? d.slug.replace(/-/g, ' ') : '', phrase)) where.push('slug');
+    const inHeadings = countLoose(headings, phrase);
+    if (inHeadings) where.push(`${inHeadings} heading${inHeadings > 1 ? 's' : ''}`);
+    if (countLoose(opening, phrase)) where.push('opening');
+    const exact = countIn(body, phrase);
+    const loose = countLoose(body, phrase);
+    return { phrase, role, body: loose, exact, variants: Math.max(0, loose - exact), where };
+  });
+}
+
+/** The draft with every target phrase marked, longest phrases first. */
+function highlighted(body, phrases) {
+  let out = esc(body);
+  const marks = [];
+  [...phrases].sort((a, b) => b.phrase.length - a.phrase.length).forEach(({ phrase }) => {
+    out = out.replace(rxLoose(esc(phrase)), (m) => {
+      marks.push(m);
+      return `\u0000${marks.length - 1}\u0000`;
+    });
+  });
+  return out.replace(/\u0000(\d+)\u0000/g, (_, i) => `<mark>${marks[Number(i)]}</mark>`);
+}
 
 /** ISO week stamp, matching the one drafts are tagged with. */
 function isoWeek(d = new Date()) {
@@ -115,7 +220,7 @@ function weekBar(rows) {
 
 function statusPill(status) {
   const cls =
-    status === 'approved-by-aj' ? 'p-ok' : status === 'rejected-by-aj' ? 'p-no' : status === 'draft-awaiting-aj' ? 'p-wait' : 'p-old';
+    status === 'published' ? 'p-live' : status === 'approved-by-aj' ? 'p-ok' : status === 'rejected-by-aj' ? 'p-no' : status === 'draft-awaiting-aj' ? 'p-wait' : 'p-old';
   return `<span class="pill ${cls}">${esc(STATUS_LABELS[status] || status || 'unknown')}</span>`;
 }
 
@@ -275,21 +380,76 @@ export function mountApprove(app) {
         `<div class="k">Voice check</div>` +
           (flags.length ? flags.map((f) => `<div class="flag">${esc(f)}</div>`).join('') : '<div>Machine checks passed.</div>')
       );
-      const body = d.body || d.text || (d.sections ? d.sections.map((s, i) => `${i + 1}. ${s.h2}\n   ${s.covers}`).join('\n') : '');
-      sections.push(`<div class="k">The draft</div><pre>${esc(body)}</pre>`);
+      // Keyword coverage: what this draft claims to target, and whether the
+      // words actually appear. A phrase with a zero count is called out in red
+      // rather than left for AJ to notice.
+      const usage = keywordUsage(d);
+      if (usage.length) {
+        const row = (u) =>
+          `<tr><td>${esc(u.phrase)}${u.role === 'primary' ? ' <span class="meta">(primary)</span>' : ''}</td>` +
+          `<td class="${u.body || u.where.length ? 'cnt' : 'miss'}">${
+            u.body
+              ? `${u.body}×${u.variants ? ` <span class="meta">(${u.exact} exact)</span>` : ''}`
+              : u.where.length
+                ? '<span class="meta">title only</span>'
+                : 'not used'
+          }</td>` +
+          `<td class="where">${u.where.length ? esc(u.where.join(' · ')) : 'body only'}</td></tr>`;
+        const missing = usage.filter((u) => !u.body && !u.where.length).length;
+        sections.push(
+          `<div class="k">Keyword coverage</div>` +
+            `<table class="kw"><tr><th>Target phrase</th><th>Uses in the post</th><th>Where it lands</th></tr>` +
+            usage.map(row).join('') +
+            `</table>` +
+            `<div class="meta" style="margin-top:6px">${
+              missing
+                ? `<b class="miss">${missing} target phrase(s) never appear in the post.</b> Highlighted below: every place a target phrase is actually used.`
+                : 'Every target phrase appears in the post. Highlighted below.'
+            }</div>`
+        );
+      }
 
-      const actions =
-        d.status === 'draft-awaiting-aj'
-          ? `<form method="post" action="/approve/${encodeURIComponent(row.entity_key)}/decision?t=${t}">
-               <button class="btn b-ok" name="action" value="approve">Approve</button>
-               <button class="btn b-no" name="action" value="reject">Reject</button>
-             </form>
-             <p class="meta">Approve = ready for you to post/publish (nothing is posted automatically). Reject = Sam is told, with the draft kept for the record.</p>`
-          : '';
+      const body = d.body || d.text || (d.sections ? d.sections.map((s, i) => `${i + 1}. ${s.h2}\n   ${s.covers}`).join('\n') : '');
+      sections.push(`<div class="k">The draft</div><pre>${highlighted(body, usage)}</pre>`);
+
+      // Approving is a judgement about the writing. Publishing is a live change
+      // to the website. They stay two separate presses, so nothing reaches Wix
+      // on the same click that says the writing is good.
+      let actions = '';
+      if (d.status === 'draft-awaiting-aj') {
+        actions =
+          `<form method="post" action="/approve/${encodeURIComponent(row.entity_key)}/decision?t=${t}">
+             <button class="btn b-ok" name="action" value="approve">Approve</button>
+             <button class="btn b-no" name="action" value="reject">Reject</button>
+           </form>
+           <p class="meta">Approve marks it ready and shows you a Publish button. Nothing goes near Wix until you press that.</p>`;
+      } else if (d.status === 'approved-by-aj' && !d.published_url) {
+        const wix = await wixOauthConnected().catch(() => false);
+        actions = wix
+          ? `<form method="post" action="/approve/${encodeURIComponent(row.entity_key)}/publish?t=${t}" ` +
+            `onsubmit="return confirm('Publish this to the live Design Bees blog now?')">` +
+            `<button class="btn b-go">Publish to Wix now</button></form>` +
+            `<p class="meta">Creates the post with your byline, category, slug and meta, then publishes it. The cover image is added in Wix.</p>`
+          : `<p class="meta">Approved. Publishing needs the Wix app connected — open /auth/wix first.</p>`;
+      } else if (d.published_url) {
+        actions = `<p class="meta">Published: <a href="${esc(d.published_url)}">${esc(d.published_url)}</a></p>`;
+      }
+
+      const done = String(req.query.done || '');
+      const banner =
+        done === 'approve'
+          ? '<div class="banner">Approved. Publish it below when you are ready.</div>'
+          : done === 'reject'
+            ? '<div class="banner bad">Rejected. Sam has been told and the draft stays on record.</div>'
+            : done === 'published'
+              ? '<div class="banner">Published to the Design Bees blog.</div>'
+              : done === 'failed'
+                ? `<div class="banner bad">Publishing failed: ${esc(req.query.why || 'unknown error')}</div>`
+                : '';
 
       res.send(
         `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${PAGE_CSS}</style>` +
-          `<div class="wrap"><p><a href="/approve?t=${t}">← all drafts</a></p><h1>${esc(title)}</h1><div class="card">${sections.join('')}</div>${actions}</div>`
+          `<div class="wrap"><p><a href="/approve?t=${t}">← all drafts</a></p>${banner}<h1>${esc(title)}</h1><div class="card">${sections.join('')}</div>${actions}</div>`
       );
     } catch (e) {
       res.status(500).send(`Dashboard error: ${esc(e.message)}`);
@@ -311,7 +471,24 @@ export function mountApprove(app) {
           RETURNING data`,
         [status, req.params.key]
       );
-      if (!r.rows[0]) return res.status(409).send('That draft is not awaiting a decision (already decided, or missing).');
+      if (!r.rows[0]) {
+        // Say WHICH of the two it is. "Nothing happened" on a button press is
+        // indistinguishable from a broken button, and AJ reported it as one.
+        const cur = await dbQuery(
+          `SELECT data->>'status' AS status FROM knowledge WHERE entity_type='topic' AND entity_key=$1`,
+          [req.params.key]
+        );
+        const st = cur.rows[0]?.status;
+        console.log(`[approve] ${action} on ${req.params.key} did nothing — current status ${st || 'missing'}`);
+        return res
+          .status(409)
+          .send(
+            st
+              ? `That draft is already "${esc(STATUS_LABELS[st] || st)}", so there is nothing to decide. <a href="/approve?t=${encodeURIComponent(req.query.t)}">Back to the list</a>.`
+              : `No draft with that key. <a href="/approve?t=${encodeURIComponent(req.query.t)}">Back to the list</a>.`
+          );
+      }
+      console.log(`[approve] AJ ${action}d ${req.params.key}`);
 
       const d = asData(r.rows[0]);
       const title = d.query || d.working_title || d.hook || req.params.key;
@@ -328,9 +505,59 @@ export function mountApprove(app) {
       });
 
       const t = encodeURIComponent(req.query.t);
-      res.redirect(`/approve?t=${t}`);
+      // Back to the draft, not the list: approving shows the Publish button,
+      // and either way AJ sees his press land.
+      res.redirect(`/approve/${encodeURIComponent(req.params.key)}?t=${t}&done=${action}`);
     } catch (e) {
       res.status(500).send(`Decision failed: ${esc(e.message)}`);
+    }
+  });
+
+  // Publishing. Separate from approval on purpose: this is the only route in
+  // the whole hive that changes the live website, so it takes its own press,
+  // its own confirm, and it records the URL it created.
+  app.post('/approve/:key/publish', async (req, res) => {
+    if (!authed(req)) return deny(res);
+    const t = encodeURIComponent(req.query.t);
+    const back = (q) => res.redirect(`/approve/${encodeURIComponent(req.params.key)}?t=${t}&${q}`);
+    try {
+      const r = await dbQuery(
+        `SELECT data FROM knowledge WHERE entity_type='topic' AND entity_key=$1`,
+        [req.params.key]
+      );
+      if (!r.rows[0]) return res.status(404).send('No such draft.');
+      const d = asData(r.rows[0]);
+      if (d.status !== 'approved-by-aj') {
+        return back(`done=failed&why=${encodeURIComponent('Approve it first — only an approved draft can be published.')}`);
+      }
+      if (d.published_url) return back('done=published');
+
+      console.log(`[approve] publishing ${req.params.key} to Wix…`);
+      const out = await publishDraft(d);
+      await dbQuery(
+        `UPDATE knowledge
+            SET data = data || jsonb_build_object('status','published','published_url',$1::text,'published_at',now()::text,'wix_post_id',$2::text)
+          WHERE entity_type='topic' AND entity_key=$3`,
+        [out.url || '', out.id || '', req.params.key]
+      );
+      console.log(`[approve] published ${req.params.key} → ${out.url}`);
+
+      await publish({
+        worker_key: 'forge',
+        topic: 'content:published',
+        title: `Published: ${String(d.query || req.params.key).slice(0, 100)}`,
+        body:
+          `AJ published "${d.query}" to the Design Bees blog.\n${out.url || '(url not returned)'}\n\n` +
+          `Ricky: add it to the performance watch and check Search Console in 90 days against the ` +
+          `cluster it targets. Sam: it now owns that cluster, so treat it as a live page in the ` +
+          `cannibalisation check from here on.`,
+        data: { knowledge_key: req.params.key, url: out.url, cluster: d.long_tail_cluster || [] },
+        confidence: 'fact',
+      });
+      return back('done=published');
+    } catch (e) {
+      console.error('[approve] publish failed:', e.message);
+      return back(`done=failed&why=${encodeURIComponent(e.message.slice(0, 300))}`);
     }
   });
 
