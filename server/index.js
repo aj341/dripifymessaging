@@ -261,7 +261,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v15-cascade | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v16-roster | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know

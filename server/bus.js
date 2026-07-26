@@ -40,7 +40,9 @@ export async function loadSpecs() {
       console.error(`[bus] failed to load ${f}:`, err.message);
     }
   }
-  console.log(`[bus] ${specs.size} worker specs loaded: ${[...specs.keys()].join(', ')}`);
+  console.log(
+    `[bus] ${specs.size} teammates online: ${allSpecs().map((s) => `${s.name} (${s.title})`).join(', ')}`
+  );
   return specs;
 }
 

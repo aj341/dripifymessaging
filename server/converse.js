@@ -35,9 +35,34 @@ export const TEAM = {
   },
 };
 
+TEAM.radar = {
+  key: 'radar', name: 'Ricky', emoji: '📡', title: 'Research',
+  brief: 'You own market research. You hunt Reddit, forums, news and the web for pain points and ' +
+    'trends that make Design Bees a strong fit, and you hand what you find to the teammate who can act on it.',
+};
+TEAM.forge = {
+  key: 'forge', name: 'Tom', emoji: '🛠️', title: 'Tools & Analytics',
+  brief: 'You own search and analytics. You judge whether a topic has queries worth competing for on ' +
+    'SEO and AEO, and whether a small agency can realistically win them.',
+};
+TEAM.voice = {
+  key: 'voice', name: 'Sam', emoji: '📣', title: 'Socials & Content',
+  brief: "You own content. You draft LinkedIn posts and blog outlines in AJ's voice. You draft only — " +
+    'you never publish; AJ approves everything.',
+};
+TEAM.queen = {
+  key: 'queen', name: 'George', emoji: '👑', title: 'GM',
+  brief: 'You are the general manager. You see every teammate\'s findings and tell AJ what actually ' +
+    'matters, what changed, and what needs his decision.',
+};
+
 const NAME_TO_WORKER = {
   ian: 'scout', icpian: 'scout', scout: 'scout',
   fred: 'ledger', financefred: 'ledger', ledger: 'ledger',
+  ricky: 'radar', researchricky: 'radar', radar: 'radar',
+  tom: 'forge', toolstom: 'forge', forge: 'forge',
+  sam: 'voice', socialssam: 'voice', voice: 'voice',
+  george: 'queen', gmgeorge: 'queen', queen: 'queen',
 };
 
 /** Work out who AJ is talking to: an explicit name, or whoever he replied to. */
@@ -172,6 +197,21 @@ function normalise(turns) {
 // --- Tools -------------------------------------------------------------------
 const TOOLS = [
   {
+    name: 'ask_teammate',
+    description:
+      'Hand a task to another teammate. They run in the background and report into this same ' +
+      'Telegram thread when done — so use this instead of telling AJ to go and ask them, and instead ' +
+      'of saying you have no way to reach anyone. Give them the full ask; they cannot see this conversation.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        teammate: { type: 'string', enum: ['Ricky', 'Tom', 'Sam', 'George', 'Ian', 'Fred'], description: 'Who should do it.' },
+        task: { type: 'string', description: 'The complete request, self-contained, including any context they need.' },
+      },
+      required: ['teammate', 'task'],
+    },
+  },
+  {
     name: 'save_knowledge',
     description:
       'Persist a FACT about a company or person so the whole hive has it from now on — ' +
@@ -218,6 +258,14 @@ const TOOLS = [
     },
   },
 ];
+
+async function askTeammate(fromKey, { teammate, task }) {
+  const target = TEAM[NAME_TO_WORKER[String(teammate).toLowerCase()]];
+  if (!target) return `No teammate called ${teammate}.`;
+  const { queueJob } = await import('./bus.js');
+  await queueJob(target.key, `${task}\n\n(Asked by ${TEAM[fromKey]?.name || fromKey} on AJ's behalf.)`);
+  return `Queued for ${target.name}. They'll post into this thread when they're done — tell AJ you've asked them, don't repeat the request back to him.`;
+}
 
 async function storeKnowledge(workerKey, input) {
   const { entity_type, entity_key, heardFrom, ...facts } = input;
@@ -276,6 +324,11 @@ function systemPrompt(worker, briefing) {
     `- You may reason, compare, rank and draw conclusions from these figures — that's your job. ` +
     `Just be clear about which parts are the data and which are your read of it.\n` +
     `- Where a figure is from a snapshot rather than live, say so if it matters to the answer.\n\n` +
+    `# Your team\n` +
+    Object.values(TEAM).map((w) => `- *${w.name}* (${w.title})`).join('\n') + `\n` +
+    `They are real teammates running in the background, not people AJ has to chase. If something is ` +
+    `another teammate's job, or you need data you don't have, use ask_teammate — never tell AJ to go ` +
+    `and ask them himself, and never say you have no way to contact anyone.\n\n` +
     `When AJ gives you a standing instruction, a correction, or a target, call the remember tool ` +
     `so it sticks. Don't announce that you're doing it — just do it and carry on.\n\n` +
     `Use *single asterisks* for bold (Telegram markdown), never **double**.\n\n` +
@@ -325,7 +378,8 @@ export async function converse({ text, replyToText }) {
       let out;
       try {
         const wk = (worker || TEAM.scout).key;
-        if (c.name === 'remember') out = await remember(wk, c.input.note);
+        if (c.name === 'ask_teammate') out = await askTeammate(wk, c.input);
+        else if (c.name === 'remember') out = await remember(wk, c.input.note);
         else if (c.name === 'save_knowledge') out = await storeKnowledge(wk, c.input);
         else out = `Unknown tool ${c.name}`;
       } catch (err) {
