@@ -1,0 +1,302 @@
+{
+  "source": "Clay company + contact enrichment, with titles corrected by AJ (Gmail signatures + direct confirmation)",
+  "builtAt": "2026-07-26T04:14:15Z",
+  "byEmail": {
+    "ashleigh.craig@permaconn.com": {
+      "title": "Marketing & Events Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Security & Investigations",
+      "subIndustry": "IoT / connected security hardware",
+      "employeeCount": 86,
+      "sizeBand": "51-200",
+      "domain": "permaconn.com",
+      "name": "Ashleigh Craig"
+    },
+    "natasha.sullivan@1cover.com.au": {
+      "title": "Senior Manager, Digital Marketing",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Insurance",
+      "subIndustry": "Travel insurance",
+      "employeeCount": 32,
+      "sizeBand": "51-200",
+      "domain": "1cover.com.au",
+      "name": "Natasha Sullivan"
+    },
+    "rachel.korbel@qsrfoodies.com.au": {
+      "title": "Chief Marketing Officer",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Food & Beverage Services",
+      "subIndustry": "Multi-brand QSR / franchising group",
+      "sizeBand": "11-50",
+      "domain": "qsrfoodies.com.au",
+      "name": "Rachel Korbel"
+    },
+    "ludi.w@anzuk.education": {
+      "title": "Director, Growth Marketing ANZ",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Education Administration",
+      "subIndustry": "Education recruitment agency",
+      "employeeCount": 2215,
+      "sizeBand": "201-500",
+      "domain": "anzuk.education",
+      "name": "Ludi Wiggins"
+    },
+    "alison.hedger@aldercon.com.au": {
+      "title": "Editor-in-Chief",
+      "roleType": "Other",
+      "companyType": "In-house",
+      "industry": "Construction",
+      "subIndustry": "Construction & property development",
+      "employeeCount": 123,
+      "sizeBand": "51-200",
+      "domain": "aldercon.com.au",
+      "name": "Alison Hedger"
+    },
+    "peter.nittes@macroview.com.au": {
+      "title": "Marketing Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "IT Services & Consulting",
+      "subIndustry": "Document/email management software",
+      "employeeCount": 21,
+      "sizeBand": "11-50",
+      "domain": "macroview.com.au",
+      "name": "Peter Nittes"
+    },
+    "d.timm@redmarble.ai": {
+      "title": "Co-CEO",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "IT & Services",
+      "subIndustry": "Enterprise AI consultancy",
+      "employeeCount": 15,
+      "sizeBand": "11-50",
+      "domain": "redmarble.ai",
+      "name": "Dave Timm"
+    },
+    "gwatkins@ausjudo.com.au": {
+      "title": "General Manager – Participation",
+      "roleType": "Other",
+      "companyType": "In-house",
+      "industry": "Spectator Sports",
+      "subIndustry": "National sporting body",
+      "employeeCount": 26,
+      "sizeBand": "2-10",
+      "domain": "ausjudo.com.au",
+      "name": "Gwatkins"
+    },
+    "luke.starbuck@educationperfect.com": {
+      "title": "Fractional CMO",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "E-Learning",
+      "subIndustry": "EdTech platform",
+      "employeeCount": 877,
+      "sizeBand": "201-500",
+      "domain": "educationperfect.com",
+      "name": "Luke Starbuck"
+    },
+    "rebecca.magill@readytech.io": {
+      "title": "Head of Brand, Communications & Experience",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "IT & Services",
+      "subIndustry": "B2B/govtech SaaS (ASX-listed)",
+      "employeeCount": 533,
+      "sizeBand": "501-1000",
+      "domain": "readytech.io",
+      "name": "Rebecca Magill"
+    },
+    "accounts@parachuteagency.com.au": {
+      "title": "Managing Director",
+      "roleType": "Founder",
+      "companyType": "Agency",
+      "industry": "Fundraising",
+      "subIndustry": "Charity fundraising agency",
+      "employeeCount": 13,
+      "sizeBand": "11-50",
+      "domain": "parachuteagency.com.au",
+      "name": "Shanelle Clapham"
+    },
+    "abasone@atlascarbon.ag": {
+      "title": "VP of Revenue",
+      "roleType": "Exec",
+      "companyType": "In-house",
+      "industry": "Agriculture / Machinery",
+      "subIndustry": "Carbon farming / AgTech",
+      "employeeCount": 30,
+      "sizeBand": "11-50",
+      "domain": "atlascarbon.ag",
+      "name": "Abasone"
+    },
+    "slim@endotx.com.au": {
+      "title": "Marketing Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Hospitals & Health Care",
+      "subIndustry": "Medical device distribution",
+      "employeeCount": 89,
+      "sizeBand": "51-200",
+      "domain": "endotx.com.au",
+      "name": "Shawna Lim"
+    },
+    "ajita.joshi@zipline.io": {
+      "title": "Fractional Marketing Leader",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Software Development",
+      "subIndustry": "Care-economy B2B SaaS",
+      "employeeCount": 51,
+      "sizeBand": "51-200",
+      "domain": "zipline.io",
+      "name": "Ajita Joshi"
+    },
+    "kristina.charchalis@aldercon.com.au": {
+      "title": "Brand and Communications Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Construction",
+      "subIndustry": "Construction & property development",
+      "employeeCount": 123,
+      "sizeBand": "51-200",
+      "domain": "aldercon.com.au",
+      "name": "Kristina Charchalis-Rana"
+    },
+    "nonny@zipline.io": {
+      "title": "Chief Revenue Officer",
+      "roleType": "Exec",
+      "companyType": "In-house",
+      "industry": "Software Development",
+      "subIndustry": "Care-economy B2B SaaS",
+      "employeeCount": 51,
+      "sizeBand": "51-200",
+      "domain": "zipline.io",
+      "name": "Nonny Evans"
+    },
+    "ayoung@atlasag.com": {
+      "title": "Senior Events, Community and PR Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Agriculture / Machinery",
+      "subIndustry": "Carbon farming / AgTech",
+      "employeeCount": 30,
+      "sizeBand": "11-50",
+      "domain": "atlasag.com",
+      "name": "Amanda Young"
+    },
+    "anthonyr@rejuvaustralia.com.au": {
+      "title": "Marketing Manager",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Cosmetics",
+      "subIndustry": "Medical aesthetics clinics",
+      "employeeCount": 29,
+      "sizeBand": "11-50",
+      "domain": "rejuvaustralia.com.au",
+      "name": "Anthony Rumble"
+    },
+    "patricia.rodriguez@netstrategy.net": {
+      "title": "Marketing & Admin Coordinator",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "IT Services & Consulting",
+      "subIndustry": "IT services for schools",
+      "employeeCount": 44,
+      "sizeBand": "51-200",
+      "domain": "netstrategy.net",
+      "name": "Patricia Rodriguez"
+    },
+    "helena@cooperandco.com.au": {
+      "title": "Marketing Coordinator",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Furniture / Home Furnishings",
+      "subIndustry": "Homewares wholesale",
+      "employeeCount": 10,
+      "sizeBand": "2-10",
+      "domain": "cooperandco.com.au",
+      "name": "Helena Papaspyratos"
+    },
+    "marketing@heartlandbank.com.au": {
+      "title": "Head of Marketing",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Banking",
+      "subIndustry": "Specialist / digital bank",
+      "employeeCount": 97,
+      "sizeBand": "201-500",
+      "domain": "heartlandbank.com.au",
+      "name": "Matthew Farnham"
+    },
+    "matt@grpl.com.au": {
+      "title": "Founder",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "Business Consulting",
+      "subIndustry": "Growth / positioning strategy",
+      "employeeCount": 3,
+      "sizeBand": "2-10",
+      "domain": "grpl.com.au",
+      "name": "Matt Gudge"
+    },
+    "ana.belgun@terria.io": {
+      "title": "Co-founder / CEO",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "Software Development",
+      "subIndustry": "Geospatial / digital twin",
+      "employeeCount": 24,
+      "sizeBand": "11-50",
+      "domain": "terria.io",
+      "name": "Ana Belgun"
+    },
+    "alison@blugibbon.com.au": {
+      "title": "Managing Director",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "Hospitals & Health Care",
+      "subIndustry": "Medical recruitment",
+      "employeeCount": 35,
+      "sizeBand": "11-50",
+      "domain": "blugibbon.com.au",
+      "name": "Samuel Whitaker"
+    },
+    "utsav@horizonx.com.au": {
+      "title": "Founder and CEO",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "IT Services & Consulting",
+      "subIndustry": "Cloud / Data / AI consultancy",
+      "employeeCount": 12,
+      "sizeBand": "11-50",
+      "domain": "horizonx.com.au",
+      "name": "Utsav"
+    },
+    "jessica@pivotpl.com": {
+      "title": "Marketing Coordinator",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Education Administration",
+      "subIndustry": "EdTech / teacher analytics",
+      "employeeCount": 23,
+      "sizeBand": "11-50",
+      "domain": "pivotpl.com",
+      "name": "Jessica Roberts"
+    },
+    "jon@themarketingroom.com": {
+      "title": "Group CEO",
+      "roleType": "Founder",
+      "companyType": "Agency",
+      "industry": "Marketing Services",
+      "subIndustry": "Fractional marketing consultancy",
+      "employeeCount": 52,
+      "sizeBand": "51-200",
+      "domain": "themarketingroom.com",
+      "name": "Jonathan Sharp"
+    }
+  }
+}
