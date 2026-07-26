@@ -315,11 +315,11 @@
       "sizeBand": "2-10",
       "domain": "cooperandco.com.au",
       "name": "Helena Papaspyratos",
-      "city": null,
-      "state": null,
+      "city": "Melbourne",
+      "state": "VIC",
       "country": "Australia",
-      "locationConfidence": "low",
-      "locationSource": "Online homewares/furniture retailer, ships Australia-wide \u2014 HQ city not published, confirm with AJ"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "marketing@heartlandbank.com.au": {
       "title": "Head of Marketing",
