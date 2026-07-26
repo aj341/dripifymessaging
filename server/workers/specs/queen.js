@@ -243,9 +243,10 @@ export default {
 
     check_open_items: async (_input = {}, ctx) => {
       try {
+        // No .catch here: a dead read must surface as "unknown", never as "nothing open".
         const [flags, decisions] = await Promise.all([
-          ctx.allKnowledge('hive_flag').catch(() => []),
-          ctx.allKnowledge('hive_decision').catch(() => []),
+          ctx.allKnowledge('hive_flag'),
+          ctx.allKnowledge('hive_decision'),
         ]);
         const open = (flags || [])
           .map((r) => ({ key: r.entity_key, ...(r.data || {}), updated_at: r.updated_at }))
@@ -284,7 +285,9 @@ export default {
         if (!headline || !decision) return 'Not sent: a flag needs both a headline and a specific decision for AJ.';
 
         const key = slug(input.key || headline);
-        const prior = await ctx.getKnowledge('hive_flag', key).catch(() => null);
+        // Unguarded on purpose: if we cannot check for a prior flag, we must not
+        // risk notifying AJ twice — let the outer catch abort the send.
+        const prior = await ctx.getKnowledge('hive_flag', key);
         const priorData = prior?.data || {};
         if (prior && priorData.status !== 'resolved') {
           const h = hoursSince(priorData.flagged_at || prior.updated_at);
@@ -333,7 +336,7 @@ export default {
     resolve_flag: async (input = {}, ctx) => {
       try {
         const key = slug(input.key);
-        const prior = await ctx.getKnowledge('hive_flag', key).catch(() => null);
+        const prior = await ctx.getKnowledge('hive_flag', key);
         if (!prior) return `No open flag called "${key}" — check_open_items lists the real keys.`;
         await ctx.saveKnowledge({
           entity_type: 'hive_flag',

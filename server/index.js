@@ -20,6 +20,7 @@ import {
   hoursSinceReconcile,
 } from './workers/ledger.js';
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
+import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish } from './bus.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -92,16 +93,39 @@ const LIVE = {
   ian: () => runScout(), icpian: () => runScout(), scout: () => runScout(),
   fred: () => sendPulse(), financefred: () => sendPulse(), ledger: () => sendPulse(),
 };
-const COMING = {
-  ricky: 'Ricky (Research)', researchricky: 'Ricky (Research)',
-  tom: 'Tom (Tools)', toolstom: 'Tom (Tools)',
-  sam: 'Sam (Socials)', socialssam: 'Sam (Socials)',
-  george: 'George (GM)', gmgeorge: 'George (GM)',
-};
 for (const [alias, fn] of Object.entries(LIVE)) commands[alias] = fn;
-for (const [alias, who] of Object.entries(COMING)) {
-  commands[alias] = () => send(`🐝 ${who} isn't online yet — coming in a later phase.`);
+
+// The bus-driven teammates. Messaging a name queues that worker's standing task
+// and lets the cascade run — anything they publish wakes whoever subscribes.
+const BUS_ALIASES = {
+  ricky: 'radar', researchricky: 'radar', radar: 'radar',
+  tom: 'forge', toolstom: 'forge', forge: 'forge',
+  sam: 'voice', socialssam: 'voice',
+  george: 'queen', gmgeorge: 'queen', queen: 'queen',
+};
+for (const [alias, key] of Object.entries(BUS_ALIASES)) {
+  commands[alias] = async () => {
+    const spec = allSpecs().find((s) => s.key === key);
+    if (!spec) return send(`🐝 That teammate isn't online yet.`);
+    await queueJob(key, spec.daily?.prompt || `Do your standing job now and report what you find.`);
+    await send(`${spec.emoji} *${spec.name}* is on it — I'll post what he finds.`);
+  };
 }
+
+// Kick the whole chain: Ian assesses an industry, and whatever he concludes
+// wakes the rest of the team. `cascade construction` is the end-to-end test.
+commands.cascade = async (text) => {
+  const industry = String(text || '').split(/\s+/).slice(1).join(' ').trim();
+  if (!industry) return send('Give me an industry to start from, e.g. `cascade construction`.');
+  await publish({
+    worker_key: 'queen',
+    topic: `pain:industry=${industry.toLowerCase().replace(/\s+/g, '-')}`,
+    title: `AJ asked the hive to look at ${industry}`,
+    body: `AJ wants the team to work through ${industry}: is it a fit for us, is there a search gap, and is there content worth writing?`,
+    confidence: 'unknown',
+  });
+  await send(`🐝 Started the chain on *${industry}* — Ian first, then whoever he wakes.`);
+};
 commands.clients = () => runLedgerClients();
 commands.refresh = () => runLedger();
 commands.reconcile = () => runLedgerReconcile({ notify: true });
@@ -121,7 +145,11 @@ commands.help = () =>
       '• *Ian* / ICPIan / *cohorts* — customer cohorts (Nectar, Honeycomb, active)\n' +
       '• *salesnav* / *filters* — persona / company type / headcount / industry split\n' +
       '• *demos* / *conversions* — demo→conversion since March\n' +
-      '• *Ricky, Tom, Sam, George* — coming soon\n' +
+      '• *Ricky* — research: pain points & trends (Reddit + web)\n' +
+      '• *Tom* — search queries worth competing for (SEO/AEO)\n' +
+      '• *Sam* — drafts posts (never publishes — you approve)\n' +
+      '• *George* — the morning brief\n' +
+      '• *cascade <industry>* — run the whole chain: Ian → Tom → Sam\n' +
       '• *help* — this list'
   );
 
@@ -204,7 +232,15 @@ function scheduleWorkers() {
     ledgerTick().catch(() => {});
     reconcileTick().catch(() => {});
     scoutTick().catch(() => {});
+    queueDaily(sydneyHour()).catch((e) => console.error('[bus] daily:', e.message));
   }, 60 * 60 * 1000); // hourly
+
+  // The cascade runs on its own clock. Every few minutes the bus drains a few
+  // queued jobs, so a finding published at 07:00 has worked its way through the
+  // team long before AJ reads George's brief — rather than waiting an hour per hop.
+  setInterval(() => {
+    processJobs().catch((e) => console.error('[bus] tick:', e.message));
+  }, 3 * 60 * 1000);
   // Ian: onboarding once, the first time Wix is connected.
   setTimeout(async () => {
     try {
@@ -225,7 +261,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v14-knowledge-base | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v15-cascade | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know
@@ -235,6 +271,7 @@ async function boot() {
     const rows = await allKnowledge();
     applyKnowledge(rows);
     console.log(`[hive] knowledge: ${rows.length} entities (${added} seeded this boot)`);
+    await loadSpecs();
   } catch (e) {
     console.error('[boot] knowledge load failed:', e.message);
   }
