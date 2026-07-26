@@ -145,6 +145,18 @@ commands.transcripts = async (text) => {
       "He'll post what he finds, and each one wakes Ian to check it against who actually pays."
   );
 };
+commands.skills = async () => {
+  await queueJob(
+    'radar',
+    'Search GitHub and the web for Claude skills, agents, prompt packs or MCP servers published in the ' +
+      'last few months that would make one of the teammates materially better — Ian (ICP/prospecting), ' +
+      'Fred (finance), Ricky (research), Tom (SEO/AEO), Sam (content), George (synthesis). For each ' +
+      'genuine candidate use record_skill_candidate with the real repo URL. Only propose things that ' +
+      'beat what the teammate already has; skip anything unmaintained or that needs a paid API AJ does ' +
+      'not have. Three good ones are worth more than ten weak ones.'
+  );
+  await send('📡 *Ricky* is looking for skills worth adopting — he\'ll put candidates to you, and nothing gets installed without your say-so.');
+};
 commands.clients = () => runLedgerClients();
 commands.refresh = () => runLedger();
 commands.reconcile = () => runLedgerReconcile({ notify: true });
@@ -169,6 +181,7 @@ commands.help = () =>
       '• *Sam* — drafts posts (never publishes — you approve)\n' +
       '• *George* — the morning brief\n' +
       '• *transcripts* / *transcripts all* — Ricky reads your demo calls for real pain points\n' +
+      '• *skills* — Ricky hunts GitHub for Claude skills worth giving a teammate\n' +
       '• *cascade <industry>* — run the whole chain: Ian → Tom → Sam\n' +
       '• *help* — this list'
   );
@@ -310,7 +323,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v18-transcripts | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v19-confirm-and-skills | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know

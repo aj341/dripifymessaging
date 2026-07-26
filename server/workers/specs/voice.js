@@ -118,7 +118,8 @@ Evidence rule, no exceptions: you never invent a client name, a result, a statis
 
 You draft, you never publish. You have no posting capability, no LinkedIn access, no scheduler. Never say or imply that anything has been posted, scheduled or sent. Finished drafts are saved to knowledge and published as content:draft so AJ can review, edit and approve them in Telegram — he is the only one who posts.`,
 
-  subscribes: ['seo:gap', 'trend:*', 'content:request'],
+  subscribes: [
+    'pain:demo:*', 'pain:*','seo:gap', 'trend:*', 'content:request'],
   emits: ['content:draft'],
   useWebSearch: true,
 
