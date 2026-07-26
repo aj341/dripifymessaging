@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { query as _q } from './db.js';
-import { writeSignal, saveKnowledge, getKnowledge, allKnowledge, askQuestion } from './brain.js';
+import { writeSignal, saveKnowledge, getKnowledge, allKnowledge, askQuestion, getSetting, setSetting } from './brain.js';
 import { applyKnowledge } from './wix.js';
 import { send } from './telegram.js';
 
@@ -22,10 +22,15 @@ const MAX_JOBS_PER_TICK = 4;
 export function autorunEnabled() {
   return process.env.HIVE_AUTORUN === '1';
 }
-// After a question is asked, everything stops for this long so AJ can answer
-// before another teammate speaks.
-const QUIET_AFTER_QUESTION_MS = 5 * 60 * 1000;
-let quietUntil = 0;
+// The hive speaks once, then waits. Nothing else runs and nothing else is sent
+// until AJ has replied — his answer usually removes the need for the next
+// message anyway, so working on before hearing it wastes his money twice.
+export async function awaitingReply() {
+  return Boolean(await getSetting('hive_awaiting_reply'));
+}
+export async function clearAwaitingReply() {
+  await setSetting('hive_awaiting_reply', '');
+}
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 
 // --- Spec registry -----------------------------------------------------------
@@ -180,6 +185,8 @@ async function flushOutbox() {
   const body = outbox.join('\n\n');
   outbox = [];
   await send(body).catch((e) => console.error('[bus] flush failed:', e.message));
+  await setSetting('hive_awaiting_reply', new Date().toISOString());
+  console.log('[bus] message sent — holding all work until AJ replies');
 }
 
 // --- The context every worker gets ------------------------------------------
@@ -240,7 +247,7 @@ function buildCtx(spec, depth) {
         `❓ *${spec.name}* — ${question}` +
           (assumption ? `\n_Otherwise I'll assume:_ ${assumption}` : '')
       );
-      quietUntil = Date.now() + QUIET_AFTER_QUESTION_MS;
+
       return 'Asked AJ — he answers everything, in his own time. Do NOT wait, do NOT ask again, and do NOT ' +
         'report yourself as blocked. Record what the evidence plainly supports, leave the uncertain part out, ' +
         'and finish the rest of your work now.';
@@ -364,7 +371,7 @@ async function runJob(job) {
 export async function processJobs(limit = MAX_JOBS_PER_TICK) {
   if (!client || !specs.size) return 0;
   if (!autorunEnabled()) return 0;                 // stopped by default
-  if (Date.now() < quietUntil) return 0;           // AJ has a question pending
+  if (await awaitingReply()) return 0;             // said our piece; waiting on AJ
   let done = 0;
   for (let i = 0; i < limit; i++) {
     // Claim one job atomically so overlapping ticks can't double-run it.

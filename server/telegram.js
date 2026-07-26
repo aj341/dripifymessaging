@@ -91,6 +91,12 @@ async function handleUpdate(update) {
 
   await logMessage({ direction: 'in', text: msg.text, telegram_message_id: msg.message_id });
 
+  // AJ has spoken — the hive may work and speak again.
+  try {
+    const { clearAwaitingReply } = await import('./bus.js');
+    await clearAwaitingReply();
+  } catch { /* bus not loaded yet */ }
+
   const text = msg.text.trim();
   // A bare name or keyword runs the report: "Ian", "/ledger", "FinanceFred".
   // Anything with more to it — "Ian, what should we target?" — is a question for
