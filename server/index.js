@@ -434,7 +434,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v41-bulk-reject | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v42-library-via-api | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
@@ -454,7 +454,11 @@ async function boot() {
   ensureLibrary()
     .then((ok) =>
       console.log(
-        `[content] library ${ok ? 'ready' : 'unavailable'} — writes ${contentLibraryWritable() ? 'enabled (append-only)' : 'disabled (no GITHUB_TOKEN)'}`
+        `[content] library ${ok ? 'ready' : 'unavailable'} — ${
+          contentLibraryWritable()
+            ? 'writes enabled (append-only)'
+            : 'no GITHUB_TOKEN: writes disabled, and reads run unauthenticated (rate-limited, and blocked entirely if the repo is private)'
+        }`
       )
     )
     .catch((e) => console.error('[content]', e.message));
