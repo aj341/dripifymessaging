@@ -7,6 +7,7 @@ import {
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
 import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
+import { tools as feedTools, handlers as feedHandlers } from '../feeds.js';
 import { tools as redditTools, handlers as redditHandlers } from '../reddit-tools.js';
 import { tools as topicTools, handlers as topicHandlers } from '../topic-tools.js';
 import { tools as transcriptTools, handlers as transcriptHandlers } from '../transcript-tools.js';
@@ -270,6 +271,7 @@ ${ANALYTICS_STATUS}`,
   tools: [
     ...blogEngineTools,
     ...libraryTools,
+    ...feedTools,
     ...SAM_TRANSCRIPT_TOOLS,
     ...redditTools,
     ...samAnalyticsTools,
@@ -553,6 +555,7 @@ ${ANALYTICS_STATUS}`,
   handlers: {
     ...blogEngineHandlers,
     ...libraryHandlers,
+    ...feedHandlers,
     ...transcriptHandlers,
     ...redditHandlers,
     ...analyticsHandlers,

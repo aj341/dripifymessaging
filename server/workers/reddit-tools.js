@@ -103,9 +103,11 @@ export const tools = [
   {
     name: 'reddit_scan',
     description:
-      "Fetch top/hot/new posts from a public subreddit via Reddit's free JSON API — where buyers complain " +
-      'in their own words. Good subs: ' + HOME_SUBS.map((s) => `r/${s}`).join(', ') + '. ' +
-      'Returns titles, scores, comment counts, permalinks and post text. Permalinks are valid evidence URLs.',
+      "Fetch top/hot/new posts from a subreddit — where buyers complain in their own words. Good subs: " +
+      HOME_SUBS.map((s) => `r/${s}`).join(', ') + '. Returns titles, scores, comments, permalinks and post ' +
+      'text; permalinks are valid evidence URLs. NOTE: Reddit now requires approved API credentials. If this ' +
+      'comes back refused, do NOT treat it as "nothing found" — use web search with site:reddit.com instead, ' +
+      'which reaches the same conversations, and say which method you used.',
     input_schema: {
       type: 'object',
       properties: {
@@ -120,9 +122,10 @@ export const tools = [
   {
     name: 'reddit_search',
     description:
-      'Search Reddit for a phrase, site-wide or inside one subreddit. Use it to test a specific hypothesis ' +
-      '("brand guidelines", "design turnaround", "hiring a designer") and to hear the exact words buyers ' +
-      'use about it, rather than browsing a whole listing.',
+      'Search Reddit for a phrase, site-wide or inside one subreddit — to test a hypothesis ("brand ' +
+      'guidelines", "design turnaround", "hiring a designer") and hear the exact words buyers use. NOTE: ' +
+      'Reddit now requires approved API credentials. If this is refused, fall back to web search with ' +
+      'site:reddit.com plus your phrase — the threads are still indexed and quotable — and say which you used.',
     input_schema: {
       type: 'object',
       properties: {
