@@ -85,7 +85,11 @@ export async function fetchAllTransactions(maxPages = 40) {
   const all = [];
   let offset = 0;
   for (let p = 0; p < maxPages; p++) {
-    const data = await wixGet(`/payments/api/merchant/v2/transactions?limit=100&offset=${offset}`);
+    // Documented public Payments endpoint. The internal `/payments/api/merchant/v2/`
+    // path returns 403 permission_denied for account API keys; the public
+    // `/payments/v2/transactions` surface honors the key's granted permission and
+    // returns the identical transaction shape.
+    const data = await wixGet(`/payments/v2/transactions?limit=100&offset=${offset}`);
     const batch = data.transactions || [];
     all.push(...batch);
     const total = data.pagination && data.pagination.total;
