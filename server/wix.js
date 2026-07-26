@@ -477,7 +477,10 @@ export function enrich(m) {
   const exact = idx.byEmail[String(m.email || '').toLowerCase()];
   const rec = exact || idx.byDomain[String(m.domain || '').toLowerCase()];
   if (!rec) return m;
-  const fields = exact ? [...COMPANY_FIELDS, ...PERSON_FIELDS] : COMPANY_FIELDS;
+  // A domain match carries the person's title only when it's the same person —
+  // some clients are on file by company rather than by email.
+  const samePerson = exact || (rec.name && normName(rec.name) === normName(m.name));
+  const fields = samePerson ? [...COMPANY_FIELDS, ...PERSON_FIELDS] : COMPANY_FIELDS;
   for (const f of fields) if (rec[f] != null && m[f] == null) m[f] = rec[f];
   return m;
 }

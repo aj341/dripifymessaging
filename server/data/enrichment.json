@@ -1,6 +1,6 @@
 {
-  "source": "Clay company + contact enrichment, with titles corrected by AJ (Gmail signatures + direct confirmation)",
-  "builtAt": "2026-07-26T04:14:15Z",
+  "source": "Clay company + contact enrichment, with titles corrected by AJ (Gmail signatures + direct confirmation); AJ-supplied firmographics for Pappa Flock and LEKI Electric",
+  "builtAt": "2026-07-26T05:31:49.074Z",
   "byEmail": {
     "ashleigh.craig@permaconn.com": {
       "title": "Marketing & Events Manager",
@@ -297,6 +297,29 @@
       "sizeBand": "51-200",
       "domain": "themarketingroom.com",
       "name": "Jonathan Sharp"
+    },
+    "rachel.korbel@pappaflock.com.au": {
+      "name": "Rachel Korbel",
+      "domain": "pappaflock.com.au",
+      "company": "Pappa Flock",
+      "title": "Chief Marketing Officer",
+      "roleType": "Marketing",
+      "companyType": "In-house",
+      "industry": "Food & Beverage Services",
+      "subIndustry": "Fast food retail",
+      "employeeCount": 53,
+      "sizeBand": "51-200"
+    },
+    "lekielectric.com": {
+      "name": "Cain Cooke",
+      "domain": "lekielectric.com",
+      "company": "LEKI Electric",
+      "title": "Co-founder & CEO",
+      "roleType": "Founder",
+      "companyType": "In-house",
+      "industry": "Retail Motor Vehicles",
+      "subIndustry": "Electric mobility (e-mobility) / EVs — electric motorbikes",
+      "sizeBand": "2-10"
     }
   }
 }
