@@ -96,6 +96,29 @@ export async function listTranscripts({ since, limit = 50 } = {}) {
   return data.files || [];
 }
 
+// AJ's brand folder: tone of voice, messaging bible, content playbooks.
+export const BRAND_FOLDER = process.env.GOOGLE_BRAND_FOLDER || '1TgZJdS8vwEOZFRQAebu5zzYO2E_cGrZS';
+
+/** Everything in a folder, whatever the type. */
+export async function listFolder(folderId, limit = 50) {
+  const res = await driveGet('files', {
+    q: `'${folderId}' in parents and trashed = false`,
+    pageSize: String(limit),
+    fields: 'files(id,name,mimeType,modifiedTime)',
+  });
+  return (await res.json()).files || [];
+}
+
+/**
+ * Any Drive file as text. Google Docs have to be exported; everything else
+ * (markdown, docx, plain text) is downloaded raw.
+ */
+export async function readDriveFile(fileId, mimeType) {
+  if (mimeType && mimeType.includes('google-apps.document')) return readTranscript(fileId);
+  const res = await driveGet(`files/${fileId}`, { alt: 'media' });
+  return res.text();
+}
+
 /** A doc as plain text. Google Docs must be exported, not downloaded. */
 export async function readTranscript(fileId) {
   const res = await driveGet(`files/${fileId}/export`, { mimeType: 'text/plain' });
