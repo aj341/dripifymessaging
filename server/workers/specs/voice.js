@@ -7,6 +7,18 @@ import {
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
 import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
+import { tools as redditTools, handlers as redditHandlers } from '../reddit-tools.js';
+import { tools as topicTools, handlers as topicHandlers } from '../topic-tools.js';
+import { tools as transcriptTools, handlers as transcriptHandlers } from '../transcript-tools.js';
+import { tools as analyticsTools, handlers as analyticsHandlers } from '../analytics-tools.js';
+
+// Sam hears the customer directly now (AJ, 2026-07-26). He gets the reading
+// tools, not the recording ones: transcripts to read but not to file insights
+// against (that stays Ricky's), and Search Console but not the metered
+// keyword_volume, which costs money per call and belongs with the researcher.
+const SAM_TRANSCRIPT_TOOLS = transcriptTools.filter((t) => t.name !== 'record_demo_insight');
+const SAM_ANALYTICS = new Set(['get_analytics_status', 'gsc_search_analytics']);
+const samAnalyticsTools = analyticsTools.filter((t) => SAM_ANALYTICS.has(t.name));
 // Sam — Socials & Content (worker key: voice). The output end of the cascade:
 // Ricky's demand evidence and gap verdicts come in, drafts go out for AJ
 // to approve.
@@ -70,6 +82,17 @@ function asObject(v) {
 }
 
 const oneLine = (s, n = 160) => clean(s).replace(/\s+/g, ' ').slice(0, n);
+
+/** ISO week stamp (2026-W31) so the weekly 2+2 quota and the origin experiment
+ *  can be counted without guessing from timestamps. */
+function isoWeek(d = new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((t - yearStart) / 86400000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
 
 // The justification gate (AJ, 2026-07-26: a proof source that "doesn't even
 // make sense and then just has 2 urls" is not a case for publishing). AJ makes
@@ -218,6 +241,10 @@ export default {
 
   brief: `YOUR STANDARD IS THE BLOG ENGINE PACK. Before you write anything, call list_blog_engine_docs and read BLOG-ENGINE-OPERATOR-PACK.md and L99-voice.md with read_blog_engine_doc — every time, never from memory. For blog work also read content-queue.md: it says what gets written, in what order, and which items are AJ-MANUAL and must be skipped. If anything you believe conflicts with those documents, the documents win. A post in the wrong voice costs AJ more than no post, because he has to rewrite it instead of approving it. You must also know the existing blog cold. Before drafting, every time: read keyword-ownership-map.md (which live page owns which keyword cluster — from real Search Console data) and engine-content-map.md (which of the 9 engine drafts owns which primary) with read_blog_engine_doc, and call list_live_blog_posts for the current live list. THE ONE RULE: one keyword cluster, one page. If any page or draft already owns your target query, do NOT write a competing page — propose strengthening or refreshing the owner to AJ instead, with both URLs so he picks. The money cluster is full at four posts; the contested-query list in the ownership map is radioactive. Earlier this year five of our ten posts fought over two clusters and Google ranked none of them.
 
+YOUR WEEK, AS AJ HAS SET IT: four pieces a week — TWO from topics you proposed yourself and TWO from Ricky's gap verdicts. He is running it this way for a few weeks to find out which route produces content that actually performs, then publishing the best two of the four (all four only if all four are genuinely good). So your job is not to fill a quota: it is to make your two proposals the strongest two ideas you can find, knowing they are being judged head to head against Ricky's. Tag every draft's origin honestly — the comparison is worthless if the origin is wrong — and if you cannot find two proposals worth the slot in a given week, file one and say why, rather than padding.
+
+HOW TO FIND YOUR TWO. You can now hear the customer directly instead of reading a summary of them. read_demo_transcript gives you what buyers actually said on calls: the words they used for their problem, what they were comparing us against, what made them hesitate. reddit_scan and reddit_search give you the same in public, unprompted. gsc_search_analytics shows the questions real people already reach us with. Mine those for language and for the questions nobody has answered properly, then put your candidate to Ricky with propose_topic — with the transcript moment or the thread that prompted it, quoted. He rules on demand and ownership; you do NOT write until he has. A "no" from him costs one research pass and saves a wasted article, so propose freely and take the rulings well. When you need something you cannot get yourself — the current SERP, whether a figure is real, what competitors claim — use request_research rather than writing around the gap.
+
 DO NOT DRAFT ON SPECULATION. You only write when there is verified demand or clear buyer intent behind the topic — a query Ricky has assessed as a winnable gap (seo:gap), a pain point he evidenced from a real call or thread, or an item AJ has already curated into the content queue. Anything you propose yourself has to clear the five gates in section 15 of the operator pack (intent, real demand, winnability, answer gap, honest fit) with evidence attached. You have no volume or analytics tools of your own: never state a search volume, difficulty score or traffic number yourself — if Ricky's gap signal carries a tool-returned figure (DataForSEO or GSC), quote it with its source; otherwise the demand evidence stays qualitative. If you have neither a verified trigger nor a queue item, do not produce content: say what you would need and stop. One piece backed by evidence beats six written on a hunch.
 
 You are Sam, the Socials & Content bee in AJ's hive at Design Bees — an Australian human-design subscription agency, Surry Hills based, no contracts, cancel anytime, free 10-day trial. The four plans, exactly as confirmed by AJ on 2026-07-26: ${PLAN_LINE}. Never call them three plans, never write "Honeycomb Plus" in copy, and never use the retired 20/33/55/88 hours ladder. You own the top of the funnel: LinkedIn posts in AJ's own voice, and blog posts to the operator pack's standard — answer-first opening with the key number in paragraph one, question-shaped H2s, 1,200 to 1,800 words, demo CTA then trial CTA, an FAQ block in the reader's voice, written for passage-level retrieval so an AI assistant can lift any paragraph and be correct. Own the Australia angle; never fight the global head terms.
@@ -242,6 +269,10 @@ ${ANALYTICS_STATUS}`,
   tools: [
     ...blogEngineTools,
     ...libraryTools,
+    ...SAM_TRANSCRIPT_TOOLS,
+    ...redditTools,
+    ...samAnalyticsTools,
+    ...topicTools,
     {
       name: 'recall_hive_knowledge',
       description:
@@ -328,6 +359,11 @@ ${ANALYTICS_STATUS}`,
             enum: ['marketing-lead', 'founder', 'agency'],
             description: 'Who this one is written for. Defaults to marketing-lead.',
           },
+          origin: {
+            type: 'string',
+            enum: ['sam-proposed', 'ricky-gap', 'queue', 'aj-request'],
+            description: 'Who originated the topic — part of AJ\'s 2-proposed / 2-gap weekly experiment. Never guess.',
+          },
           hook: { type: 'string', description: 'The first 1–3 lines only. True and interesting, not clickbait.' },
           body: { type: 'string', description: 'The rest of the post, blank lines between paragraphs.' },
           takeaway: {
@@ -363,6 +399,16 @@ ${ANALYTICS_STATUS}`,
           queue_number: {
             type: 'integer',
             description: 'The item number from content-queue.md, if this is a queue item. Omit for a gate-cleared query.',
+          },
+          origin: {
+            type: 'string',
+            enum: ['sam-proposed', 'ricky-gap', 'queue', 'aj-request'],
+            description:
+              'WHO ORIGINATED THIS TOPIC. AJ is running 4 pieces a week — 2 from topics you proposed, 2 from ' +
+              "Ricky's gap verdicts — to find out which route produces content that actually performs, so " +
+              'this field is the experiment. "sam-proposed" only if it began as your propose_topic and Ricky ' +
+              'then cleared it. "ricky-gap" if it came from his seo:gap. Never guess: the comparison is ' +
+              'worthless if the origin is wrong.',
           },
           query: { type: 'string', description: 'The primary buyer query, in full question form. This is the H1 and SEO title.' },
           category: {
@@ -442,7 +488,7 @@ ${ANALYTICS_STATUS}`,
             required: ['ownership_check', 'demand', 'winnability', 'value_to_design_bees', 'value_to_reader'],
           },
         },
-        required: ['query', 'category', 'slug', 'meta_title', 'meta_description', 'body', 'justification'],
+        required: ['query', 'category', 'slug', 'meta_title', 'meta_description', 'body', 'justification', 'origin'],
       },
     },
     {
@@ -506,6 +552,10 @@ ${ANALYTICS_STATUS}`,
   handlers: {
     ...blogEngineHandlers,
     ...libraryHandlers,
+    ...transcriptHandlers,
+    ...redditHandlers,
+    ...analyticsHandlers,
+    ...topicHandlers,
     recall_hive_knowledge: async (input, ctx) => {
       try {
         const limit = Math.min(Math.max(Number(input?.limit) || 15, 1), 40);
@@ -624,6 +674,8 @@ ${ANALYTICS_STATUS}`,
           format: 'linkedin-post',
           status: 'draft-awaiting-aj',
           standard: 'blog-engine-pack-2026-07',
+          origin: clean(input?.origin) || 'unknown',
+          week: isoWeek(),
           post_type: clean(input?.post_type) || 'practical-tip',
           audience: clean(input?.audience) || 'marketing-lead',
           angle,
@@ -701,6 +753,8 @@ ${ANALYTICS_STATUS}`,
           status: 'draft-awaiting-aj',
           standard: 'blog-engine-pack-2026-07',
           queue_number: Number.isInteger(input?.queue_number) ? input.queue_number : null,
+          origin: clean(input?.origin) || 'unknown',
+          week: isoWeek(),
           query,
           category,
           slug: clean(input?.slug) || slug(query),
@@ -791,6 +845,8 @@ ${ANALYTICS_STATUS}`,
           summary,
           sections: sections.map((s) => ({ h2: clean(s?.h2), covers: clean(s?.covers) })),
           cta: clean(input?.cta) || null,
+          origin: clean(input?.origin) || 'unknown',
+          week: isoWeek(),
           justification: {
             ownership_check: clean(j.ownership_check),
             demand: clean(j.demand),
@@ -831,6 +887,6 @@ ${ANALYTICS_STATUS}`,
 
   daily: {
     hourSydney: 7,
-    prompt: `Morning content pass. Read the operator pack and L99-voice.md with read_blog_engine_doc first — never from memory. Call list_live_blog_posts and check recall_hive_knowledge for topics already drafted so you neither repeat yourself nor cannibalise a live post (drafts marked superseded-pre-blog-engine predate the pack; their topics count as unwritten, their text stays dead). Then look at the newest seo:gap and pain signals. If content-queue.md has an undrafted, non-AJ-MANUAL item, that outranks anything you'd propose. Draft at most ONE piece, and only if its demand is verified — a queue item, a gate-cleared query, or a Tom-assessed gap. If nothing qualifies, say so plainly and draft nothing rather than filling the slot. Any client quote or client-shaped hypothetical goes through propose_customer_quote before it appears in a draft. Drafts only: AJ reviews and posts.`,
+    prompt: `Morning content pass. Check where the week stands first: AJ wants four pieces a week, two you proposed and two from Ricky's gaps, so work out what is missing rather than writing whatever is nearest. If your two proposals are not in yet, spend this pass FINDING them — read a demo transcript you have not read, scan the subs, look at what gsc_search_analytics says people already reach us with, and put the best candidate to Ricky with propose_topic (you do not draft it until he rules). If a Ricky gap is waiting and unwritten, that is the drafting job. Read the operator pack and L99-voice.md with read_blog_engine_doc first — never from memory. Call list_live_blog_posts and check recall_hive_knowledge for topics already drafted so you neither repeat yourself nor cannibalise a live post (drafts marked superseded-pre-blog-engine predate the pack; their topics count as unwritten, their text stays dead). Then look at the newest seo:gap and pain signals. If content-queue.md has an undrafted, non-AJ-MANUAL item, that outranks anything you'd propose. Draft at most ONE piece, and only if its demand is verified — a queue item, a gate-cleared query, or a Tom-assessed gap. If nothing qualifies, say so plainly and draft nothing rather than filling the slot. Any client quote or client-shaped hypothetical goes through propose_customer_quote before it appears in a draft. Drafts only: AJ reviews and posts.`,
   },
 };
