@@ -169,6 +169,14 @@ export async function buildBriefing() {
     }
   }
 
+  // What AJ has stated outright. First in the briefing because it overrides
+  // anything a worker might otherwise infer from the numbers.
+  try {
+    const { settledFacts } = await import('./bus.js');
+    const f = settledFacts();
+    if (f) out.unshift(`## Settled facts AJ has stated — treat as true, never ask about these\n${f}`);
+  } catch { /* bus not loaded — briefing still works */ }
+
   return out.join('\n\n');
 }
 

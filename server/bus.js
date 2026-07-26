@@ -117,6 +117,20 @@ export async function publish({ worker_key, topic, title, body, data, confidence
 // Questions are hive-wide, not per-worker. Without this, three teammates ask the
 // same thing in a row and a fourth re-asks something AJ already answered to
 // someone else — which is exactly what happened on the first real run.
+// Facts AJ has stated. Loaded once — these are settled, and a worker asking
+// about them again wastes his time. He should never have to say a thing twice.
+let _facts;
+export function settledFacts() {
+  if (_facts !== undefined) return _facts;
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(__dir, 'data', 'facts.json'), 'utf8'));
+    _facts = (raw.facts || []).map((f) => `- ${f.topic}: ${f.fact}`).join('\n');
+  } catch {
+    _facts = '';
+  }
+  return _facts;
+}
+
 async function questionLog() {
   const r = await _q(
     `SELECT worker_key, question, status, answer, asked_at
@@ -245,7 +259,11 @@ async function runJob(job) {
   const qlog = await questionLog().catch(() => []);
   const answered = qlog.filter((q) => q.status === 'answered' && q.answer);
   const open = qlog.filter((q) => q.status === 'open');
+  const facts = settledFacts();
   const qa =
+    (facts
+      ? `\n\n# Settled facts about Design Bees — AJ has stated these\nTreat every one as true. Never ask about them, never contradict them, never re-derive them from data.\n${facts}`
+      : '') +
     (answered.length
       ? `\n\n# What AJ has already told the team\nTreat these as settled — never ask them again.\n` +
         answered.map((q) => `- Q (${getSpec(q.worker_key)?.name || q.worker_key}): ${q.question}\n  A: ${q.answer}`).join('\n')

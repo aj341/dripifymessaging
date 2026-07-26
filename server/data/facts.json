@@ -1,0 +1,36 @@
+{
+  "note": "Settled facts about Design Bees, stated by AJ. Every teammate sees these before doing anything. If something here is wrong, AJ corrects it once and it is corrected for the whole hive — nobody should ever ask about these again.",
+  "updatedAt": "2026-07-26",
+  "facts": [
+    {
+      "topic": "Plan names",
+      "fact": "Honeycomb and Honeycomb Plus are the SAME plan. Treat them as one plan everywhere — never report them as two, never compare them against each other, never count a move between them as an upgrade or a change.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Plans and prices",
+      "fact": "The monthly subscription plans are Worker Bee $545, Buzz Basics $995, Honeycomb (a.k.a. Honeycomb Plus) $1645, and Nectar $2645. Anything under $100 is not a plan payment.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Richard Lowe",
+      "fact": "Richard Lowe converted on Buzz Basics. Design Bees completed his logo and branding within 48 hours. He stayed a few months, then cancelled the subscription because he ran out of design work — NOT because of dissatisfaction, price or a competitor. He is still a customer: he now sends a brief for one-off jobs when he needs them, charged at an hourly rate for custom work. Do not describe this as churn or a loss, and do not ask AJ about it again — he has explained it three times.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Peter Nittes / MacroView",
+      "fact": "Peter Nittes was deliberately signed for a ~3 month engagement so Design Bees could deliver a full new suite of logos. That was the intent from the start. The later call was AJ trying to extend him into an ongoing client, not a churn conversation. Do not record this as a lost client or a budget objection.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Subscription model",
+      "fact": "Design Bees is a design subscription agency: unlimited graphic design on a monthly plan. Clients running out of design work is a normal and expected reason to pause or cancel, not a failure of the service.",
+      "statedBy": "AJ"
+    },
+    {
+      "topic": "Content gating",
+      "fact": "No LinkedIn post or blog post is written until there is verified search demand or clear buyer intent behind it. Volume is not the goal. A post nobody is searching for is not worth writing.",
+      "statedBy": "AJ"
+    }
+  ]
+}
