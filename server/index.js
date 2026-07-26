@@ -218,7 +218,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: ian-cohorts-v5 | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v7-payments-public-path | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
