@@ -7,6 +7,7 @@
 // which is exactly why this lives on the deploy host, not in an AI session.
 import { getSetting, setSetting, logMessage } from './brain.js';
 import { query as _q } from './db.js';
+import { converse, brainReady } from './converse.js';
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API = TOKEN ? `https://api.telegram.org/bot${TOKEN}` : null;
@@ -90,12 +91,14 @@ async function handleUpdate(update) {
 
   await logMessage({ direction: 'in', text: msg.text, telegram_message_id: msg.message_id });
 
-  // Commands take priority over question-answering.
   const text = msg.text.trim();
-  // Match the first word to a command, letters only: "Ian", "/ledger",
-  // "FinanceFred", "GM George" → ian / ledger / financefred / gm.
-  const cmd = text.split(/\s+/)[0].replace(/^\//, '').toLowerCase().replace(/[^a-z]/g, '');
-  if (commands[cmd]) {
+  // A bare name or keyword runs the report: "Ian", "/ledger", "FinanceFred".
+  // Anything with more to it — "Ian, what should we target?" — is a question for
+  // that teammate, so it falls through to the conversation below.
+  const words = text.split(/\s+/);
+  const cmd = words[0].replace(/^\//, '').toLowerCase().replace(/[^a-z]/g, '');
+  const isBareCommand = words.length === 1 || (words.length === 2 && /^[^a-z0-9]*$/i.test(words[1]));
+  if (commands[cmd] && isBareCommand) {
     try {
       await commands[cmd](text);
     } catch (err) {
@@ -105,8 +108,8 @@ async function handleUpdate(update) {
     return;
   }
 
-  // Naive Phase-0 behaviour: treat a reply as the answer to the newest open
-  // question. Phase 1 makes this properly conversational.
+  // Record the answer to whatever the hive last asked, so a question doesn't
+  // stay open once AJ has replied to it.
   const open = await _q(
     `SELECT id FROM questions WHERE status = 'open' ORDER BY asked_at DESC LIMIT 1`
   );
@@ -115,6 +118,23 @@ async function handleUpdate(update) {
       `UPDATE questions SET status='answered', answer=$1, answered_at=now() WHERE id=$2`,
       [msg.text, open.rows[0].id]
     );
+  }
+
+  // Anything that isn't a command is a conversation. Route it to the teammate
+  // AJ named or replied to, and let them think about it.
+  if (!brainReady()) {
+    await send(
+      "🐝 I can run the reports (`help` lists them), but I can't hold a conversation yet — " +
+        'that needs an Anthropic API key on the service.'
+    ).catch(() => {});
+    return;
+  }
+  try {
+    const out = await converse({ text, replyToText: msg.reply_to_message?.text });
+    if (out) await send(out.reply, { worker: out.worker || undefined });
+  } catch (err) {
+    console.error('[brain] converse failed:', err.message);
+    await send(`⚠️ I couldn't think that through: ${err.message}`).catch(() => {});
   }
 }
 
