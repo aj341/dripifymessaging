@@ -110,7 +110,7 @@ export const handlers = {
       // existing-client check-in is worth recording but not worth a cascade.
       if (outcome !== 'existing_client' && (openingProblem || objection)) {
         await ctx.publish({
-          topic: `pain:demo=${key}`,
+          topic: `pain:demo:${key}`,
           title: `${person}${company ? ` (${company})` : ''} — ${outcome.replace('_', ' ')}`,
           body:
             `Industry: ${industry || 'unknown'}\n` +

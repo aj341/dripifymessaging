@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { query as _q } from './db.js';
-import { writeSignal, saveKnowledge, getKnowledge, allKnowledge } from './brain.js';
+import { writeSignal, saveKnowledge, getKnowledge, allKnowledge, askQuestion } from './brain.js';
 import { applyKnowledge } from './wix.js';
 import { send } from './telegram.js';
 
@@ -144,11 +144,43 @@ function buildCtx(spec, depth) {
       return r.rows;
     },
     notify: (text) => send(text, { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }),
+    askAJ: async ({ question, why, assumption }) => {
+      await askQuestion({ worker_key: spec.key, question });
+      await send(
+        `❓ *${spec.name}* needs a steer before recording this:\n\n${question}` +
+          (assumption ? `\n\n_What I'd otherwise assume:_ ${assumption}` : '') +
+          (why ? `\n_Why it matters:_ ${why}` : ''),
+        { worker: { key: spec.key, name: spec.name, emoji: spec.emoji } }
+      );
+      return 'Asked AJ. Do NOT record the assumption as fact — record only what you can see, note the open question, and move on.';
+    },
   };
 }
 
 // --- Running one job ---------------------------------------------------------
 const WEB_SEARCH = { type: 'web_search_20260209', name: 'web_search' };
+
+// Every worker can check with AJ. Records are cheap to write and expensive to
+// unpick — a wrong interpretation stored as fact quietly poisons everything
+// downstream, so the cost of asking is far lower than the cost of assuming.
+const ASK_AJ = {
+  name: 'ask_aj',
+  description:
+    'Ask AJ to confirm before you record an interpretation the hive will act on. Use it whenever the ' +
+    'evidence supports more than one reading and the readings would lead to different decisions — ' +
+    'why a client left, whether an engagement was always meant to be short, whether a demo converted, ' +
+    'what someone actually meant. He answers in Telegram. Asking is cheap; a wrong fact recorded as ' +
+    'true is expensive and spreads.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      question: { type: 'string', description: 'The specific question, with the evidence you are working from.' },
+      assumption: { type: 'string', description: "What you would conclude if he doesn't correct you." },
+      why: { type: 'string', description: 'What changes depending on his answer.' },
+    },
+    required: ['question'],
+  },
+};
 
 async function runJob(job) {
   const spec = getSpec(job.worker_key);
@@ -156,7 +188,7 @@ async function runJob(job) {
   if (!client) throw new Error('ANTHROPIC_API_KEY not set');
 
   const ctx = buildCtx(spec, job.depth || 0);
-  const tools = [...(spec.tools || [])];
+  const tools = [...(spec.tools || []), ASK_AJ];
   if (spec.useWebSearch) tools.push(WEB_SEARCH);
 
   const system =
@@ -167,6 +199,12 @@ async function runJob(job) {
     `EVIDENCE RULE: never state a number, name, company or result you cannot point to a source for. ` +
     `Record what you learn so the rest of the hive gets it. If you lack something, use your data-request tool ` +
     `rather than guessing or giving up.\n\n` +
+    `CONFIRM BEFORE YOU CONCLUDE: a transcript or a number tells you what happened, not why. If a piece ` +
+    `of evidence supports more than one reading, and those readings would lead the hive to target, message ` +
+    `or price differently, use ask_aj before you record it. A worked example: a client whose retainer ended ` +
+    `reads like churn, when in fact AJ deliberately signed them for three months to deliver one project and ` +
+    `the final call was him trying to extend it. Recording that as "lost on budget" would have been wrong ` +
+    `and would have skewed everything built on top. Record what you can see; ask about what you are inferring.\n\n` +
     `When you find something another teammate should act on, publish it — that is how the hive compounds.\n\n` +
     `Finish with two or three sentences on what you actually did and what you found.`;
 
@@ -188,7 +226,7 @@ async function runJob(job) {
     messages.push({ role: 'assistant', content: res.content });
     const results = [];
     for (const c of res.content.filter((b) => b.type === 'tool_use')) {
-      const fn = spec.handlers?.[c.name];
+      const fn = c.name === 'ask_aj' ? (i) => ctx.askAJ(i) : spec.handlers?.[c.name];
       let out;
       try {
         out = fn ? await fn(c.input, ctx) : `No handler for ${c.name}`;
