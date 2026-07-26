@@ -1,73 +1,111 @@
-// Wix custom-app OAuth — the hive's live, read-only line into the money.
+// Wix custom-app auth — the hive's live, read-only line into the money.
 //
-// AJ built a custom app in the Wix dev centre with read-only permissions
-// (pricing plans, orders, contacts) and installed it on the Design Bees site.
-// This module holds the token plumbing: AJ consents once at /auth/wix, the
-// refresh token lives in the settings table, and access tokens are minted on
-// demand. Same pattern, same guarantees as google.js — read, never write.
+// Wix deprecated the redirect/refresh-token handshake for new apps; the current
+// model is OAuth client credentials: POST /oauth2/token with the app ID, app
+// secret and the INSTANCE ID of the app's installation on the Design Bees site,
+// and back comes a 4-hour access token. No redirect URL, no consent screen, no
+// refresh token to lose. Read-only still comes from the app's permission grant.
 //
-// Why OAuth and not the account API key: the payments endpoints that matter are
-// admin-gated in ways account keys structurally cannot satisfy (the 403s that
-// started all this). An installed app's tokens carry the app's granted
-// permissions instead.
+// The one awkward part is the instance ID. It arrives in webhooks and in the
+// signed `instance` parameter Wix passes to the app's dashboard page — so
+// /auth/wix accepts a paste of any of: the raw instance ID, the signed instance
+// token, or a whole URL containing one, extracts the ID, stores it, and proves
+// the connection by minting a token and reading the app instance back.
 import { getSetting, setSetting } from './brain.js';
 
 const APP_ID = process.env.WIX_APP_ID;
 const APP_SECRET = process.env.WIX_APP_SECRET;
-const REDIRECT = `${process.env.PUBLIC_URL || 'https://dripifymessaging-production.up.railway.app'}/auth/wix/callback`;
 
 export function wixOauthConfigured() {
   return Boolean(APP_ID && APP_SECRET);
 }
 
+export async function wixInstanceId() {
+  return process.env.WIX_INSTANCE_ID || (await getSetting('wix_instance_id')) || '';
+}
+
 export async function wixOauthConnected() {
-  return Boolean(await getSetting('wix_refresh_token'));
+  return wixOauthConfigured() && Boolean(await wixInstanceId());
+}
+
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+function b64urlJson(part) {
+  try {
+    const pad = part.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(Buffer.from(pad, 'base64').toString('utf8'));
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Where AJ goes to consent. The Wix installer handles both fresh installs and
- * already-installed apps — either way it comes back to the callback with a code.
+ * Pull an instance ID out of whatever AJ pastes: a bare UUID, a signed Wix
+ * `instance` token (signature.payload, payload JSON carries instanceId), a JWT,
+ * or a full URL containing either. Returns '' when nothing usable is found.
  */
-export function wixInstallUrl() {
-  const p = new URLSearchParams({ appId: APP_ID, redirectUrl: REDIRECT });
-  return `https://www.wix.com/installer/install?${p}`;
-}
+export function extractInstanceId(pasted) {
+  const s = String(pasted || '').trim();
+  if (!s) return '';
 
-async function tokenRequest(body) {
-  const res = await fetch('https://www.wixapis.com/oauth/access', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ client_id: APP_ID, client_secret: APP_SECRET, ...body }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`wix token ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
+  // A URL: prefer an explicit instance/instanceId query param, else fall through.
+  let candidate = s;
+  try {
+    const url = new URL(s);
+    candidate = url.searchParams.get('instance') || url.searchParams.get('instanceId') || s;
+  } catch {
+    /* not a URL */
   }
-  return data;
+
+  // Signed instance token or JWT: some dot-separated chunk decodes to JSON
+  // holding instanceId.
+  for (const part of String(candidate).split('.')) {
+    const json = b64urlJson(part);
+    if (json && typeof json === 'object') {
+      const id = json.instanceId || json.instance_id || json.iid;
+      if (id && UUID_RE.test(id)) return id.match(UUID_RE)[0];
+    }
+  }
+
+  // A bare UUID anywhere in the paste. Guard: an appId is also a UUID, so if
+  // the paste contains our own app id, skip that match.
+  const uuids = s.match(new RegExp(UUID_RE, 'gi')) || [];
+  const notAppId = uuids.find((u) => u.toLowerCase() !== String(APP_ID || '').toLowerCase());
+  return notAppId || '';
 }
 
-/** Exchange the installer's code for tokens and store the refresh token. */
-export async function completeWixAuth(code) {
-  const data = await tokenRequest({ grant_type: 'authorization_code', code });
-  if (!data.refresh_token) throw new Error('Wix returned no refresh token — retry the install link.');
-  await setSetting('wix_refresh_token', data.refresh_token);
-  await setSetting('wix_access_token', data.access_token || '');
-  // Wix app access tokens are short-lived (minutes); expire early to be safe.
-  await setSetting('wix_token_expiry', String(Date.now() + 4 * 60 * 1000));
-  return true;
+export async function storeInstanceId(id) {
+  if (!UUID_RE.test(id)) throw new Error('That does not look like an instance ID.');
+  await setSetting('wix_instance_id', id);
 }
 
+// --- Tokens ---------------------------------------------------------------------
+// Client-credentials tokens live 4 hours; cache for 3.5 and mint on demand.
 async function accessToken() {
   const expiry = Number(await getSetting('wix_token_expiry')) || 0;
   const cached = await getSetting('wix_access_token');
   if (cached && Date.now() < expiry) return cached;
 
-  const refresh = await getSetting('wix_refresh_token');
-  if (!refresh) throw new Error('Wix app not connected — AJ visits /auth/wix once.');
-  const data = await tokenRequest({ grant_type: 'refresh_token', refresh_token: refresh });
+  if (!wixOauthConfigured()) throw new Error('WIX_APP_ID / WIX_APP_SECRET are not set on the Railway service.');
+  const instanceId = await wixInstanceId();
+  if (!instanceId) throw new Error('Wix instance ID not set — AJ completes the one-off step at /auth/wix.');
+
+  const res = await fetch('https://www.wixapis.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'client_credentials',
+      client_id: APP_ID,
+      client_secret: APP_SECRET,
+      instance_id: instanceId,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token) {
+    throw new Error(`wix token ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
+  }
   await setSetting('wix_access_token', data.access_token);
-  if (data.refresh_token) await setSetting('wix_refresh_token', data.refresh_token);
-  await setSetting('wix_token_expiry', String(Date.now() + 4 * 60 * 1000));
+  await setSetting('wix_token_expiry', String(Date.now() + 3.5 * 60 * 60 * 1000));
   return data.access_token;
 }
 
@@ -81,6 +119,17 @@ async function wixApi(path, { method = 'GET', body } = {}) {
   const text = await res.text();
   if (!res.ok) throw new Error(`wix ${method} ${path} → ${res.status}: ${text.slice(0, 300)}`);
   return text ? JSON.parse(text) : {};
+}
+
+/** Prove the connection end-to-end: mint a token and read the instance back. */
+export async function testConnection() {
+  const data = await wixApi('/apps/v1/instance');
+  return {
+    ok: true,
+    appName: data.instance?.appName || null,
+    siteName: data.site?.siteDisplayName || data.site?.url || null,
+    permissions: data.instance?.permissions || [],
+  };
 }
 
 // --- The reads Fred lives on ---------------------------------------------------
