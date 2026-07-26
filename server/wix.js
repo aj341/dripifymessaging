@@ -468,7 +468,11 @@ function enrichmentIndex() {
 // So an exact email match carries everything, while a domain-only match carries
 // the company fields alone — otherwise a colleague paying from a second address
 // would inherit someone else's job title.
-const COMPANY_FIELDS = ['company', 'companyType', 'industry', 'subIndustry', 'employeeCount', 'sizeBand'];
+const COMPANY_FIELDS = [
+  'company', 'companyType', 'industry', 'subIndustry', 'employeeCount', 'sizeBand',
+  // HQ location — company-level, so it rides the domain match like the rest.
+  'city', 'state', 'country', 'locationConfidence', 'locationSource',
+];
 const PERSON_FIELDS = ['title', 'roleType'];
 
 /**

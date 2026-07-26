@@ -91,6 +91,7 @@ function traceCascade(rows) {
 
 export default {
   key: 'queen',
+  model: 'claude-opus-5', // the one daily brief AJ reads earns the premium tier
   name: 'George',
   emoji: '👑',
   title: 'GM',

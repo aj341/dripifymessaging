@@ -14,7 +14,13 @@ import { applyKnowledge } from './wix.js';
 import { send } from './telegram.js';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
-const MODEL = 'claude-opus-5';
+// Model tiering (AJ, after the first Opus-priced day emptied the API credit):
+// routine background work — scans, validations, health checks — runs on the
+// Sonnet tier; a spec that genuinely needs top-tier judgment (Sam writing
+// customer-facing copy, George synthesising the brief) opts up with
+// `model: PREMIUM_MODEL` in its spec. Same evidence rules either way.
+const DEFAULT_MODEL = 'claude-sonnet-5';
+export const PREMIUM_MODEL = 'claude-opus-5';
 const MAX_DEPTH = 3;        // a finding may cascade at most three hops
 const MAX_JOBS_PER_TICK = 4;
 // Background work runs by default (AJ's call, 2026-07-26) — HIVE_AUTORUN=0
@@ -360,7 +366,7 @@ async function runJob(job) {
 
   for (let turn = 0; turn < 8; turn++) {
     const res = await client.messages.create({
-      model: MODEL,
+      model: spec.model || DEFAULT_MODEL,
       max_tokens: 8000,
       output_config: { effort: 'low' },
       system,
@@ -397,7 +403,9 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
   if (await awaitingReply()) return 0;             // said our piece; waiting on AJ
   let done = 0;
   for (let i = 0; i < limit; i++) {
-    // Claim one job atomically so overlapping ticks can't double-run it.
+    // Claim one job atomically so overlapping ticks can't double-run it. A
+    // re-queued job waits for a fresh tick (started_at check) so retries get
+    // the 3-minute spacing instead of hammering a struggling API.
     const claim = await _q(
       `UPDATE jobs SET status = 'running', started_at = now()
         WHERE id = (SELECT id FROM jobs WHERE status = 'pending'
@@ -412,8 +420,29 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
       await _q(`UPDATE jobs SET status='done', result=$1, finished_at=now() WHERE id=$2`, [result, job.id]);
       console.log(`[bus] ${job.worker_key} finished job ${job.id} (${job.topic || 'direct'})`);
     } catch (err) {
-      await _q(`UPDATE jobs SET status='failed', error=$1, finished_at=now() WHERE id=$2`, [err.message, job.id]);
-      console.error(`[bus] job ${job.id} (${job.worker_key}) failed:`, err.message);
+      // Transient API failures re-queue instead of dying: empty credit,
+      // overload and rate limits all clear on their own, and the 3-minute tick
+      // spacing is the backoff. Three strikes and it's a real failure.
+      const msg = String(err.message || err);
+      const transient =
+        /credit balance is too low|overloaded|rate.?limit|529|429|(?:^|\D)50[023](?:\D|$)/i.test(msg);
+      const attempts = (job.attempts || 0) + 1;
+      if (transient && attempts < 3) {
+        await _q(`UPDATE jobs SET status='pending', attempts=$1, error=$2, started_at=NULL WHERE id=$3`, [
+          attempts,
+          `retryable (attempt ${attempts}): ${msg.slice(0, 300)}`,
+          job.id,
+        ]);
+        console.warn(`[bus] job ${job.id} (${job.worker_key}) re-queued after transient error (attempt ${attempts}): ${msg.slice(0, 120)}`);
+        break; // API is unhappy — stop this tick rather than burning through the queue
+      } else {
+        await _q(`UPDATE jobs SET status='failed', attempts=$1, error=$2, finished_at=now() WHERE id=$3`, [
+          attempts,
+          msg,
+          job.id,
+        ]);
+        console.error(`[bus] job ${job.id} (${job.worker_key}) failed:`, msg);
+      }
     }
     done += 1;
   }

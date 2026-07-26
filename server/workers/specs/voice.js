@@ -71,21 +71,44 @@ function asObject(v) {
 const oneLine = (s, n = 160) => clean(s).replace(/\s+/g, ' ').slice(0, n);
 
 // A client's words, or a client used as a worked example, never appears in a
-// draft without AJ approving that specific use first. Machine side of the rule:
-// spot the shapes a quote or a named-client hypothetical takes.
+// draft without AJ approving that specific use first. Machine side of the rule,
+// tuned after the first live run flagged Sam's own definitional prose as a
+// customer quote (Tom's proposal, approved by AJ): a quoted span only DEMANDS
+// propose_customer_quote when it reads like attributed speech — an attribution
+// cue (said/told/asked, "one of our clients", a name pattern) adjacent to it.
+// Scare quotes around a term ("unlimited") and short spans of three words or
+// fewer are ignored; longer unattributed quotes become an advisory note so AJ
+// still sees them on /approve without being asked to act.
+const ATTRIBUTION_NEAR =
+  /\b(said|says|told (?:us|me)|asked|mentioned|wrote|put it|in (?:his|her|their) words|according to|one of our clients?|a client(?: of ours)?|our client|[A-Z][a-z]+ (?:from|at) [A-Z])\b/;
+
 function quoteFlags(text) {
   const t = clean(text);
   const flags = [];
-  const quoted = t.match(/["“][^"”]{25,}["”]/g) || [];
-  for (const q of quoted) {
-    flags.push(
-      `Quoted material found (${oneLine(q, 60)}…). If these are a customer's words, AJ has not approved ` +
-        'using them — pull the quote, and raise it with propose_customer_quote instead.'
-    );
+  const re = /["“]([^"”]+)["”]/g;
+  let m;
+  while ((m = re.exec(t)) !== null) {
+    const span = m[1].trim();
+    if (span.split(/\s+/).filter(Boolean).length <= 3) continue; // scare quotes on a term
+    // Look at the sentence around the quote for an attribution cue.
+    const before = t.slice(Math.max(0, m.index - 120), m.index);
+    const after = t.slice(re.lastIndex, re.lastIndex + 120);
+    const attributed = ATTRIBUTION_NEAR.test(before) || ATTRIBUTION_NEAR.test(after);
+    if (attributed) {
+      flags.push(
+        `[quote-gate] Attributed quote found ("${oneLine(span, 60)}…"). If these are a customer's words, ` +
+          'AJ has not approved this use — pull the quote and raise it with propose_customer_quote.'
+      );
+    } else {
+      flags.push(
+        `[quote-gate, advisory] Unattributed quoted span ("${oneLine(span, 60)}…") — reads as the writer's ` +
+          "own phrasing, no action needed unless these are actually a customer's words."
+      );
+    }
   }
   if (/\b(one of our|a) clients?\b[^.!?\n]{0,60}\b(said|told|asked|mentioned)\b/i.test(t)) {
     flags.push(
-      'Reads like a client anecdote. Real client stories, even anonymised, go through ' +
+      '[quote-gate] Reads like a client anecdote. Real client stories, even anonymised, go through ' +
         'propose_customer_quote for AJ to approve before they appear in a draft.'
     );
   }
@@ -95,6 +118,7 @@ function quoteFlags(text) {
 export default {
   key: 'voice',
   name: 'Sam',
+  model: 'claude-opus-5', // customer-facing words earn the premium tier
   emoji: '📣',
   title: 'Socials & Content',
 

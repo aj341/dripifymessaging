@@ -1,5 +1,5 @@
 {
-  "source": "Clay company + contact enrichment, with titles corrected by AJ (Gmail signatures + direct confirmation); AJ-supplied firmographics for Pappa Flock and LEKI Electric",
+  "source": "Clay company + contact enrichment, with titles corrected by AJ (Gmail signatures + direct confirmation); AJ-supplied firmographics for Pappa Flock and LEKI Electric; HQ locations researched from company sites/registries 2026-07-26 (see locationSource per record; medium/low confidence entries need AJ's confirmation)",
   "builtAt": "2026-07-26T05:31:49.074Z",
   "byEmail": {
     "ashleigh.craig@permaconn.com": {
@@ -11,7 +11,12 @@
       "employeeCount": 86,
       "sizeBand": "51-200",
       "domain": "permaconn.com",
-      "name": "Ashleigh Craig"
+      "name": "Ashleigh Craig",
+      "city": "Rydalmere",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "permaconn.com/about + ZoomInfo (9-11 South St, Rydalmere)"
     },
     "natasha.sullivan@1cover.com.au": {
       "title": "Senior Manager, Digital Marketing",
@@ -22,7 +27,12 @@
       "employeeCount": 32,
       "sizeBand": "51-200",
       "domain": "1cover.com.au",
-      "name": "Natasha Sullivan"
+      "name": "Natasha Sullivan",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "1cover.com.au/contact (Kent St, Sydney CBD)"
     },
     "rachel.korbel@qsrfoodies.com.au": {
       "title": "Chief Marketing Officer",
@@ -32,7 +42,12 @@
       "subIndustry": "Multi-brand QSR / franchising group",
       "sizeBand": "11-50",
       "domain": "qsrfoodies.com.au",
-      "name": "Rachel Korbel"
+      "name": "Rachel Korbel",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ludi.w@anzuk.education": {
       "title": "Director, Growth Marketing ANZ",
@@ -43,7 +58,12 @@
       "employeeCount": 2215,
       "sizeBand": "201-500",
       "domain": "anzuk.education",
-      "name": "Ludi Wiggins"
+      "name": "Ludi Wiggins",
+      "city": "Melbourne",
+      "state": "VIC",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "anzuk.education/contact (HQ Collingwood, Melbourne)"
     },
     "alison.hedger@aldercon.com.au": {
       "title": "Editor-in-Chief",
@@ -54,7 +74,12 @@
       "employeeCount": 123,
       "sizeBand": "51-200",
       "domain": "aldercon.com.au",
-      "name": "Alison Hedger"
+      "name": "Alison Hedger",
+      "city": "Helensvale (Gold Coast)",
+      "state": "QLD",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "aldercon.com.au/contact (116 Siganto Drive, Helensvale)"
     },
     "peter.nittes@macroview.com.au": {
       "title": "Marketing Manager",
@@ -65,7 +90,12 @@
       "employeeCount": 21,
       "sizeBand": "11-50",
       "domain": "macroview.com.au",
-      "name": "Peter Nittes"
+      "name": "Peter Nittes",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "Datanyze/PitchBook (31 Market St, Sydney CBD; NY satellite office)"
     },
     "d.timm@redmarble.ai": {
       "title": "Co-CEO",
@@ -76,10 +106,15 @@
       "employeeCount": 15,
       "sizeBand": "11-50",
       "domain": "redmarble.ai",
-      "name": "Dave Timm"
+      "name": "Dave Timm",
+      "city": "Melbourne",
+      "state": "VIC",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "redmarble.ai/contact (Little Collins St, Melbourne CBD)"
     },
     "gwatkins@ausjudo.com.au": {
-      "title": "General Manager – Participation",
+      "title": "General Manager \u2013 Participation",
       "roleType": "Other",
       "companyType": "In-house",
       "industry": "Spectator Sports",
@@ -87,7 +122,12 @@
       "employeeCount": 26,
       "sizeBand": "2-10",
       "domain": "ausjudo.com.au",
-      "name": "Gwatkins"
+      "name": "Gwatkins",
+      "city": "Bruce (Canberra)",
+      "state": "ACT",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "ausjudo.com.au/office-and-staff (AIS, Leverrier St, Bruce)"
     },
     "luke.starbuck@educationperfect.com": {
       "title": "Fractional CMO",
@@ -98,7 +138,12 @@
       "employeeCount": 877,
       "sizeBand": "201-500",
       "domain": "educationperfect.com",
-      "name": "Luke Starbuck"
+      "name": "Luke Starbuck",
+      "city": "Dunedin",
+      "state": "Otago",
+      "country": "New Zealand",
+      "locationConfidence": "high",
+      "locationSource": "educationperfect.com (HQ 77 Vogel St, Dunedin NZ; global offices)"
     },
     "rebecca.magill@readytech.io": {
       "title": "Head of Brand, Communications & Experience",
@@ -109,7 +154,12 @@
       "employeeCount": 533,
       "sizeBand": "501-1000",
       "domain": "readytech.io",
-      "name": "Rebecca Magill"
+      "name": "Rebecca Magill",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "ASX filing (Level 2, 77 King St, Sydney; ASX:RDY)"
     },
     "accounts@parachuteagency.com.au": {
       "title": "Managing Director",
@@ -120,7 +170,12 @@
       "employeeCount": 13,
       "sizeBand": "11-50",
       "domain": "parachuteagency.com.au",
-      "name": "Shanelle Clapham"
+      "name": "Shanelle Clapham",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "parachuteagency.com.au/contact (Sydney CBD near Wynyard)"
     },
     "abasone@atlascarbon.ag": {
       "title": "VP of Revenue",
@@ -131,7 +186,12 @@
       "employeeCount": 30,
       "sizeBand": "11-50",
       "domain": "atlascarbon.ag",
-      "name": "Abasone"
+      "name": "Abasone",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "Carbon Market Institute / theorg (580 George St, Sydney)"
     },
     "slim@endotx.com.au": {
       "title": "Marketing Manager",
@@ -142,7 +202,12 @@
       "employeeCount": 89,
       "sizeBand": "51-200",
       "domain": "endotx.com.au",
-      "name": "Shawna Lim"
+      "name": "Shawna Lim",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ajita.joshi@zipline.io": {
       "title": "Fractional Marketing Leader",
@@ -153,7 +218,13 @@
       "employeeCount": 51,
       "sizeBand": "51-200",
       "domain": "zipline.io",
-      "name": "Ajita Joshi"
+      "name": "Ajita Joshi",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly + her LinkedIn (Sydney, NSW), 2026-07-26",
+      "note": "AJ 2026-07-26: Ajita is the client personally, based in Sydney \u2014 she is no longer the marketing base at Retail Zipline (San Francisco). Do not attribute her to Zipline or to the US; treat as an individual marketing leader (Brand | Content | Product Marketing)."
     },
     "kristina.charchalis@aldercon.com.au": {
       "title": "Brand and Communications Manager",
@@ -164,7 +235,12 @@
       "employeeCount": 123,
       "sizeBand": "51-200",
       "domain": "aldercon.com.au",
-      "name": "Kristina Charchalis-Rana"
+      "name": "Kristina Charchalis-Rana",
+      "city": "Helensvale (Gold Coast)",
+      "state": "QLD",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "aldercon.com.au/contact (116 Siganto Drive, Helensvale)"
     },
     "nonny@zipline.io": {
       "title": "Chief Revenue Officer",
@@ -175,7 +251,13 @@
       "employeeCount": 51,
       "sizeBand": "51-200",
       "domain": "zipline.io",
-      "name": "Nonny Evans"
+      "name": "Nonny Evans",
+      "city": null,
+      "state": null,
+      "country": null,
+      "locationConfidence": "low",
+      "locationSource": "zipline.io was initially misidentified as Retail Zipline (San Francisco); Clay data says care-economy B2B SaaS, a different company. Location unknown \u2014 confirm with AJ.",
+      "note": "AJ 2026-07-26: Ajita is the client personally, based in Sydney \u2014 she is no longer the marketing base at Retail Zipline (San Francisco). Do not attribute her to Zipline or to the US; treat as an individual marketing leader (Brand | Content | Product Marketing)."
     },
     "ayoung@atlasag.com": {
       "title": "Senior Events, Community and PR Manager",
@@ -186,7 +268,12 @@
       "employeeCount": 30,
       "sizeBand": "11-50",
       "domain": "atlasag.com",
-      "name": "Amanda Young"
+      "name": "Amanda Young",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "D&B: Atlas Agri Solutions Pty Ltd, Sydney NSW (same group as Atlas Carbon)"
     },
     "anthonyr@rejuvaustralia.com.au": {
       "title": "Marketing Manager",
@@ -197,7 +284,12 @@
       "employeeCount": 29,
       "sizeBand": "11-50",
       "domain": "rejuvaustralia.com.au",
-      "name": "Anthony Rumble"
+      "name": "Anthony Rumble",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "rejuvaustralia.com.au/contact (clinics: Sydney CBD, Barangaroo, Chatswood)"
     },
     "patricia.rodriguez@netstrategy.net": {
       "title": "Marketing & Admin Coordinator",
@@ -208,7 +300,12 @@
       "employeeCount": 44,
       "sizeBand": "51-200",
       "domain": "netstrategy.net",
-      "name": "Patricia Rodriguez"
+      "name": "Patricia Rodriguez",
+      "city": "North Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "RocketReach/LinkedIn (NetStrategy Pty Ltd, North Sydney; school IT since 1987)"
     },
     "helena@cooperandco.com.au": {
       "title": "Marketing Coordinator",
@@ -219,7 +316,12 @@
       "employeeCount": 10,
       "sizeBand": "2-10",
       "domain": "cooperandco.com.au",
-      "name": "Helena Papaspyratos"
+      "name": "Helena Papaspyratos",
+      "city": "Melbourne",
+      "state": "VIC",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "marketing@heartlandbank.com.au": {
       "title": "Head of Marketing",
@@ -230,7 +332,12 @@
       "employeeCount": 97,
       "sizeBand": "201-500",
       "domain": "heartlandbank.com.au",
-      "name": "Matthew Farnham"
+      "name": "Matthew Farnham",
+      "city": "Melbourne",
+      "state": "VIC",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "Bloomberg LEI + heartlandgroup.info (Melbourne hub since May 2024; Sydney office retained)"
     },
     "matt@grpl.com.au": {
       "title": "Founder",
@@ -241,7 +348,12 @@
       "employeeCount": 3,
       "sizeBand": "2-10",
       "domain": "grpl.com.au",
-      "name": "Matt Gudge"
+      "name": "Matt Gudge",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ana.belgun@terria.io": {
       "title": "Co-founder / CEO",
@@ -252,7 +364,12 @@
       "employeeCount": 24,
       "sizeBand": "11-50",
       "domain": "terria.io",
-      "name": "Ana Belgun"
+      "name": "Ana Belgun",
+      "city": "Canberra",
+      "state": "ACT",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "alison@blugibbon.com.au": {
       "title": "Managing Director",
@@ -263,7 +380,12 @@
       "employeeCount": 35,
       "sizeBand": "11-50",
       "domain": "blugibbon.com.au",
-      "name": "Samuel Whitaker"
+      "name": "Samuel Whitaker",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "blugibbon.com.au/about-us (founded Cottesloe WA, now based Sydney)"
     },
     "utsav@horizonx.com.au": {
       "title": "Founder and CEO",
@@ -274,7 +396,12 @@
       "employeeCount": 12,
       "sizeBand": "11-50",
       "domain": "horizonx.com.au",
-      "name": "Utsav"
+      "name": "Utsav",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "LeadIQ (52 Martin Place, Sydney CBD)"
     },
     "jessica@pivotpl.com": {
       "title": "Marketing Coordinator",
@@ -285,7 +412,12 @@
       "employeeCount": 23,
       "sizeBand": "11-50",
       "domain": "pivotpl.com",
-      "name": "Jessica Roberts"
+      "name": "Jessica Roberts",
+      "city": "Melbourne",
+      "state": "VIC",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "australianedtech.com.au directory (Level 40, 140 William St, Melbourne)"
     },
     "jon@themarketingroom.com": {
       "title": "Group CEO",
@@ -296,7 +428,12 @@
       "employeeCount": 52,
       "sizeBand": "51-200",
       "domain": "themarketingroom.com",
-      "name": "Jonathan Sharp"
+      "name": "Jonathan Sharp",
+      "city": "Subiaco (Perth)",
+      "state": "WA",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "ZoomInfo/Yelp (HQ 330 Churchill Ave, Subiaco; satellite presences elsewhere)"
     },
     "rachel.korbel@pappaflock.com.au": {
       "name": "Rachel Korbel",
@@ -308,7 +445,12 @@
       "industry": "Food & Beverage Services",
       "subIndustry": "Fast food retail",
       "employeeCount": 53,
-      "sizeBand": "51-200"
+      "sizeBand": "51-200",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "lekielectric.com": {
       "name": "Cain Cooke",
@@ -318,8 +460,13 @@
       "roleType": "Founder",
       "companyType": "In-house",
       "industry": "Retail Motor Vehicles",
-      "subIndustry": "Electric mobility (e-mobility) / EVs — electric motorbikes",
-      "sizeBand": "2-10"
+      "subIndustry": "Electric mobility (e-mobility) / EVs \u2014 electric motorbikes",
+      "sizeBand": "2-10",
+      "city": "Adelaide",
+      "state": "SA",
+      "country": "Australia",
+      "locationConfidence": "high",
+      "locationSource": "lekielectric.com (warehouse + assembly Gepps Cross, Adelaide)"
     }
   }
 }
