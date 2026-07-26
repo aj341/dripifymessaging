@@ -18,7 +18,7 @@ import {
   hoursSinceLastRun,
   hoursSinceReconcile,
 } from './workers/ledger.js';
-import { runScout, scoutReady, scoutHasRun } from './workers/scout.js';
+import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -107,6 +107,10 @@ commands.reconcile = () => runLedgerReconcile({ notify: true });
 commands.prepay = () => runLedgerReconcile({ notify: true });
 commands.prepayments = () => runLedgerReconcile({ notify: true });
 commands.cohorts = () => runScout({ notify: true });
+commands.salesnav = () => runScoutSalesNav({ notify: true });
+commands.filters = () => runScoutSalesNav({ notify: true });
+commands.demos = () => runScoutDemos({ notify: true });
+commands.conversions = () => runScoutDemos({ notify: true });
 commands.help = () =>
   send(
     '🐝 *The hive* — message a name or title+name:\n' +
@@ -114,6 +118,8 @@ commands.help = () =>
       '• *clients* — who paid what (last 90 days)\n' +
       '• *reconcile* / *prepay* — prepayments & one-offs (since Apr 2026)\n' +
       '• *Ian* / ICPIan / *cohorts* — customer cohorts (Nectar, Honeycomb, active)\n' +
+      '• *salesnav* / *filters* — persona / company type / headcount / industry split\n' +
+      '• *demos* / *conversions* — demo→conversion since March\n' +
       '• *Ricky, Tom, Sam, George* — coming soon\n' +
       '• *help* — this list'
   );
@@ -218,7 +224,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v8-snapshot-fallback | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v9-salesnav-demos | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
