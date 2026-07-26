@@ -3,6 +3,7 @@
 // Fred is the teammate the others check commercial reality against: Ian can say
 // an industry looks promising, but only Fred can say what it has actually paid.
 import { getRevenue, getReconcile, money } from '../../wix.js';
+import { wixOauthConnected, planOrders, ecomOrders, findContacts } from '../../wix-oauth.js';
 
 export default {
   key: 'ledger',
@@ -19,7 +20,18 @@ promising, you are the one who can say whether it has actually paid. Answer with
 period it covers, and say plainly when a figure is a cached snapshot rather than live.
 
 Never invent or extrapolate a number. AJ has been given wrong revenue figures before and it cost
-trust — if you cannot source it, say so and ask for what you'd need.`,
+trust — if you cannot source it, say so and ask for what you'd need.
+
+LIVE WIX ACCESS (via the read-only app AJ installed 2026-07-26): wix_subscriptions reads the pricing
+plan orders straight from Wix — plan, status, price, start/cancel dates. This is where churn stops
+being a guess: CANCELED and ENDED orders carry their dates, and the plan mix is what it actually is
+today. wix_recent_orders reads one-off store orders; wix_find_contact joins money to a person. Two
+rules. First, RECONCILE BEFORE YOU TRUST: the accepted benchmarks are July 2026 MTD $36,076 and 2026
+YTD $243,167 from the snapshot — the first time live data is used for a total, compare against these
+and report any gap to AJ instead of silently preferring either source. Second, remember the settled
+facts: a cancellation is not automatically churn (Richard Lowe cancelled because he ran out of design
+work and still buys one-offs; Peter Nittes was always a ~3-month engagement) — the status field says
+what happened, never why. Say "Source: Wix live" or "Source: snapshot" with every figure.`,
 
   subscribes: ['request:wix', 'request:revenue', 'finance:*'],
   emits: ['finance:pulse', 'finance:anomaly'],
@@ -39,6 +51,43 @@ trust — if you cannot source it, say so and ask for what you'd need.`,
         'Payments since April 2026 classified as standard plan months, multi-month prepayments, or ' +
         "one-offs. Use when asked about prepayments, discounts, or payments that don't match a plan price.",
       input_schema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'wix_subscriptions',
+      description:
+        'LIVE pricing-plan orders from Wix (read-only app): every subscription with plan name, status ' +
+        '(ACTIVE / CANCELED / ENDED / PAUSED), price, start and cancel dates. This is the churn ledger and ' +
+        'the real plan mix. Statuses say what happened, never why — check the settled facts before calling ' +
+        'anything churn. If Wix is not connected, this says so; never substitute an estimate.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['ACTIVE', 'CANCELED', 'ENDED', 'PAUSED'], description: 'Optional filter.' },
+          limit: { type: 'integer', description: 'How many orders, newest first. Default 100, max 300.' },
+        },
+      },
+    },
+    {
+      name: 'wix_recent_orders',
+      description:
+        'LIVE store/eCommerce orders from Wix (read-only app) — one-off jobs and non-subscription payments, ' +
+        'newest first, with totals and payment status. Use for hourly custom work (e.g. Richard Lowe one-offs) ' +
+        'and anything that is not a plan payment.',
+      input_schema: {
+        type: 'object',
+        properties: { limit: { type: 'integer', description: 'Default 50, max 100.' } },
+      },
+    },
+    {
+      name: 'wix_find_contact',
+      description:
+        'Look up Wix contacts by name or email fragment (read-only) — for joining a payment or subscription ' +
+        'to a person. Never use it to browse; look up the specific person a finding is about.',
+      input_schema: {
+        type: 'object',
+        properties: { search: { type: 'string', description: 'Name or email fragment.' } },
+        required: ['search'],
+      },
     },
     {
       name: 'report_finding',
@@ -86,6 +135,71 @@ trust — if you cannot source it, say so and ask for what you'd need.`,
         );
       } catch (err) {
         return `Couldn't read Wix: ${err.message}. Report this rather than estimating.`;
+      }
+    },
+
+    wix_subscriptions: async (input = {}) => {
+      try {
+        if (!(await wixOauthConnected())) {
+          return 'Wix live access is not connected yet — AJ visits /auth/wix once. Until then use revenue_snapshot and say the figures are from the snapshot.';
+        }
+        const limit = Math.min(Math.max(Number(input.limit) || 100, 1), 300);
+        let orders = await planOrders({ limit });
+        if (input.status) orders = orders.filter((o) => o.status === input.status);
+        if (!orders.length) return `Wix live returned no plan orders${input.status ? ` with status ${input.status}` : ''}. That is the real answer — report it as such.`;
+
+        const mix = {};
+        for (const o of orders) {
+          const k = `${o.planName || 'unknown'} / ${o.status}`;
+          mix[k] = (mix[k] || 0) + 1;
+        }
+        const lines = orders.slice(0, 60).map((o) => {
+          const price = o.price ? `$${o.price}${o.currency ? ` ${o.currency}` : ''}` : 'price n/a';
+          const cancel = o.canceledDate ? ` · cancelled ${String(o.canceledDate).slice(0, 10)}${o.cancellationReason ? ` (${o.cancellationReason})` : ''}` : '';
+          return `• ${o.planName || 'unknown plan'} — ${o.status} — ${price} · started ${String(o.startDate || o.createdDate).slice(0, 10)}${cancel}`;
+        });
+        return (
+          `Source: Wix live (pricing-plan orders, ${orders.length} returned${orders.length === limit ? ', limit hit — there may be more' : ''})\n` +
+          `Mix: ${Object.entries(mix).map(([k, n]) => `${k} ×${n}`).join('; ')}\n\n${lines.join('\n')}` +
+          (orders.length > 60 ? `\n…and ${orders.length - 60} more.` : '') +
+          `\n\nRemember: in billing data Honeycomb and Honeycomb Plus are the SAME plan, and a CANCELED status says what happened, not why.`
+        );
+      } catch (err) {
+        return `Wix live read failed: ${err.message}. Fall back to revenue_snapshot and say so — never estimate.`;
+      }
+    },
+
+    wix_recent_orders: async (input = {}) => {
+      try {
+        if (!(await wixOauthConnected())) {
+          return 'Wix live access is not connected yet — AJ visits /auth/wix once.';
+        }
+        const orders = await ecomOrders({ limit: Math.min(Math.max(Number(input.limit) || 50, 1), 100) });
+        if (!orders.length) return 'Wix live returned no store orders. That is the real answer.';
+        const lines = orders.map(
+          (o) =>
+            `• #${o.number} — $${o.total || '?'} ${o.currency || ''} — ${o.paymentStatus} — ${String(o.createdDate).slice(0, 10)}${
+              o.buyerEmail ? ` — ${o.buyerEmail}` : ''
+            } — ${o.items.join(', ')}`
+        );
+        return `Source: Wix live (store orders, ${orders.length})\n${lines.join('\n')}`;
+      } catch (err) {
+        return `Wix live read failed: ${err.message}. Say so rather than estimating.`;
+      }
+    },
+
+    wix_find_contact: async (input = {}) => {
+      try {
+        if (!(await wixOauthConnected())) return 'Wix live access is not connected yet — AJ visits /auth/wix once.';
+        const search = String(input.search || '').trim();
+        if (!search) return 'Give a name or email fragment to search for.';
+        const contacts = await findContacts({ search });
+        if (!contacts.length) return `No Wix contacts match "${search}".`;
+        return contacts
+          .map((c) => `• ${c.name || 'unnamed'} — ${c.email || 'no email'}${c.company ? ` — ${c.company}` : ''} (since ${String(c.createdDate).slice(0, 10)})`)
+          .join('\n');
+      } catch (err) {
+        return `Contact lookup failed: ${err.message}.`;
       }
     },
 

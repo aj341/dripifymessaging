@@ -24,6 +24,7 @@ import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autoru
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
+import { wixOauthConfigured, wixOauthConnected, wixInstallUrl, completeWixAuth } from './wix-oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -245,6 +246,34 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
+// --- Wix app consent ----------------------------------------------------------
+// Same shape as Google: AJ visits /auth/wix once, the installer bounces back to
+// the callback with a code, and the refresh token lives in settings from then on.
+app.get('/auth/wix', async (_req, res) => {
+  if (!wixOauthConfigured()) {
+    return res
+      .status(503)
+      .send('Wix app is not configured — set WIX_APP_ID and WIX_APP_SECRET on the Railway service, then reload this page.');
+  }
+  res.redirect(wixInstallUrl());
+});
+
+app.get('/auth/wix/callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error) return res.status(400).send(`Wix returned an error: ${error}`);
+  if (!code) return res.status(400).send('No authorisation code returned by the Wix installer.');
+  try {
+    await completeWixAuth(String(code));
+    res.send('<h2>Connected.</h2><p>The hive can now read plan orders, store orders and contacts from Wix — read-only. You can close this tab.</p>');
+  } catch (err) {
+    res.status(500).send(`Could not complete Wix auth: ${err.message}`);
+  }
+});
+
+app.get('/auth/wix/status', async (_req, res) => {
+  res.json({ configured: wixOauthConfigured(), connected: await wixOauthConnected().catch(() => false) });
+});
+
 app.get('/auth/google/status', async (_req, res) => {
   res.json({
     configured: googleConfigured(),
@@ -369,7 +398,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v26-platform | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v27-wix-live | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
