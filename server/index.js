@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 import { migrate } from './migrate.js';
 import { ping } from './db.js';
-import { readHive, writeSignal, askQuestion, setMemory } from './brain.js';
+import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, allKnowledge } from './brain.js';
+import { enrichmentSeed, applyKnowledge } from './wix.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
 import {
   runLedger,
@@ -224,9 +225,19 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v13-aj-firmographics | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v14-knowledge-base | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
+  // Seed the file-based enrichment once, then load everything the workers know
+  // into the in-memory index the cohort builder reads.
+  try {
+    const added = await seedKnowledge(enrichmentSeed());
+    const rows = await allKnowledge();
+    applyKnowledge(rows);
+    console.log(`[hive] knowledge: ${rows.length} entities (${added} seeded this boot)`);
+  } catch (e) {
+    console.error('[boot] knowledge load failed:', e.message);
+  }
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
   startPolling().catch((err) => console.error('[boot] telegram:', err.message));
   scheduleWorkers();

@@ -121,3 +121,57 @@ export async function logMessage({ direction, worker_key = null, text, telegram_
     [direction, worker_key, text, telegram_message_id]
   );
 }
+
+// --- Knowledge ---------------------------------------------------------------
+// The hive's shared facts. Writes merge rather than replace, so a worker adding
+// one field doesn't wipe what another already learned about the same entity.
+export async function saveKnowledge({ entity_type, entity_key, data, source, confidence = 'fact', worker_key = null }) {
+  if (!entity_type || !entity_key) throw new Error('entity_type and entity_key are required');
+  if (!source) throw new Error('knowledge needs a source — where did this come from?');
+  const key = String(entity_key).toLowerCase().trim();
+  const r = await query(
+    `INSERT INTO knowledge (entity_type, entity_key, data, source, confidence, worker_key)
+     VALUES ($1,$2,$3,$4,$5,$6)
+     ON CONFLICT (entity_type, entity_key) DO UPDATE
+       SET data = knowledge.data || EXCLUDED.data,
+           source = EXCLUDED.source,
+           confidence = EXCLUDED.confidence,
+           worker_key = COALESCE(EXCLUDED.worker_key, knowledge.worker_key),
+           updated_at = now()
+     RETURNING *`,
+    [entity_type, key, JSON.stringify(data || {}), JSON.stringify(source), confidence, worker_key]
+  );
+  return r.rows[0];
+}
+
+export async function getKnowledge(entity_type, entity_key) {
+  const r = await query(
+    `SELECT * FROM knowledge WHERE entity_type = $1 AND entity_key = $2`,
+    [entity_type, String(entity_key).toLowerCase().trim()]
+  );
+  return r.rows[0] || null;
+}
+
+export async function allKnowledge(entity_type) {
+  const r = entity_type
+    ? await query(`SELECT * FROM knowledge WHERE entity_type = $1`, [entity_type])
+    : await query(`SELECT * FROM knowledge`);
+  return r.rows;
+}
+
+/** Insert only if absent — used to seed the file-based enrichment once. */
+export async function seedKnowledge(rows) {
+  let added = 0;
+  for (const r of rows) {
+    const res = await query(
+      `INSERT INTO knowledge (entity_type, entity_key, data, source, confidence, worker_key)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (entity_type, entity_key) DO NOTHING
+       RETURNING id`,
+      [r.entity_type, String(r.entity_key).toLowerCase().trim(), JSON.stringify(r.data),
+       JSON.stringify(r.source), r.confidence || 'fact', r.worker_key || null]
+    );
+    if (res.rows[0]) added += 1;
+  }
+  return added;
+}
