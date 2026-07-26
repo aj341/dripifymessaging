@@ -2,44 +2,33 @@
 //
 // This is the hive's real memory of the website: strategy docs, live-data
 // audits, cannibalisation reports, the performance tracker, schema, and the
-// pages and articles themselves. It is cloned on boot and pulled periodically,
-// so AJ's updates in that repo reach Sam and Ricky without a redeploy.
+// pages and articles themselves.
+//
+// Reached through the GitHub REST API, not a clone: the Railway container has
+// no git binary (the first deploy failed with `spawn git ENOENT`), and an API
+// client has no binary dependency, no disk to keep in sync, and no working copy
+// that can drift. Contents are cached in memory for 30 minutes, so AJ's edits
+// reach Sam, Ricky and Tom without a redeploy.
 //
 // WRITES ARE APPEND-ONLY, BY CONSTRUCTION (AJ's condition, 2026-07-26: "as long
 // as they don't delete anything that's there"):
-//   - new files only, under hive-drafts/ — a path outside that prefix is refused
-//   - an existing path is refused rather than overwritten
-//   - there is no delete, move or rmdir code path anywhere in this module, and
-//     `git rm`/`git mv` are never invoked
-// Everything AJ or anyone else put in that repo is therefore untouchable by the
-// hive: the worst a worker can do is add a file in its own drafts folder.
-import fs from 'node:fs';
-import fsp from 'node:fs/promises';
-import path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
-const run = promisify(execFile);
-
+//   - only PUT /contents, only under hive-drafts/ — a path outside that prefix
+//     is rewritten into it, so a tracked file can never be targeted
+//   - the request never carries a `sha`, which is GitHub's own rule for
+//     create-only: updating an existing file REQUIRES its sha, so an overwrite
+//     is rejected by GitHub (422) even if this code tried
+//   - there is no DELETE call anywhere in this module
+// The worst a worker can do is add a file in its own drafts folder.
 const REPO = process.env.CONTENT_REPO || 'aj341/designbees-website-content';
-const DIR = process.env.CONTENT_REPO_DIR || '/tmp/designbees-website-content';
-const TOKEN = process.env.GITHUB_TOKEN; // only needed to push; reads work without it
-const WRITE_PREFIX = 'hive-drafts/';    // the ONLY writable location
-const PULL_EVERY_MS = 30 * 60 * 1000;
+const BRANCH = process.env.CONTENT_REPO_BRANCH || 'main';
+const TOKEN = process.env.GITHUB_TOKEN; // reads work without it on a public repo
+const WRITE_PREFIX = 'hive-drafts/';
+const CACHE_MS = 30 * 60 * 1000;
 const MAX_READ = 60000;
+const API = 'https://api.github.com';
 
-let lastPull = 0;
-
-function remote(withToken) {
-  return withToken && TOKEN
-    ? `https://x-access-token:${TOKEN}@github.com/${REPO}.git`
-    : `https://github.com/${REPO}.git`;
-}
-
-async function git(args, opts = {}) {
-  const { stdout } = await run('git', ['-C', DIR, ...args], { maxBuffer: 20 * 1024 * 1024, ...opts });
-  return stdout;
-}
+let tree = { at: 0, files: [] };
+const fileCache = new Map(); // path -> { at, text }
 
 export function contentLibraryConfigured() {
   return Boolean(REPO);
@@ -47,49 +36,78 @@ export function contentLibraryConfigured() {
 export function contentLibraryWritable() {
   return Boolean(TOKEN);
 }
-export function contentLibraryReady() {
-  return fs.existsSync(path.join(DIR, '.git'));
+
+async function gh(path, { method = 'GET', body } = {}) {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'designbees-hive',
+      ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+      ...(body ? { 'content-type': 'application/json' } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(20000),
+  });
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    /* non-JSON error body */
+  }
+  if (!res.ok) {
+    const msg = data?.message || text.slice(0, 200);
+    const err = new Error(`GitHub ${res.status}: ${msg}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
 }
 
-/** Clone if absent, pull if stale. Safe to call often; never throws upward. */
-export async function ensureLibrary({ force = false } = {}) {
+/** Every file path in the repo. Cached — the tree changes rarely. */
+async function listFiles({ force = false } = {}) {
+  if (!force && tree.files.length && Date.now() - tree.at < CACHE_MS) return tree.files;
+  const data = await gh(`/repos/${REPO}/git/trees/${encodeURIComponent(BRANCH)}?recursive=1`);
+  const files = (data.tree || []).filter((n) => n.type === 'blob').map((n) => n.path);
+  tree = { at: Date.now(), files };
+  return files;
+}
+
+const TEXTUAL = /\.(md|markdown|txt|json|csv|ya?ml|html?|js|py)$/i;
+
+async function readFile(path) {
+  const hit = fileCache.get(path);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.text;
+  const data = await gh(`/repos/${REPO}/contents/${path.split('/').map(encodeURIComponent).join('/')}?ref=${encodeURIComponent(BRANCH)}`);
+  if (data.encoding !== 'base64' || typeof data.content !== 'string') {
+    throw new Error('unexpected content encoding');
+  }
+  const text = Buffer.from(data.content, 'base64').toString('utf8');
+  fileCache.set(path, { at: Date.now(), text });
+  return text;
+}
+
+/** Force the write path inside the drafts prefix, whatever was passed. */
+function draftPath(filename) {
+  let name = String(filename || '').replace(/^\/+/, '');
+  if (name.startsWith(WRITE_PREFIX)) name = name.slice(WRITE_PREFIX.length);
+  if (name.includes('/')) name = name.split('/').pop();
+  name = name.replace(/[^\w.\-]/g, '-');
+  if (!/\.[a-z0-9]{1,6}$/i.test(name)) name += '.md';
+  return `${WRITE_PREFIX}${name}`;
+}
+
+/** Boot-time reachability check; never throws upward. */
+export async function ensureLibrary() {
   try {
-    if (!contentLibraryReady()) {
-      await fsp.mkdir(path.dirname(DIR), { recursive: true });
-      await run('git', ['clone', '--depth', '50', remote(true), DIR], { maxBuffer: 20 * 1024 * 1024 });
-      // Keep the token out of .git/config on disk; it is re-supplied per push.
-      await git(['remote', 'set-url', 'origin', remote(false)]);
-      await git(['config', 'user.email', 'hive@designbees.com.au']);
-      await git(['config', 'user.name', 'Design Bees Hive']);
-      lastPull = Date.now();
-      console.log(`[content] cloned ${REPO} → ${DIR}`);
-      return true;
-    }
-    if (force || Date.now() - lastPull > PULL_EVERY_MS) {
-      await git(['pull', '--ff-only', remote(true), 'HEAD']).catch(async (e) => {
-        // A diverged local branch must never be "fixed" by discarding files.
-        console.warn('[content] pull failed, leaving the working copy alone:', e.message);
-      });
-      lastPull = Date.now();
-    }
+    const files = await listFiles({ force: true });
+    console.log(`[content] ${REPO}: ${files.length} file(s) reachable via the GitHub API`);
     return true;
   } catch (err) {
     console.error('[content] library unavailable:', err.message);
     return false;
   }
-}
-
-/** Resolve a repo-relative path, refusing anything that escapes the repo. */
-function safePath(rel) {
-  const clean = String(rel || '').replace(/^\/+/, '');
-  const abs = path.resolve(DIR, clean);
-  if (!abs.startsWith(path.resolve(DIR) + path.sep)) throw new Error('path escapes the repository');
-  return { abs, rel: path.relative(DIR, abs) };
-}
-
-async function listFiles() {
-  const out = await git(['ls-files']);
-  return out.split('\n').map((s) => s.trim()).filter(Boolean);
 }
 
 export const tools = [
@@ -138,11 +156,11 @@ export const tools = [
   {
     name: 'save_to_content_library',
     description:
-      "Add a NEW document to the content library, committed and pushed to AJ's repository so it lives with " +
-      `the rest of the content work. Append-only by design: files go under ${WRITE_PREFIX} and nothing that ` +
-      'already exists can be overwritten, moved or deleted — if the path is taken the call is refused and ' +
-      'you pick a new name. Use it for finished drafts and reports worth keeping outside the hive database. ' +
-      'AJ still approves anything customer-facing before it goes near the website.',
+      "Add a NEW document to the content library, committed to AJ's repository so it lives with the rest " +
+      `of the content work. Append-only by design: files go under ${WRITE_PREFIX} and nothing that already ` +
+      'exists can be overwritten, moved or deleted — if the path is taken the call is refused and you pick ' +
+      'a new name. Use it for finished drafts and reports worth keeping outside the hive database. AJ still ' +
+      'approves anything customer-facing before it goes near the website.',
     input_schema: {
       type: 'object',
       properties: {
@@ -160,7 +178,6 @@ export const tools = [
 
 export const handlers = {
   list_content_library: async (input = {}) => {
-    if (!(await ensureLibrary())) return 'The content library could not be reached this run. Say so rather than guessing what it contains.';
     try {
       const filter = String(input.contains || '').toLowerCase();
       let files = await listFiles();
@@ -168,38 +185,53 @@ export const handlers = {
       if (!files.length) return `No files${filter ? ` matching "${filter}"` : ''} in the content library.`;
       return `${files.length} document(s) in ${REPO}:\n${files.map((f) => `• ${f}`).join('\n')}\n\nRead any of them with read_content_doc.`;
     } catch (err) {
-      return `Could not list the content library: ${err.message}`;
+      return `Could not reach the content library (${err.message}). Say so rather than guessing what it contains.`;
     }
   },
 
   read_content_doc: async (input = {}) => {
-    if (!(await ensureLibrary())) return 'The content library could not be reached this run.';
     try {
-      const { abs, rel } = safePath(input.file);
-      const text = await fsp.readFile(abs, 'utf8');
-      return `# ${rel}\n\n${text.length > MAX_READ ? `${text.slice(0, MAX_READ)}\n\n[truncated]` : text}`;
+      const file = String(input.file || '').replace(/^\/+/, '');
+      if (!file) return 'Give the exact path from list_content_library.';
+      const text = await readFile(file);
+      return `# ${file}\n\n${text.length > MAX_READ ? `${text.slice(0, MAX_READ)}\n\n[truncated]` : text}`;
     } catch (err) {
       return `Could not read "${input.file}" (${err.message}). Check the exact path with list_content_library.`;
     }
   },
 
   search_content_library: async (input = {}) => {
-    if (!(await ensureLibrary())) return 'The content library could not be reached this run.';
     const q = String(input.query || '').trim();
     if (!q) return 'Give a phrase to search for.';
     const limit = Math.min(Math.max(Number(input.limit) || 40, 1), 200);
     try {
-      // -I skips binaries (the cover PNGs), -n gives line numbers.
-      const out = await git(['grep', '-I', '-n', '-i', '--', q]).catch((e) => {
-        if (e.code === 1) return ''; // git grep exits 1 on no match
-        throw e;
-      });
-      const lines = String(out).split('\n').filter(Boolean);
-      if (!lines.length) return `No mention of "${q}" anywhere in the content library. That itself is useful: nothing written on it yet.`;
-      const shown = lines.slice(0, limit).map((l) => `• ${l.slice(0, 300)}`);
+      const files = (await listFiles()).filter((f) => TEXTUAL.test(f));
+      const needle = q.toLowerCase();
+      const hits = [];
+      for (const f of files) {
+        let text;
+        try {
+          text = await readFile(f);
+        } catch {
+          continue; // one unreadable file must not kill the whole search
+        }
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(needle)) {
+            hits.push(`${f}:${i + 1}: ${lines[i].trim().slice(0, 280)}`);
+            if (hits.length >= limit * 3) break;
+          }
+        }
+        if (hits.length >= limit * 3) break;
+      }
+      if (!hits.length) {
+        return `No mention of "${q}" anywhere in the content library. That itself is useful: nothing written on it yet.`;
+      }
       return (
-        `${lines.length} matching line(s) for "${q}"${lines.length > limit ? ` (showing ${limit})` : ''}:\n` +
-        `${shown.join('\n')}\n\nRead the full file with read_content_doc before drawing conclusions.`
+        `${hits.length}${hits.length >= limit * 3 ? '+' : ''} matching line(s) for "${q}"` +
+        `${hits.length > limit ? ` (showing ${limit})` : ''}:\n` +
+        hits.slice(0, limit).map((h) => `• ${h}`).join('\n') +
+        `\n\nRead the full file with read_content_doc before drawing conclusions.`
       );
     } catch (err) {
       return `Search failed: ${err.message}`;
@@ -210,54 +242,31 @@ export const handlers = {
     if (!contentLibraryWritable()) {
       return 'The content library is READ-ONLY this run (no GITHUB_TOKEN on the service). Keep the document in the hive knowledge base instead and tell AJ it could not be filed to the repo.';
     }
-    if (!(await ensureLibrary())) return 'The content library could not be reached this run — nothing was written.';
-
     const body = String(input.content || '');
     const why = String(input.why || '').trim();
     if (!body.trim()) return 'Nothing written: content is empty.';
     if (!why) return 'Nothing written: `why` is required — it becomes the commit message.';
 
-    // Force the write inside the drafts prefix, whatever was passed.
-    let name = String(input.filename || '').replace(/^\/+/, '');
-    if (name.startsWith(WRITE_PREFIX)) name = name.slice(WRITE_PREFIX.length);
-    if (name.includes('/')) name = name.split('/').pop();
-    if (!/\.[a-z0-9]{1,6}$/i.test(name)) name += '.md';
-    const rel = `${WRITE_PREFIX}${name}`;
-
+    const path = draftPath(input.filename);
     try {
-      const { abs } = safePath(rel);
-      // Never overwrite. An existing path is a refusal, not a merge.
-      if (fs.existsSync(abs)) {
-        return `REFUSED: ${rel} already exists and nothing in the library may be overwritten. Choose a different name (add a date or a version suffix) and call again.`;
-      }
-      await fsp.mkdir(path.dirname(abs), { recursive: true });
-      await fsp.writeFile(abs, body, 'utf8');
-
-      // Stage ONLY this file — never `git add -A`, so an unrelated local change
-      // can't ride along, and nothing already tracked is ever touched.
-      await git(['add', '--', rel]);
-      const worker = ctx.workerKey || 'hive';
-      await git(['commit', '-m', `${worker}: ${why}`.slice(0, 200), '--', rel]);
-      try {
-        await git(['push', remote(true), 'HEAD']);
-      } catch (pushErr) {
-        // A push that fails must not leave a local commit behind: a diverged
-        // branch stops every later --ff-only pull, and the library would go
-        // quietly stale. Roll back exactly our own commit and remove exactly
-        // the file we just created — nothing that was already in the repo is
-        // ever staged, committed or removed by this path.
-        await git(['reset', '--soft', 'HEAD~1']).catch(() => {});
-        await git(['restore', '--staged', '--', rel]).catch(() => {});
-        await fsp.unlink(abs).catch(() => {});
-        return (
-          `NOT filed: the push to ${REPO} failed (${pushErr.message.slice(0, 200)}). The local commit and ` +
-          `the new file have been rolled back so the library stays in sync — nothing pre-existing was touched. ` +
-          `Keep the document in the hive knowledge base and tell AJ the repo write failed.`
-        );
-      }
-      return `Filed to ${REPO} as ${rel} and pushed. Nothing else in the repository was touched — the hive can only add files under ${WRITE_PREFIX}.`;
+      // No `sha` in the payload: GitHub requires one to update an existing
+      // file, so this call can only ever create. An existing path comes back
+      // 422 and is reported as a refusal, not retried with a sha.
+      await gh(`/repos/${REPO}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, {
+        method: 'PUT',
+        body: {
+          message: `${ctx.workerKey || 'hive'}: ${why}`.slice(0, 200),
+          content: Buffer.from(body, 'utf8').toString('base64'),
+          branch: BRANCH,
+        },
+      });
+      tree = { at: 0, files: [] }; // the listing is stale now
+      return `Filed to ${REPO} as ${path}. Nothing else in the repository was touched — the hive can only add files under ${WRITE_PREFIX}.`;
     } catch (err) {
-      return `Could not file the document (${err.message}). It was NOT pushed; keep it in the hive knowledge base and report the failure.`;
+      if (err.status === 422) {
+        return `REFUSED: ${path} already exists and nothing in the library may be overwritten. Choose a different name (add a date or a version suffix) and call again.`;
+      }
+      return `Could not file the document (${err.message}). Nothing was written; keep it in the hive knowledge base and report the failure.`;
     }
   },
 };
