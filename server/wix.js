@@ -439,6 +439,49 @@ export function getDemos() {
   return (snap && snap.demos) || null;
 }
 
+// --- Clay enrichment --------------------------------------------------------
+// Wix knows what a client pays; it has no idea who they are. Title, role,
+// industry and headcount come from Clay (with titles AJ corrected by hand), and
+// are joined on here by email — falling back to domain so a client who pays
+// under a second address still resolves. This has to happen on the live path as
+// well as the snapshot: the moment the Wix key started working, Ian would
+// otherwise have been left with nothing but domains and spend.
+let _enrichment;
+function enrichmentIndex() {
+  if (_enrichment !== undefined) return _enrichment;
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(__dir, 'data', 'enrichment.json'), 'utf8'));
+    const byEmail = raw.byEmail || {};
+    const byDomain = {};
+    for (const rec of Object.values(byEmail)) {
+      if (rec.domain && !byDomain[rec.domain]) byDomain[rec.domain] = rec;
+    }
+    _enrichment = { byEmail, byDomain, builtAt: raw.builtAt };
+  } catch (err) {
+    console.error('[wix] no enrichment file:', err.message);
+    _enrichment = { byEmail: {}, byDomain: {} };
+  }
+  return _enrichment;
+}
+
+// Company facts are true of anyone at the domain; a title belongs to one person.
+// So an exact email match carries everything, while a domain-only match carries
+// the company fields alone — otherwise a colleague paying from a second address
+// would inherit someone else's job title.
+const COMPANY_FIELDS = ['company', 'companyType', 'industry', 'subIndustry', 'employeeCount', 'sizeBand'];
+const PERSON_FIELDS = ['title', 'roleType'];
+
+/** Attach known firmographics to a cohort member. Never overwrites Wix facts. */
+export function enrich(m) {
+  const idx = enrichmentIndex();
+  const exact = idx.byEmail[String(m.email || '').toLowerCase()];
+  const rec = exact || idx.byDomain[String(m.domain || '').toLowerCase()];
+  if (!rec) return m;
+  const fields = exact ? [...COMPANY_FIELDS, ...PERSON_FIELDS] : COMPANY_FIELDS;
+  for (const f of fields) if (rec[f] != null && m[f] == null) m[f] = rec[f];
+  return m;
+}
+
 // --- Customer cohorts (for Ian) --------------------------------------------
 // Deterministic customer segments from Wix payments. The founder/marketing/
 // agency breakdown is a later step (needs enrichment); this gives the lists.
@@ -473,15 +516,16 @@ export function buildCohorts(txns, now = new Date()) {
     if (/honeycomb/i.test(plan) && d >= Y2026) c.honey2026 = true;
   }
 
-  const member = (c) => ({
-    name: c.name,
-    email: c.email,
-    domain: c.domain,
-    plans: [...c.plans].filter(Boolean),
-    tenureMonths: +((now.getTime() - c.first.getTime()) / (30.44 * DAY)).toFixed(1),
-    spend: Math.round(c.spend),
-    lastActive: c.last.toISOString().slice(0, 10),
-  });
+  const member = (c) =>
+    enrich({
+      name: c.name,
+      email: c.email,
+      domain: c.domain,
+      plans: [...c.plans].filter(Boolean),
+      tenureMonths: +((now.getTime() - c.first.getTime()) / (30.44 * DAY)).toFixed(1),
+      spend: Math.round(c.spend),
+      lastActive: c.last.toISOString().slice(0, 10),
+    });
   const list = Object.values(clients);
   const bySpend = (a, b) => b.spend - a.spend;
 
