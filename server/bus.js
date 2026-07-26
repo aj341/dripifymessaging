@@ -227,7 +227,7 @@ async function flushOutbox() {
 }
 
 // --- The context every worker gets ------------------------------------------
-function buildCtx(spec, depth) {
+export function buildCtx(spec, depth) {
   return {
     workerKey: spec.key,
     saveKnowledge: async (args) => {
@@ -312,7 +312,7 @@ function buildCtx(spec, depth) {
 }
 
 // --- Running one job ---------------------------------------------------------
-const WEB_SEARCH = { type: 'web_search_20260209', name: 'web_search' };
+export const WEB_SEARCH = { type: 'web_search_20260209', name: 'web_search' };
 
 /**
  * Strip server-side tool calls that never produced a result in the same turn.
@@ -324,7 +324,7 @@ const WEB_SEARCH = { type: 'web_search_20260209', name: 'web_search' };
  * a killed job means the draft AJ was waiting on never reaches the dashboard.
  * Completed searches keep their results; only the pending stub is dropped.
  */
-function settled(content) {
+export function settled(content) {
   const done = new Set(content.filter((b) => b.tool_use_id).map((b) => b.tool_use_id));
   return content.filter((b) => b.type !== 'server_tool_use' || done.has(b.id));
 }
