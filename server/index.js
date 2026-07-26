@@ -24,7 +24,13 @@ import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autoru
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
-import { wixOauthConfigured, wixOauthConnected, wixInstallUrl, completeWixAuth } from './wix-oauth.js';
+import {
+  wixOauthConfigured,
+  wixOauthConnected,
+  extractInstanceId,
+  storeInstanceId as storeWixInstanceId,
+  testConnection as testWixConnection,
+} from './wix-oauth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -246,27 +252,56 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
-// --- Wix app consent ----------------------------------------------------------
-// Same shape as Google: AJ visits /auth/wix once, the installer bounces back to
-// the callback with a code, and the refresh token lives in settings from then on.
+// --- Wix app connection ---------------------------------------------------------
+// Wix's current app auth needs no redirect and no consent screen — just the app
+// credentials plus the instance ID of the install on the Design Bees site. AJ
+// pastes anything containing that ID once; we extract it, mint a token, and
+// prove the connection by reading the app instance back.
+const WIX_FORM = (msg = '') => `
+  <div style="font-family:sans-serif;max-width:560px;margin:40px auto;line-height:1.5">
+    <h2>Connect Wix</h2>${msg}
+    <p>Open your app's page in the site dashboard (Apps → Manage Apps → your custom app),
+    copy the <b>full URL</b> from the browser, and paste it below. A bare instance ID or
+    the signed <code>instance=</code> token works too.</p>
+    <form method="post" action="/auth/wix">
+      <input name="paste" style="width:100%;padding:10px;font-size:15px" placeholder="Paste the URL, token or instance ID here" />
+      <button style="margin-top:12px;padding:10px 24px;font-size:15px">Connect</button>
+    </form>
+  </div>`;
+
 app.get('/auth/wix', async (_req, res) => {
   if (!wixOauthConfigured()) {
     return res
       .status(503)
       .send('Wix app is not configured — set WIX_APP_ID and WIX_APP_SECRET on the Railway service, then reload this page.');
   }
-  res.redirect(wixInstallUrl());
+  if (await wixOauthConnected()) {
+    try {
+      const t = await testWixConnection();
+      return res.send(
+        `<h2>Connected.</h2><p>App "${t.appName || 'custom app'}" on ${t.siteName || 'your site'} — token minted and verified. Read-only permissions: ${
+          (t.permissions || []).join(', ') || '(not reported)'
+        }</p>`
+      );
+    } catch (err) {
+      return res.send(WIX_FORM(`<p style="color:#a00">Stored instance ID no longer works (${err.message}). Paste a fresh one:</p>`));
+    }
+  }
+  res.send(WIX_FORM());
 });
 
-app.get('/auth/wix/callback', async (req, res) => {
-  const { code, error } = req.query;
-  if (error) return res.status(400).send(`Wix returned an error: ${error}`);
-  if (!code) return res.status(400).send('No authorisation code returned by the Wix installer.');
+app.post('/auth/wix', async (req, res) => {
   try {
-    await completeWixAuth(String(code));
-    res.send('<h2>Connected.</h2><p>The hive can now read plan orders, store orders and contacts from Wix — read-only. You can close this tab.</p>');
+    const id = extractInstanceId(req.body?.paste);
+    if (!id) return res.send(WIX_FORM('<p style="color:#a00">Could not find an instance ID in that paste. Try the full dashboard URL of the app.</p>'));
+    await storeWixInstanceId(id);
+    const t = await testWixConnection();
+    res.send(
+      `<h2>Connected.</h2><p>Instance ${id} verified — app "${t.appName || 'custom app'}" on ${t.siteName || 'your site'}, read-only. ` +
+        `You can close this tab; Fred is live.</p>`
+    );
   } catch (err) {
-    res.status(500).send(`Could not complete Wix auth: ${err.message}`);
+    res.send(WIX_FORM(`<p style="color:#a00">That instance ID did not verify: ${err.message}. Check the app is installed on the Design Bees site and try again.</p>`));
   }
 });
 
@@ -398,7 +433,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v27-wix-live | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v28-wix-client-credentials | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
