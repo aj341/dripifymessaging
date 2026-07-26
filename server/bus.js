@@ -353,6 +353,10 @@ async function runJob(job) {
 
   const messages = [{ role: 'user', content: job.prompt }];
   let text = '';
+  // The server-side web-search tool runs in a container; once a response has
+  // used it, every follow-up request in the same conversation must name that
+  // container or the API rejects the turn ("container_id is required...").
+  let container = null;
 
   for (let turn = 0; turn < 8; turn++) {
     const res = await client.messages.create({
@@ -362,7 +366,9 @@ async function runJob(job) {
       system,
       tools,
       messages,
+      ...(container ? { container } : {}),
     });
+    if (res.container?.id) container = res.container.id;
     text = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n').trim();
     if (res.stop_reason !== 'tool_use') break;
 
