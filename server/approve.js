@@ -76,9 +76,42 @@ const PAGE_CSS = `
   .tab.on{background:#26221a;color:#faf8f3}
   .badge{font-size:11.5px;font-weight:700;background:#f6e8cc;color:#8a5a0b;border-radius:99px;padding:1px 8px}
   .tab.on .badge{background:#b97a0e;color:#fff}
+  .o-sam{background:#e2ecf5;color:#2b5c86}.o-ricky{background:#efe6f5;color:#6a3f8c}
+  .o-other{background:#f3efe6;color:#6e6553}.o-none{background:#f5e4dc;color:#a64b2a}
+  .weekbar{display:flex;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid #e6dfcf;border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:14px}
+  .weekbar b{font-size:16px}
   .why{font-size:13.5px;color:#4a4436;margin-top:7px;padding-left:10px;border-left:2px solid #e6dfcf}
   form{display:inline}
 `;
+
+/** ISO week stamp, matching the one drafts are tagged with. */
+function isoWeek(d = new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return `${t.getUTCFullYear()}-W${String(Math.ceil(((t - yearStart) / 86400000 + 1) / 7)).padStart(2, '0')}`;
+}
+
+/** This week against AJ's 2-proposed + 2-gap target, and how the two routes
+ *  have fared over all time — the scoreboard for the origin experiment. */
+function weekBar(rows) {
+  const wk = isoWeek();
+  const thisWeek = rows.map(asData).filter((d) => d.week === wk);
+  const n = (o) => thisWeek.filter((d) => d.origin === o).length;
+  const all = rows.map(asData);
+  const approved = (o) => all.filter((d) => d.origin === o && d.status === 'approved-by-aj').length;
+  const filed = (o) => all.filter((d) => d.origin === o).length;
+  const rate = (o) => (filed(o) ? `${approved(o)}/${filed(o)} approved` : 'none yet');
+  return (
+    `<div class="weekbar">` +
+    `<span>${esc(wk)} · target 2 + 2</span>` +
+    `<span>Sam proposed <b>${n('sam-proposed')}</b>/2</span>` +
+    `<span>Ricky gaps <b>${n('ricky-gap')}</b>/2</span>` +
+    `<span class="meta">All time — Sam: ${esc(rate('sam-proposed'))} · Ricky: ${esc(rate('ricky-gap'))}</span>` +
+    `</div>`
+  );
+}
 
 function statusPill(status) {
   const cls =
@@ -129,13 +162,23 @@ export function mountApprove(app) {
         const title = d.query || d.working_title || d.hook || row.entity_key;
         const flags = Array.isArray(d.voice_warnings) ? d.voice_warnings.length : 0;
         const kind = isSocial(d) ? 'LinkedIn' : d.format === 'blog-outline' ? 'Blog outline' : 'Blog post';
+        // Origin is AJ's running experiment: 2 Sam-proposed vs 2 Ricky-gap a
+        // week, to see which route produces content that performs.
+        const ORIGINS = {
+          'sam-proposed': ['Sam proposed', 'o-sam'],
+          'ricky-gap': ['Ricky gap', 'o-ricky'],
+          queue: ['Queue', 'o-other'],
+          'aj-request': ['AJ asked', 'o-other'],
+        };
+        const [oLabel, oCls] = ORIGINS[d.origin] || ['origin not tagged', 'o-none'];
         // A one-line reason at list level, so the queue is scannable without
         // opening every draft.
         const why = d.justification?.value_to_design_bees || d.why_this_lands || d.demand_evidence || '';
         return (
           `<div class="card"><b><a href="/approve/${encodeURIComponent(row.entity_key)}?t=${t}">${esc(title)}</a></b>` +
           statusPill(d.status) +
-          `<div class="meta">${esc(kind)}${d.category ? ` · ${esc(d.category)}` : ''}${d.word_count ? ` · ${d.word_count} words` : ''}${
+          `<span class="pill ${oCls}">${esc(oLabel)}</span>` +
+          `<div class="meta">${esc(kind)}${d.week ? ` · ${esc(d.week)}` : ''}${d.category ? ` · ${esc(d.category)}` : ''}${d.word_count ? ` · ${d.word_count} words` : ''}${
             flags ? ` · <b>${flags} voice flag(s)</b>` : ' · voice-clean'
           } · ${esc(String(row.updated_at).slice(0, 10))}</div>` +
           (why ? `<div class="why">${esc(oneLine(why, 190))}</div>` : '') +
@@ -155,6 +198,7 @@ export function mountApprove(app) {
           `<div class="wrap"><h1>Content approvals</h1>` +
           `<p class="sub">${waitingAll.length} draft(s) waiting · approving marks a draft ready, it never posts anything</p>` +
           `<div class="tabs">${tab('all', 'All', waitingAll.length)}${tab('blog', 'Blog', blogWaiting)}${tab('social', 'Socials', socialWaiting)}</div>` +
+          weekBar(rows) +
           (pending.length
             ? pending.map(card).join('') +
               `<form method="post" action="/approve/reject-all?t=${t}${view === 'all' ? '' : `&view=${view}`}" ` +
