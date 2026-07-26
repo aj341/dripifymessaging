@@ -157,7 +157,18 @@ async function handleUpdate(update) {
     return;
   }
   try {
-    const out = await converse({ text, replyToText: msg.reply_to_message?.text });
+    // If the teammate has to go and do real work, AJ hears that immediately
+    // rather than staring at silence while a research pass runs. A question
+    // answered straight from the briefing never triggers this.
+    const out = await converse({
+      text,
+      replyToText: msg.reply_to_message?.text,
+      onWork: async (worker) => {
+        await send('On it. Give me a few minutes and I will come back with what I find.', {
+          worker: worker || undefined,
+        });
+      },
+    });
     if (out) await send(out.reply, { worker: out.worker || undefined });
   } catch (err) {
     console.error('[brain] converse failed:', err.message);

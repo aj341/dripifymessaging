@@ -48,25 +48,28 @@ TEAM.radar = {
   brief: 'You own research AND the whole AEO/SEO demand pipeline (this moved to you from Tom on ' +
     '2026-07-26 — never say Tom holds it). You hunt Reddit, forums, news and the web for pain points and ' +
     'trends, and you judge which search queries are worth competing for. Your background self holds the ' +
-    'live tools: Google Search Console and GA4 (read-only), keyword volumes via DataForSEO when configured, ' +
-    'the query-verdict tools, demo transcripts and the blog engine pack. This chat cannot run those tools ' +
-    'directly — when AJ wants that data, use ask_teammate to queue Ricky (yourself) with the specific ask, ' +
-    'and never claim you lack the access.',
+    'live tools: Google Search Console and GA4 (read-only), Reddit and feed scans, keyword volumes via DataForSEO when configured, ' +
+    'the query-verdict tools, demo transcripts, the content archive and the blog engine pack. You hold every ' +
+    'one of them HERE, in this conversation, so when AJ asks a research question you go and look before you ' +
+    'answer. Never say you will queue it and come back unless the work genuinely needs a long background run.',
 };
 TEAM.forge = {
   key: 'forge', name: 'Tom', emoji: '🛠️', title: 'Tools & Analytics',
   brief: 'You own the platform the hive runs on — NOT search research; that is Ricky\'s since 2026-07-26. ' +
     'You watch hive health (job failures, stuck queues, question flow), you own the /approve content ' +
-    'dashboard, and you evaluate candidate tools and integrations for AJ. Your background self holds the ' +
-    'hive_health and analytics tools; queue yourself with ask_teammate when AJ wants those numbers.',
+    'dashboard, and you evaluate candidate tools and integrations for AJ. You hold hive_health, the analytics ' +
+    'tools and the content library HERE in this conversation, so run them and answer with the real numbers.',
 };
 TEAM.voice = {
   key: 'voice', name: 'Sam', emoji: '📣', title: 'Socials & Content',
   brief: "You own content, governed by AJ's blog engine pack (the operator pack, content queue and L99 " +
     'voice spec in the repo). You draft only when demand is verified — a gap Ricky judged winnable, an ' +
     'evidenced pain, or a queue item — and you draft only; you never publish, AJ approves everything at ' +
-    '/approve or in this thread. Customer quotes and client-shaped hypotheticals need AJ\'s approval ' +
-    'before they appear in any draft.',
+    '/approve, never in this thread. You hold your full drafting kit HERE: the blog engine pack, the content ' +
+    'archive and live post list, Search Console, demo transcripts, Reddit and the feeds, propose_topic and ' +
+    'request_research. When AJ asks for a post, do the work in this conversation and file the draft with ' +
+    'draft_blog_post so it lands on the dashboard, then tell him it is there with the link. Customer quotes ' +
+    'and client-shaped hypotheticals need AJ\'s approval before they appear in any draft.',
 };
 TEAM.queen = {
   key: 'queen', name: 'George', emoji: '👑', title: 'GM',
@@ -332,8 +335,41 @@ async function remember(workerKey, note) {
   return `Saved. You now have ${value.length} standing instruction(s) from AJ.`;
 }
 
+// --- The teammate's own tools ------------------------------------------------
+/**
+ * Load the routed teammate's real tool set, the one their background job runs
+ * with, and build the context those handlers expect. Falls back to the three
+ * chat tools when nobody is routed or the specs have not loaded yet.
+ */
+async function liveTools(worker) {
+  const base = { spec: null, tools: TOOLS, handlers: {}, ctx: null };
+  if (!worker) return base;
+  try {
+    const bus = await import('./bus.js');
+    const spec = bus.getSpec(worker.key);
+    if (!spec) return base;
+    const tools = [...TOOLS, ...(spec.tools || [])];
+    if (spec.useWebSearch) tools.push(bus.WEB_SEARCH);
+    return { spec, tools, handlers: spec.handlers || {}, ctx: bus.buildCtx(spec, 0) };
+  } catch (e) {
+    console.error('[brain] live tools unavailable:', e.message);
+    return base;
+  }
+}
+
+async function settled(content) {
+  const bus = await import('./bus.js');
+  return bus.settled(content);
+}
+
 // --- The reply ---------------------------------------------------------------
-function systemPrompt(worker, briefing) {
+function toolLine(spec) {
+  const names = (spec?.tools || []).map((t) => t.name).filter(Boolean);
+  if (!names.length) return '';
+  return `# Your tools, live in this conversation\n${names.join(', ')}\n\n`;
+}
+
+function systemPrompt(worker, briefing, spec) {
   const who = worker
     ? `You are ${worker.name}, ${worker.title} at Design Bees. ${worker.brief}`
     : `You are the Design Bees hive — answer as the teammate best suited to the question ` +
@@ -355,12 +391,13 @@ function systemPrompt(worker, briefing) {
     `They are real teammates running in the background, not people AJ has to chase. If something is ` +
     `another teammate's job, or you need data you don't have, use ask_teammate — never tell AJ to go ` +
     `and ask them himself, and never say you have no way to contact anyone.\n` +
-    `Live data access, held by the background workers (not by this chat): Ricky — Search Console, GA4, ` +
-    `keyword volumes, query verdicts, transcripts; Tom — hive health and the /approve dashboard; Fred — ` +
-    `live Wix plan orders, store orders and contacts; Sam — the blog engine pack. When AJ asks for ` +
-    `something needing those tools, ask_teammate the right worker (including yourself) with the specific ` +
-    `request — never say the hive lacks the access, and never claim a teammate holds a tool the list ` +
-    `above gives to someone else.\n\n` +
+    `Use ask_teammate when the work belongs to SOMEONE ELSE, or when it is a long run better done in the ` +
+    `background. Never use it to avoid doing your own job: your own tools are listed below and they run ` +
+    `right here, in this conversation.\n\n` +
+    `${toolLine(spec)}` +
+    `WORK BEFORE YOU ANSWER. If AJ asks something your tools can settle, call them and answer from what ` +
+    `came back. "I'll look into it and come back to you" is not an answer when the tool that answers it ` +
+    `is in your hand. If a job genuinely takes minutes, say what you are doing, do it, then report.\n\n` +
     `When AJ gives you a standing instruction, a correction, or a target, call the remember tool ` +
     `so it sticks. Don't announce that you're doing it — just do it and carry on.\n\n` +
     `Use *single asterisks* for bold (Telegram markdown), never **double**.\n\n` +
@@ -372,7 +409,7 @@ function systemPrompt(worker, briefing) {
  * Reason about AJ's message and return the reply plus who should say it.
  * Returns null when there is no LLM key configured.
  */
-export async function converse({ text, replyToText }) {
+export async function converse({ text, replyToText, onWork }) {
   if (!client) return null;
   const worker = routeWorker(text, replyToText);
   const briefing = await buildBriefing().catch((e) => {
@@ -380,20 +417,32 @@ export async function converse({ text, replyToText }) {
     return '';
   });
 
+  // The teammate AJ is talking to gets the SAME tools their background self
+  // holds. Before this, the chat had three tools and the real work sat in a
+  // background job, so asking Ricky a research question got you "I've queued
+  // it" and nothing else. Same teammate, two code paths, and the one AJ
+  // actually talks to was the one built without hands.
+  const { spec, tools, handlers, ctx } = await liveTools(worker);
   const history = normalise(await recentTurns().catch(() => []));
   const messages = [...history, { role: 'user', content: text }];
-  const system = systemPrompt(worker, briefing);
+  const system = systemPrompt(worker, briefing, spec);
 
   let reply = '';
-  for (let turn = 0; turn < 4; turn++) {
+  let container = null;
+  let announced = false;
+  // Real research takes more than four turns. Reading Search Console, checking
+  // the ownership map and searching the web is three calls before a thought.
+  for (let turn = 0; turn < 12; turn++) {
     const res = await client.messages.create({
       model: MODEL,
       max_tokens: 4096,
       output_config: { effort: 'low' },
       system,
-      tools: TOOLS,
+      tools,
       messages,
+      ...(container ? { container } : {}),
     });
+    if (res.container?.id) container = res.container.id;
 
     reply = res.content
       .filter((b) => b.type === 'text')
@@ -401,10 +450,21 @@ export async function converse({ text, replyToText }) {
       .join('\n')
       .trim();
 
+    if (res.stop_reason === 'pause_turn') {
+      messages.push({ role: 'assistant', content: await settled(res.content) });
+      continue;
+    }
     if (res.stop_reason !== 'tool_use') break;
 
     const calls = res.content.filter((b) => b.type === 'tool_use');
-    messages.push({ role: 'assistant', content: res.content });
+    // AJ hears "on it" the moment real work starts, not four minutes later when
+    // it finishes. A question answered straight from the briefing never trips
+    // this, so it stays quiet when there is nothing to wait for.
+    if (!announced && onWork && calls.length) {
+      announced = true;
+      await onWork(worker).catch(() => {});
+    }
+    messages.push({ role: 'assistant', content: await settled(res.content) });
     const results = [];
     for (const c of calls) {
       let out;
@@ -413,11 +473,12 @@ export async function converse({ text, replyToText }) {
         if (c.name === 'ask_teammate') out = await askTeammate(wk, c.input);
         else if (c.name === 'remember') out = await remember(wk, c.input.note);
         else if (c.name === 'save_knowledge') out = await storeKnowledge(wk, c.input);
+        else if (handlers[c.name]) out = await handlers[c.name](c.input, ctx);
         else out = `Unknown tool ${c.name}`;
       } catch (err) {
         out = `Failed: ${err.message}`;
       }
-      results.push({ type: 'tool_result', tool_use_id: c.id, content: out });
+      results.push({ type: 'tool_result', tool_use_id: c.id, content: String(out).slice(0, 8000) });
     }
     messages.push({ role: 'user', content: results });
   }
