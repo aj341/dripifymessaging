@@ -15,11 +15,13 @@ import { send } from './telegram.js';
 import { approveUrl } from './dashboard-link.js';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
-// Model tiering (AJ, after the first Opus-priced day emptied the API credit):
-// routine background work — scans, validations, health checks — runs on the
-// Sonnet tier; a spec that genuinely needs top-tier judgment (Sam writing
-// customer-facing copy, George synthesising the brief) opts up with
-// `model: PREMIUM_MODEL` in its spec. Same evidence rules either way.
+// Model tiering. AJ pays for this hive by the token on his Anthropic API key,
+// on top of a Max plan he has already paid for, so the rule since 2026-07-26 is
+// blunt: UNSUPERVISED work runs on the cheaper tier, full stop. A spec may name
+// PREMIUM_MODEL and it only takes effect when AJ asked for the job himself,
+// where the volume is bounded by him and the quality is what he is waiting on.
+// Before this, one feed item could wake Sam on the premium tier with web search,
+// every hour, whether or not anything came of it.
 const DEFAULT_MODEL = 'claude-sonnet-5';
 export const PREMIUM_MODEL = 'claude-opus-5';
 const MAX_DEPTH = 3;        // a finding may cascade at most three hops
@@ -402,9 +404,13 @@ async function runJob(job) {
   // container or the API rejects the turn ("container_id is required...").
   let container = null;
 
+  // Premium only when AJ is the one waiting. Everything the hive decides to do
+  // on its own runs on the cheaper tier.
+  const model = job.topic === 'manual' ? spec.model || DEFAULT_MODEL : DEFAULT_MODEL;
+
   for (let turn = 0; turn < 8; turn++) {
     const res = await client.messages.create({
-      model: spec.model || DEFAULT_MODEL,
+      model,
       max_tokens: 8000,
       output_config: { effort: 'low' },
       system,

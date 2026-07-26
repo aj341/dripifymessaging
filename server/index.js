@@ -25,6 +25,7 @@ import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autoru
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
+import { mountFiling } from './filing.js';
 import { ensureLibrary, contentLibraryWritable } from './content-library.js';
 import { sweepReddit } from './workers/reddit-monitor.js';
 import { sweepFeeds } from './workers/feeds.js';
@@ -381,7 +382,8 @@ app.get('/', hiveWall);
 app.get('/hive', hiveWall);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 mountApprove(app); // AJ's content approval dashboard (/approve?t=DASHBOARD_TOKEN)
-mountIngest(app); // weekly Dripify results (/ingest/dripify?t=DASHBOARD_TOKEN)
+mountIngest(app);
+mountFiling(app); // weekly Dripify results (/ingest/dripify?t=DASHBOARD_TOKEN)
 
 // --- Boot ------------------------------------------------------------------
 // Retry the migration a few times: on a fresh deploy the private database DNS
@@ -447,9 +449,11 @@ function scheduleWorkers() {
 
   // The feed watchlist — subreddits, trade press and news queries. Paced to
   // each host's limits, so a full sweep takes minutes and runs quietly.
+  // Every four hours, not hourly. Nothing in this feed list changes fast enough
+  // to justify four times the downstream model calls (AJ, on cost, 2026-07-26).
   setInterval(() => {
     sweepFeeds().catch((e) => console.error('[feeds] sweep:', e.message));
-  }, 60 * 60 * 1000);
+  }, 4 * 60 * 60 * 1000);
   setTimeout(() => sweepFeeds().catch(() => {}), 90000);
 
   setInterval(() => {
@@ -504,7 +508,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v50-publish-and-keywords | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v51-cheap-by-default | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

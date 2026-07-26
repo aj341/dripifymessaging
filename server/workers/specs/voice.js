@@ -264,7 +264,11 @@ ${ANALYTICS_STATUS}`,
   subscribes: [
     'pain:demo:*', 'pain:*', 'seo:gap', 'trend:*', 'content:request',
     'outreach:*', // Dripify results — which messaging actually got replies
-    'community:mention:*', // someone describing our problem in their own words
+    // NOT community:mention:* any more. The hourly feed sweep woke Sam on every
+    // match, which is a paid model call per item whether or not anything came of
+    // it. Ricky already watches the same feeds; when a thread is genuinely worth
+    // writing about he hands it over as a pain or a gap, which is the path the
+    // rest of the design already uses.
   ],
   emits: ['content:draft'],
   useWebSearch: true,
