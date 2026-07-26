@@ -219,11 +219,12 @@
       "sizeBand": "51-200",
       "domain": "zipline.io",
       "name": "Ajita Joshi",
-      "city": "San Francisco",
-      "state": "CA",
-      "country": "United States",
+      "city": "Sydney",
+      "state": "NSW",
+      "country": "Australia",
       "locationConfidence": "high",
-      "locationSource": "Retail Zipline (getzipline.com), HQ San Francisco \u2014 our one non-ANZ client"
+      "locationSource": "AJ confirmed directly + her LinkedIn (Sydney, NSW), 2026-07-26",
+      "note": "AJ 2026-07-26: Ajita is the client personally, based in Sydney \u2014 she is no longer the marketing base at Retail Zipline (San Francisco). Do not attribute her to Zipline or to the US; treat as an individual marketing leader (Brand | Content | Product Marketing)."
     },
     "kristina.charchalis@aldercon.com.au": {
       "title": "Brand and Communications Manager",
@@ -251,11 +252,12 @@
       "sizeBand": "51-200",
       "domain": "zipline.io",
       "name": "Nonny Evans",
-      "city": "San Francisco",
-      "state": "CA",
-      "country": "United States",
-      "locationConfidence": "high",
-      "locationSource": "Retail Zipline (getzipline.com), HQ San Francisco \u2014 our one non-ANZ client"
+      "city": null,
+      "state": null,
+      "country": null,
+      "locationConfidence": "low",
+      "locationSource": "zipline.io was initially misidentified as Retail Zipline (San Francisco); Clay data says care-economy B2B SaaS, a different company. Location unknown \u2014 confirm with AJ.",
+      "note": "AJ 2026-07-26: Ajita is the client personally, based in Sydney \u2014 she is no longer the marketing base at Retail Zipline (San Francisco). Do not attribute her to Zipline or to the US; treat as an individual marketing leader (Brand | Content | Product Marketing)."
     },
     "ayoung@atlasag.com": {
       "title": "Senior Events, Community and PR Manager",
