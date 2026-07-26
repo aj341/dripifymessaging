@@ -12,6 +12,7 @@ import { query as _q } from './db.js';
 import { writeSignal, saveKnowledge, getKnowledge, allKnowledge, askQuestion, getSetting, setSetting } from './brain.js';
 import { applyKnowledge } from './wix.js';
 import { send } from './telegram.js';
+import { approveUrl } from './dashboard-link.js';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 // Model tiering (AJ, after the first Opus-priced day emptied the API credit):
@@ -23,6 +24,9 @@ const DEFAULT_MODEL = 'claude-sonnet-5';
 export const PREMIUM_MODEL = 'claude-opus-5';
 const MAX_DEPTH = 3;        // a finding may cascade at most three hops
 const MAX_JOBS_PER_TICK = 4;
+// The longest a single teammate update may be in Telegram. Long enough for a
+// headline and the reason it matters; far too short to paste a blog post into.
+const NOTIFY_MAX = 600;
 // Background work runs by default (AJ's call, 2026-07-26) — HIVE_AUTORUN=0
 // turns it off. The cost controls that made this safe to switch back on are
 // the reply gate and the quiet window below, not the off switch.
@@ -252,7 +256,26 @@ function buildCtx(spec, depth) {
       );
       return r.rows;
     },
-    notify: async (text) => queueOut(`${spec.emoji} *${spec.name}*\n${text}`),
+    // Telegram is a notification channel, not a reading surface. A teammate who
+    // pastes a draft into the thread has put the decision in the wrong place —
+    // the work belongs on the dashboard, where the case, the evidence and the
+    // approve buttons sit, and the thread should only say "go and look". The
+    // briefs asked for this and were ignored, so it is enforced here instead.
+    notify: async (text) => {
+      const t = String(text || '').trim();
+      if (!t) return 'Nothing to send.';
+      if (t.length <= NOTIFY_MAX) {
+        queueOut(`${spec.emoji} *${spec.name}*\n${t}`);
+        return 'Sent to the thread.';
+      }
+      const head = t.slice(0, NOTIFY_MAX).replace(/\s+\S*$/, '');
+      queueOut(`${spec.emoji} *${spec.name}*\n${head}…\n\nThe rest is on the dashboard: ${approveUrl()}`);
+      return (
+        `That was ${t.length} characters — the thread carries a headline, not the work. It was trimmed to ` +
+        `${NOTIFY_MAX} and pointed at the dashboard. Anything AJ has to read properly (a draft, a case, a ` +
+        `table) goes to the dashboard via the right tool; notify() tells him it is there and why it matters.`
+      );
+    },
     askAJ: async ({ question, why, assumption }) => {
       const log = await questionLog();
 
@@ -416,10 +439,17 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
     // Claim one job atomically so overlapping ticks can't double-run it. A
     // re-queued job waits for a fresh tick (started_at check) so retries get
     // the 3-minute spacing instead of hammering a struggling API.
+    //
+    // ORDERING MATTERS: what AJ asked for directly ('manual') goes first, then
+    // the standing daily work, then everything else oldest-first. Without this,
+    // a burst of cascade jobs buries a direct request behind them — which is
+    // exactly what happened when he asked for proposals and waited half an hour
+    // while George worked through a backlog of feed signals.
     const claim = await _q(
       `UPDATE jobs SET status = 'running', started_at = now()
         WHERE id = (SELECT id FROM jobs WHERE status = 'pending'
-                     ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED)
+                     ORDER BY (topic = 'manual') DESC, (topic = 'daily') DESC, created_at
+                     LIMIT 1 FOR UPDATE SKIP LOCKED)
         RETURNING *`
     );
     const job = claim.rows[0];

@@ -100,7 +100,12 @@ export default {
 
 Telegram markdown only: single *asterisks* for bold, never double.`,
 
-  subscribes: ['*'],
+  // NOT '*'. George subscribing to every signal gave him one job per signal —
+  // the feed sweep alone spawned five — and with oldest-first claiming that
+  // buried the work AJ actually asked for. He is a synthesiser, not a reactor:
+  // his daily brief reads recent signals in one pass, and these three are the
+  // only events worth waking him between briefs.
+  subscribes: ['finance:anomaly', 'attention:needed', 'platform:proposal'],
   emits: ['brief:daily', 'attention:needed', 'decision:logged'],
   useWebSearch: false,
 
