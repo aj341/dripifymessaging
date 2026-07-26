@@ -503,7 +503,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v47-message-split | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v48-dashboard-pointers | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));

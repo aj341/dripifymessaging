@@ -8,6 +8,7 @@ import {
 } from '../blog-engine.js';
 import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
 import { tools as feedTools, handlers as feedHandlers } from '../feeds.js';
+import { approveUrl } from '../../dashboard-link.js';
 import { tools as redditTools, handlers as redditHandlers } from '../reddit-tools.js';
 import { tools as topicTools, handlers as topicHandlers } from '../topic-tools.js';
 import { tools as transcriptTools, handlers as transcriptHandlers } from '../transcript-tools.js';
@@ -706,9 +707,13 @@ ${ANALYTICS_STATUS}`,
         await ctx.publish({
           topic: 'content:draft',
           title: `LinkedIn draft: ${oneLine(hook, 90)}`,
-          body: `${text}\n\n— Why it lands: ${whyLands}\n— Takeaway: ${takeaway}\n— Type: ${data.post_type} · for ${data.audience} · ${chars} chars\n— From: ${trigger}${
-            proofPoint ? `\n— Proof: ${proofPoint} (source: ${proofSource})` : ''
-          }${warnings.length ? `\n— Voice flags: ${warnings.join(' | ')}` : ''}\n\nDraft only — not posted. Approve or edit before it goes anywhere.`,
+          // Short enough to read in the thread, but the decision still happens
+          // on the dashboard where the full case sits.
+          body:
+            `${oneLine(hook, 180)}\n\n${whyLands}\n\n` +
+            `${data.post_type} · ${data.audience} · ${chars} chars · ${data.origin}\n` +
+            `${warnings.length ? `${warnings.length} voice flag(s) to check` : 'Voice checks passed'}\n\n` +
+            `Read and approve it here:\n${approveUrl(key)}\n\nDraft only — not posted anywhere.`,
           data: { ...data, knowledge_key: key },
           confidence: 'hypothesis',
         });
@@ -796,11 +801,13 @@ ${ANALYTICS_STATUS}`,
         await ctx.publish({
           topic: 'content:draft',
           title: `Blog draft${data.queue_number ? ` (queue #${data.queue_number})` : ''}: ${oneLine(query, 90)}`,
+          // A POINTER, not the post. The draft lives on the dashboard; Telegram
+          // carries the case and the link so AJ can decide whether to open it.
           body:
-            `${query}\nCategory: ${category} · ${words} words · slug: ${data.slug}\n` +
-            `Meta: ${metaTitle} / ${metaDesc}\n\n${justificationText(j, sources)}\n\n` +
-            `${body.slice(0, 1200)}${body.length > 1200 ? '\n…[full draft on /approve]' : ''}` +
-            `${warnings.length ? `\n\nFlags: ${warnings.join(' | ')}` : ''}\n\nDraft only — AJ approves before anything goes near Wix.`,
+            `${query}\n${category} · ${words} words · ${data.origin}\n\n` +
+            `${justificationText(j, sources)}\n\n` +
+            `${warnings.length ? `Flags to check: ${warnings.length}\n` : 'Voice checks passed.\n'}` +
+            `\nRead and approve it here:\n${approveUrl(key)}\n\nDraft only — nothing goes near Wix until you approve.`,
           data: { knowledge_key: key, query, category, word_count: words, queue_number: data.queue_number },
           confidence: 'hypothesis',
         });
@@ -874,9 +881,10 @@ ${ANALYTICS_STATUS}`,
         await ctx.publish({
           topic: 'content:draft',
           title: `Blog outline: ${title}`,
-          body: `Target query: "${query}" (${data.search_intent})\n\n${justificationText(j, sources)}\n\n${summary}\n\n${outline}\n\nCTA: ${
-            data.cta || 'none set'
-          }${warnings.length ? `\n\nFlags: ${warnings.join(' | ')}` : ''}\n\nOutline only — nothing written or published yet.`,
+          body:
+            `Target query: "${query}" (${data.search_intent})\n\n${justificationText(j, sources)}\n\n` +
+            `${sections.length} section(s) outlined.\n\nRead and approve it here:\n${approveUrl(key)}\n\n` +
+            `Outline only — nothing written or published yet.`,
           data: { ...data, knowledge_key: key },
           confidence: 'hypothesis',
         });
