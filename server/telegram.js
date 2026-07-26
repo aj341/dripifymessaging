@@ -48,11 +48,22 @@ export async function send(text, { worker } = {}) {
     return null;
   }
   const prefix = worker ? `${worker.emoji || ''} *${worker.name}*\n` : '';
-  const result = await api('sendMessage', {
-    chat_id: id,
-    text: prefix + text,
-    parse_mode: 'Markdown',
-  });
+  // Send as Markdown, but fall back to plain text if Telegram can't parse the
+  // entities. Error messages often carry stray underscores/braces (e.g. a Wix
+  // "permission_denied" payload) that break Markdown — without this fallback the
+  // reply fails silently and looks like the bot ignored you.
+  let result;
+  try {
+    result = await api('sendMessage', {
+      chat_id: id,
+      text: prefix + text,
+      parse_mode: 'Markdown',
+    });
+  } catch (err) {
+    // Retry once as plain text — a Markdown parse failure must not swallow the
+    // whole reply.
+    result = await api('sendMessage', { chat_id: id, text: prefix + text });
+  }
   await logMessage({
     direction: 'out',
     worker_key: worker?.key || null,
