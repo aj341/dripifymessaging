@@ -54,6 +54,16 @@ export const ANALYTICS_STATUS =
 // carries the retired hours framing, so anyone reading it gets told on the way in
 // rather than quietly copying $30/hr and 20 hours into a post.
 const DRIFT = {
+  'engine-content-map.md':
+    '\n\n---\n[HIVE NOTE, not part of the file]\nSection 5 says the legacy live blog is "not yet ' +
+    'inventoried" — that inventory now EXISTS: read keyword-ownership-map.md, built from live Search ' +
+    'Console data on 26 Jul 2026. Check every candidate query against BOTH maps. Where the two maps and ' +
+    'the live site disagree, flag it to AJ rather than picking a side.',
+  'keyword-ownership-map.md':
+    '\n\n---\n[HIVE NOTE, not part of the file]\nThis map is written for "anyone writing", including AJ ' +
+    'himself. For SAM one restriction still applies on top of it: approved open topic 2 (competitor- ' +
+    'alternative pages) names competitors and is AJ-MANUAL per the operator pack — Sam never writes those. ' +
+    'Topics 1, 3, 4 and 5 are in Sam\'s lane once gate-cleared.',
   'L99-voice.md':
     '\n\n---\n[HIVE DRIFT NOTE, not part of the file]\nThe "Structure" section above still reads ' +
     '"$545/mo = roughly $30/hr = roughly 20 hours of design a month". That framing is RETIRED. ' +
@@ -62,6 +72,24 @@ const DRIFT = {
 };
 
 const DOCS = [
+  {
+    file: 'keyword-ownership-map.md',
+    what:
+      'THE CANNIBALISATION BIBLE (AJ, 26 Jul 2026, from live Search Console data): which live page owns ' +
+      'which keyword cluster, the terms banned from any new title/H1/slug, the retired topics never to ' +
+      'recreate, the currently-contested queries where our own pages are already fighting, and the short ' +
+      'list of approved open topics. THE ONE RULE: one keyword cluster, one page. Check a target query ' +
+      'against this BEFORE any gap verdict and BEFORE any draft — if a page owns it, strengthen that page ' +
+      'or support it with a link, never compete with it.',
+  },
+  {
+    file: 'engine-content-map.md',
+    what:
+      'The engine drafts\' ownership map: which of the 9 drafted posts owns which primary query, the ' +
+      'secondary terms each already covers, the money-cluster rule (full at four — never a fifth cost ' +
+      'post), the unowned "how to brief a designer" hotspot, and the writer rules. Read together with ' +
+      'keyword-ownership-map.md, which covers the legacy LIVE blog.',
+  },
   {
     file: 'BLOG-ENGINE-OPERATOR-PACK.md',
     what:

@@ -57,9 +57,10 @@ export const tools = [
     description:
       'Record your verdict on ONE search query and, when it is a gap, wake Sam to write the content. ' +
       'Only call this AFTER you have web-searched the query and seen the real results — the evidence fields ' +
-      'are mandatory for a gap or saturated verdict. Also check list_live_blog_posts first: if a live Design ' +
-      'Bees post already targets the query, the verdict is not a gap for a NEW post — publish seo:recheck ' +
-      'reasoning to strengthen the existing page instead. verdict "gap" publishes seo:gap (Sam picks it up), ' +
+      'are mandatory for a gap or saturated verdict. Also check keyword-ownership-map.md and ' +
+      'engine-content-map.md (read_blog_engine_doc) plus list_live_blog_posts first: if any live page or ' +
+      'engine draft already owns the query, the verdict is not a gap for a NEW post — publish seo:recheck ' +
+      'reasoning to strengthen the owning page instead. verdict "gap" publishes seo:gap (Sam picks it up), ' +
       '"saturated" publishes seo:saturated so the hive stops considering it, "unclear" is saved without ' +
       'waking anyone. A search volume may appear in a field ONLY if the keyword_volume tool returned it ' +
       'this run — never estimated, never remembered.',
