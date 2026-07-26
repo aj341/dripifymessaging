@@ -82,6 +82,31 @@ CREATE TABLE IF NOT EXISTS knowledge (
 );
 CREATE INDEX IF NOT EXISTS knowledge_type_idx ON knowledge(entity_type, updated_at DESC);
 
+-- Work waiting to be done. A signal on a topic a worker subscribes to becomes a
+-- job for that worker; running it can publish further signals, which is how one
+-- teammate's finding triggers the next.
+CREATE TABLE IF NOT EXISTS jobs (
+  id                BIGSERIAL PRIMARY KEY,
+  worker_key        TEXT NOT NULL,
+  trigger_signal_id BIGINT REFERENCES signals(id) ON DELETE SET NULL,
+  topic             TEXT,
+  prompt            TEXT NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'pending',  -- pending | running | done | failed | skipped
+  depth             INT NOT NULL DEFAULT 0,           -- cascade depth, capped to stop runaway loops
+  result            TEXT,
+  error             TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  started_at        TIMESTAMPTZ,
+  finished_at       TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS jobs_pending_idx ON jobs(status, created_at);
+
+-- Topics turn signals from a log into a bus: a worker subscribes to topic
+-- patterns and is woken by anything published on them. Added separately because
+-- signals predates the bus and already holds rows in production.
+ALTER TABLE signals ADD COLUMN IF NOT EXISTS topic TEXT;
+CREATE INDEX IF NOT EXISTS signals_topic_idx ON signals(topic, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS settings (
   key        TEXT PRIMARY KEY,
   value      TEXT,
