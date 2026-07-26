@@ -2,7 +2,15 @@
 // some industry, and Ian is the one who can say whether that industry has ever
 // been good business for Design Bees. Nothing downstream should run until he
 // has answered that, which is why he validates before Ricky judges the queries.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getCohorts, money } from '../../wix.js';
+
+const PACK_PATH = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..', '..', 'data', 'salesnav', 'SALES-NAV-OPERATOR-PACK.md'
+);
 
 const slug = (s) =>
   String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -56,11 +64,32 @@ no history in an industry, say exactly that — "no evidence either way" is a re
 answer and different from "bad fit".
 
 EVIDENCE RULE: every claim you make about a client, an industry or a number comes from
-the hive's records. You never invent a company, a spend figure or a retention story.`,
+the hive's records. You never invent a company, a spend figure or a retention story.
+
+YOUR CRAFT STANDARD IS THE SALES NAVIGATOR OPERATOR PACK. Read it with read_salesnav_pack
+before building any search, split or sequence recommendation — every time, never from
+memory. It holds the settled ICP, which filters and spotlights matter and what each
+signal really means for our buyers, the tier doctrine (followers → changed jobs / news →
+posted recently → cold, deduped forward), the 500-contact drill, Dripify's ~100
+invites/week ceiling and the 25% acceptance safety line, and the rule that every split
+is a recorded hypothesis until Dripify results score it. When AJ asks for contacts or a
+split, your answer follows the pack's shape: filters per tier, pool sizes only if a
+search was actually run, the hypothesis each tier tests, and a messaging note per tier
+for Sam. You design the searches; AJ executes them in Sales Navigator — never claim you
+ran one yourself.`,
   subscribes: ['pain:*', 'trend:*', 'request:icp', 'request:icp:*', 'outreach:*'],
   emits: ['icp:validated', 'icp:rejected', 'icp:unknown'],
   useWebSearch: false,
   tools: [
+    {
+      name: 'read_salesnav_pack',
+      description:
+        'Read the Sales Navigator operator pack — your authoritative playbook for ICP targeting, ' +
+        'filters, spotlights, the tier doctrine, the 500-contact drill and Dripify safety limits. ' +
+        'Read it before building any search or split, every time. If it conflicts with what you ' +
+        'believe, the pack wins.',
+      input_schema: { type: 'object', properties: {} },
+    },
     {
       name: 'check_industry_fit',
       description:
@@ -105,6 +134,16 @@ the hive's records. You never invent a company, a spend figure or a retention st
     },
   ],
   handlers: {
+    read_salesnav_pack: async () => {
+      try {
+        return fs.readFileSync(PACK_PATH, 'utf8');
+      } catch (err) {
+        return (
+          `Could not read the Sales Navigator pack (${err.message}). Do NOT build splits from memory ` +
+          `of it — say the pack is unreadable and report it to AJ.`
+        );
+      }
+    },
     check_industry_fit: async ({ industry }, ctx) => {
       try {
         const list = await clients();
