@@ -9,6 +9,7 @@ import { migrate } from './migrate.js';
 import { ping, query as dbQuery } from './db.js';
 import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, allKnowledge, getSetting, setSetting } from './brain.js';
 import { enrichmentSeed, applyKnowledge } from './wix.js';
+import { SEED_DRAFTS } from './data/drafts/seed-drafts.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
 import {
   runLedger,
@@ -522,6 +523,11 @@ async function boot() {
   // into the in-memory index the cohort builder reads.
   try {
     const added = await seedKnowledge(enrichmentSeed());
+    // Two blog drafts written straight to the pack standard. seedKnowledge only
+    // inserts when the key is absent, so a redeploy never resurrects or
+    // overwrites one AJ has already approved or rejected.
+    const seededDrafts = await seedKnowledge(SEED_DRAFTS);
+    if (seededDrafts) console.log(`[hive] ${seededDrafts} seeded draft(s) now awaiting AJ on /approve`);
     const rows = await allKnowledge();
     applyKnowledge(rows);
     console.log(`[hive] knowledge: ${rows.length} entities (${added} seeded this boot)`);
