@@ -1,5 +1,8 @@
 // Shared Wix client for the hive. Source of truth for money & subscribers.
 // Ian (ICP) and Fred (Finance) both read subscription orders through here.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 const SITE_ID = process.env.WIX_SITE_ID || 'aa112b96-b980-49fa-8f7f-202343661708'; // Design Bees
 const API_KEY = process.env.WIX_API_KEY;
 
@@ -382,6 +385,51 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
   prepayments.sort((a, b) => b.amount - a.amount);
   oneOffs.sort((a, b) => b.amount - a.amount);
   return { scanned, standard, prepayments, oneOffs, from: from.toISOString().slice(0, 10) };
+}
+
+// --- Snapshot fallback ------------------------------------------------------
+// Wix's Cashier transactions API is an admin-only endpoint: an account API key
+// cannot read it at any permission level (the site-owner session can). Until a
+// Wix OAuth app is wired up, the hive falls back to a snapshot of the real
+// figures committed alongside the code, so Fred and Ian still answer with true
+// numbers instead of failing. Every fallback is labelled with its as-of date so
+// a cached figure is never passed off as live.
+const __dir = path.dirname(fileURLToPath(import.meta.url));
+let _snapshot;
+export function loadSnapshot() {
+  if (_snapshot !== undefined) return _snapshot;
+  try {
+    _snapshot = JSON.parse(fs.readFileSync(path.join(__dir, 'data', 'snapshot.json'), 'utf8'));
+  } catch (err) {
+    console.error('[wix] no snapshot available:', err.message);
+    _snapshot = null;
+  }
+  return _snapshot;
+}
+
+// Try live Wix first; on failure fall back to the snapshot. Returns
+// { data, live, asOf, error } so callers can label the reply honestly.
+async function liveOrSnapshot(compute, key) {
+  try {
+    return { data: await compute(), live: true };
+  } catch (err) {
+    const snap = loadSnapshot();
+    if (snap && snap[key]) {
+      console.warn(`[wix] live read failed (${err.message.slice(0, 80)}) — serving ${key} snapshot`);
+      return { data: snap[key], live: false, asOf: snap.generatedAt, error: err.message };
+    }
+    throw err;
+  }
+}
+
+export function getRevenue(now = new Date()) {
+  return liveOrSnapshot(async () => summarizeRevenue(await fetchAllTransactions(), now), 'revenue');
+}
+export function getReconcile() {
+  return liveOrSnapshot(async () => reconcilePayments(await fetchAllTransactions()), 'reconcile');
+}
+export function getCohorts(now = new Date()) {
+  return liveOrSnapshot(async () => buildCohorts(await fetchAllTransactions(), now), 'cohorts');
 }
 
 // --- Customer cohorts (for Ian) --------------------------------------------
