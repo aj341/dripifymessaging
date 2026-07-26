@@ -94,6 +94,10 @@ EVIDENCE RULE, unchanged: never state a number you cannot point to a source for.
             ORDER BY finished_at DESC LIMIT 10`,
           [iv]
         );
+        const recent = await dbQuery(
+          `SELECT count(*)::int AS n FROM jobs
+            WHERE status = 'failed' AND finished_at > now() - interval '1 hour'`
+        );
         const stuck = await dbQuery(
           `SELECT worker_key, topic, created_at
              FROM jobs WHERE status = 'pending' AND created_at < now() - interval '2 hours'
@@ -115,10 +119,25 @@ EVIDENCE RULE, unchanged: never state a number you cannot point to a source for.
         );
 
         const fmt = (rows, f) => (rows.length ? rows.map(f).join('\n') : '  (none)');
+        const ago = (t) => {
+          if (!t) return 'unfinished';
+          const mins = Math.round((Date.now() - new Date(t).getTime()) / 60000);
+          if (mins < 60) return `${mins}m ago`;
+          const hrs = mins / 60;
+          return hrs < 24 ? `${hrs.toFixed(1)}h ago` : `${Math.round(hrs / 24)}d ago`;
+        };
         return [
           `Hive health, last ${hours}h (all figures from the database this run):`,
           `Jobs by teammate/status:\n${fmt(jobs.rows, (r) => `  ${r.worker_key}: ${r.status} ×${r.n}`)}`,
-          `Failures (latest 10):\n${fmt(failures.rows, (r) => `  ${r.worker_key} [${r.topic || 'direct'}]: ${r.error}`)}`,
+          // WITH the time each one happened. Without it a failure from this
+          // morning reads exactly like one from a minute ago, and the hive
+          // reported an empty API credit as a live emergency hours after AJ
+          // had topped it up. A failure you cannot date is not evidence.
+          `Failures (latest 10, newest first — check the age before calling anything current):\n${fmt(
+            failures.rows,
+            (r) => `  ${ago(r.finished_at)} — ${r.worker_key} [${r.topic || 'direct'}]: ${r.error}`
+          )}`,
+          `Failures in the last hour: ${recent.rows[0]?.n ?? 0} (this is what "happening now" means — the list above covers ${hours}h)`,
           `Stuck pending >2h:\n${fmt(stuck.rows, (r) => `  ${r.worker_key} [${r.topic || 'direct'}] since ${r.created_at}`)}`,
           `Questions:\n${fmt(questions.rows, (r) => `  ${r.status}: ${r.n}`)}`,
           `Signals published:\n${fmt(signals.rows, (r) => `  ${r.worker_key}: ${r.n}`)}`,
