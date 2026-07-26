@@ -204,7 +204,12 @@ async function runJob(job) {
     `or price differently, use ask_aj before you record it. A worked example: a client whose retainer ended ` +
     `reads like churn, when in fact AJ deliberately signed them for three months to deliver one project and ` +
     `the final call was him trying to extend it. Recording that as "lost on budget" would have been wrong ` +
-    `and would have skewed everything built on top. Record what you can see; ask about what you are inferring.\n\n` +
+    `and would have skewed everything built on top. Record what you can see; ask about what you are inferring.\n` +
+    `Calibrate it though — do NOT ask about things the evidence states plainly. If someone says outright ` +
+    `why they didn't buy, record it and move on. Ask only when you are filling a gap the evidence leaves ` +
+    `open: an outcome that isn't stated, a reason you are guessing at, an engagement whose shape you can't ` +
+    `tell from the call alone. One good question beats five obvious ones — AJ is time-poor and being asked ` +
+    `to confirm the obvious is worse than not asking at all.\n\n` +
     `When you find something another teammate should act on, publish it — that is how the hive compounds.\n\n` +
     `Finish with two or three sentences on what you actually did and what you found.`;
 
