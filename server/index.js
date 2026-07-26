@@ -24,6 +24,7 @@ import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autoru
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
+import { ensureLibrary, contentLibraryWritable } from './content-library.js';
 import {
   wixOauthConfigured,
   wixOauthConnected,
@@ -433,7 +434,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v37-ownership-maps | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v38-content-library | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
@@ -448,6 +449,15 @@ async function boot() {
   } catch (e) {
     console.error('[boot] knowledge load failed:', e.message);
   }
+  // The content library: clone in the background so a slow clone never delays
+  // boot, and report whether writes are possible.
+  ensureLibrary()
+    .then((ok) =>
+      console.log(
+        `[content] library ${ok ? 'ready' : 'unavailable'} — writes ${contentLibraryWritable() ? 'enabled (append-only)' : 'disabled (no GITHUB_TOKEN)'}`
+      )
+    )
+    .catch((e) => console.error('[content]', e.message));
   app.listen(PORT, () => console.log(`[hive] listening on :${PORT}`));
   startPolling().catch((err) => console.error('[boot] telegram:', err.message));
   scheduleWorkers();

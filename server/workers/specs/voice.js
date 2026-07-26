@@ -6,6 +6,7 @@ import {
   PLAN_LINE,
   ANALYTICS_STATUS,
 } from '../blog-engine.js';
+import { tools as libraryTools, handlers as libraryHandlers } from '../../content-library.js';
 // Sam — Socials & Content (worker key: voice). The output end of the cascade:
 // Ricky's demand evidence and gap verdicts come in, drafts go out for AJ
 // to approve.
@@ -147,6 +148,7 @@ ${ANALYTICS_STATUS}`,
 
   tools: [
     ...blogEngineTools,
+    ...libraryTools,
     {
       name: 'recall_hive_knowledge',
       description:
@@ -331,6 +333,7 @@ ${ANALYTICS_STATUS}`,
 
   handlers: {
     ...blogEngineHandlers,
+    ...libraryHandlers,
     recall_hive_knowledge: async (input, ctx) => {
       try {
         const limit = Math.min(Math.max(Number(input?.limit) || 15, 1), 40);
