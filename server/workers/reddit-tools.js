@@ -5,10 +5,43 @@
 // it, which is a poor foundation for copy meant to resonate). Ricky records
 // findings from it; Sam reads it for language.
 //
-// Reddit's public JSON endpoints are unauthenticated but they hard-block the
-// default Node UA, so every request carries a real one.
+// AUTH (2026-07-26): Reddit tightened access — appending .json to a URL now
+// returns 403 for unauthenticated callers, so the public path this started on
+// is unreliable at best and dead at worst. A free "script" app at
+// reddit.com/prefs/apps gives an OAuth client id/secret worth 100 queries a
+// minute against oauth.reddit.com, versus 10 (or a 403) unauthenticated.
+// Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET and every call routes through
+// OAuth; without them it still tries the public path and says plainly when it
+// is being refused, rather than reporting an empty scan as "nothing found".
 const UA = 'designbees-hive/1.0 (research worker; contact aj@designbees.com.au)';
 const TIMEOUT_MS = 12000;
+const CLIENT_ID = process.env.REDDIT_CLIENT_ID;
+const CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
+
+export function redditAuthed() {
+  return Boolean(CLIENT_ID && CLIENT_SECRET);
+}
+
+let token = { value: null, expires: 0 };
+async function accessToken() {
+  if (token.value && Date.now() < token.expires) return token.value;
+  const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64'),
+      'content-type': 'application/x-www-form-urlencoded',
+      'User-Agent': UA,
+    },
+    body: 'grant_type=client_credentials',
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token) {
+    throw new Error(`Reddit token ${res.status}: ${data.error || 'no token returned'}`);
+  }
+  token = { value: data.access_token, expires: Date.now() + (data.expires_in - 60) * 1000 };
+  return token.value;
+}
 
 export const HOME_SUBS = ['graphic_design', 'marketing', 'Entrepreneur', 'smallbusiness', 'SEO', 'advertising'];
 
@@ -20,13 +53,27 @@ const clip = (s, n) => {
   return t.length > n ? `${t.slice(0, n)}…` : t;
 };
 
-async function redditJson(url) {
+export async function redditJson(url) {
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': UA, Accept: 'application/json' },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-    if (!res.ok) return { ok: false, error: `Reddit returned HTTP ${res.status} for ${url}` };
+    let target = url;
+    const headers = { 'User-Agent': UA, Accept: 'application/json' };
+    if (redditAuthed()) {
+      // oauth.reddit.com mirrors the public paths; the .json suffix is dropped.
+      target = url.replace('https://www.reddit.com', 'https://oauth.reddit.com').replace('.json?', '?').replace(/\.json$/, '');
+      headers.Authorization = `Bearer ${await accessToken()}`;
+    }
+    const res = await fetch(target, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (res.status === 403 && !redditAuthed()) {
+      return {
+        ok: false,
+        error:
+          'Reddit refused the request (403). Unauthenticated .json access is blocked as of 2026 — this is a ' +
+          'MISSING CREDENTIAL, not an empty result. Tell AJ that REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET ' +
+          'need setting (a free script app at reddit.com/prefs/apps), and do not treat the silence as evidence ' +
+          'that nobody is discussing the topic.',
+      };
+    }
+    if (!res.ok) return { ok: false, error: `Reddit returned HTTP ${res.status} for ${target}` };
     const json = await res.json();
     const children = json?.data?.children;
     if (!Array.isArray(children)) return { ok: false, error: `Unexpected Reddit payload from ${url}` };
