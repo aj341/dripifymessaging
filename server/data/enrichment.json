@@ -46,8 +46,8 @@
       "city": "Sydney",
       "state": "NSW",
       "country": "Australia",
-      "locationConfidence": "medium",
-      "locationSource": "Pappa Flock group; stores across Sydney/Brisbane/Gold Coast, first stores Sydney \u2014 group HQ city inferred, confirm with AJ"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ludi.w@anzuk.education": {
       "title": "Director, Growth Marketing ANZ",
@@ -203,11 +203,11 @@
       "sizeBand": "51-200",
       "domain": "endotx.com.au",
       "name": "Shawna Lim",
-      "city": "Macquarie Park (Sydney)",
+      "city": "Sydney",
       "state": "NSW",
       "country": "Australia",
-      "locationConfidence": "medium",
-      "locationSource": "endotx.com.au appears to be Endotherapeutics (Macquarie Park NSW) \u2014 confirm with AJ"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ajita.joshi@zipline.io": {
       "title": "Fractional Marketing Leader",
@@ -352,8 +352,8 @@
       "city": "Sydney",
       "state": "NSW",
       "country": "Australia",
-      "locationConfidence": "medium",
-      "locationSource": "Founder Matt Gudge is Sydney-based per LinkedIn; fractional CMO practice, no published office"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "ana.belgun@terria.io": {
       "title": "Co-founder / CEO",
@@ -365,11 +365,11 @@
       "sizeBand": "11-50",
       "domain": "terria.io",
       "name": "Ana Belgun",
-      "city": "Sydney",
-      "state": "NSW",
+      "city": "Canberra",
+      "state": "ACT",
       "country": "Australia",
-      "locationConfidence": "medium",
-      "locationSource": "CSIRO Data61 spin-out (Main Sequence-backed); Data61 base \u2014 confirm city with AJ"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "alison@blugibbon.com.au": {
       "title": "Managing Director",
@@ -449,8 +449,8 @@
       "city": "Sydney",
       "state": "NSW",
       "country": "Australia",
-      "locationConfidence": "medium",
-      "locationSource": "pappaflock.com.au/locations (stores Sydney/Brisbane/Gold Coast; first stores Sydney) \u2014 group HQ inferred, confirm with AJ"
+      "locationConfidence": "high",
+      "locationSource": "AJ confirmed directly, 2026-07-26"
     },
     "lekielectric.com": {
       "name": "Cain Cooke",
