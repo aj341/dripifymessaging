@@ -1,3 +1,4 @@
+import { tools as transcriptTools, handlers as transcriptHandlers } from '../transcript-tools.js';
 // Ricky — Research (worker key: radar). The entry point of the hive's cascade:
 // he goes looking for pain in the market, and every finding he records is
 // published as a signal so the teammates downstream (Ian on ICP, then the rest)
@@ -145,6 +146,7 @@ export default {
   useWebSearch: true,
 
   tools: [
+    ...transcriptTools,
     {
       name: 'reddit_scan',
       description:
@@ -309,6 +311,7 @@ export default {
   ],
 
   handlers: {
+    ...transcriptHandlers,
     reddit_scan: async (input = {}) => {
       try {
         const sub = slug(input.subreddit).replace(/-/g, '_');

@@ -127,6 +127,24 @@ commands.cascade = async (text) => {
   });
   await send(`🐝 Started the chain on *${industry}* — Ian first, then whoever he wakes.`);
 };
+commands.transcripts = async (text) => {
+  const arg = String(text || '').split(/\s+/)[1];
+  const all = /^(all|backfill)$/i.test(arg || '');
+  await queueJob(
+    'radar',
+    (all
+      ? 'Work through every demo transcript since 1 March 2026. '
+      : 'Work through any demo transcripts you have not already recorded. ') +
+      'For each: list them, check your knowledge so you skip ones already done, read the ones that are ' +
+      'left, and record what the call revealed with record_demo_insight — what they came with, what ' +
+      'held them back, who decided, and their most revealing line quoted. Do the oldest first. ' +
+      "Where you cannot tell whether they became a client, mark it unclear rather than guessing."
+  );
+  await send(
+    `📡 *Ricky* is reading your demo transcripts${all ? ' (full backfill)' : ''}. ` +
+      "He'll post what he finds, and each one wakes Ian to check it against who actually pays."
+  );
+};
 commands.clients = () => runLedgerClients();
 commands.refresh = () => runLedger();
 commands.reconcile = () => runLedgerReconcile({ notify: true });
@@ -150,6 +168,7 @@ commands.help = () =>
       '• *Tom* — search queries worth competing for (SEO/AEO)\n' +
       '• *Sam* — drafts posts (never publishes — you approve)\n' +
       '• *George* — the morning brief\n' +
+      '• *transcripts* / *transcripts all* — Ricky reads your demo calls for real pain points\n' +
       '• *cascade <industry>* — run the whole chain: Ian → Tom → Sam\n' +
       '• *help* — this list'
   );
@@ -291,7 +310,7 @@ function scheduleWorkers() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v17-google-oauth | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v18-transcripts | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   // Seed the file-based enrichment once, then load everything the workers know
