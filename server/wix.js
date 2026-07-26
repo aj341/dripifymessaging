@@ -431,6 +431,13 @@ export function getReconcile() {
 export function getCohorts(now = new Date()) {
   return liveOrSnapshot(async () => buildCohorts(await fetchAllTransactions(), now), 'cohorts');
 }
+// Demo→conversion comes from a Google Calendar scan, not from Wix, so there is
+// no live path here — it is refreshed by re-running the scan and updating the
+// snapshot. Returns null if the snapshot predates the demo data.
+export function getDemos() {
+  const snap = loadSnapshot();
+  return (snap && snap.demos) || null;
+}
 
 // --- Customer cohorts (for Ian) --------------------------------------------
 // Deterministic customer segments from Wix payments. The founder/marketing/

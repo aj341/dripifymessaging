@@ -1281,5 +1281,77 @@
       }
     ],
     "builtAt": "2026-07-26T04:14:00.000Z"
+  },
+  "demos": {
+    "window": {
+      "from": "2026-03-01",
+      "to": "2026-07-26"
+    },
+    "source": "google-calendar:primary (299 events scanned, coverage 2026-03-02 → 2026-07-24)",
+    "builtAt": "2026-07-26T04:40:41.268Z",
+    "conversions": [
+      {
+        "client": "Anthony Rumble",
+        "company": "Rejuvenation Clinics of Australia",
+        "demoDate": "2026-06-04",
+        "demoEmail": "anthonyr@rejuvaustralia.com.au",
+        "plan": "Honeycomb",
+        "spend": 3290,
+        "tenureMonths": 1.1,
+        "basis": "domain match",
+        "confidence": "fact"
+      },
+      {
+        "client": "Helena Papaspyratos",
+        "company": "Cooper & Co.",
+        "demoDate": "2026-06-25",
+        "demoEmail": "helena@ugt.com.au",
+        "payingEmail": "helena@cooperandco.com.au",
+        "plan": "Honeycomb",
+        "spend": 1645,
+        "tenureMonths": 0.6,
+        "basis": "alias — demo booked under ugt.com.au, paid under Cooper & Co (AJ-confirmed)",
+        "confidence": "fact"
+      },
+      {
+        "client": "Luke Starbuck",
+        "company": "Education Perfect",
+        "demoDate": "2026-07-02",
+        "demoEmail": "luke.starbuck@educationperfect.com",
+        "plan": "Nectar",
+        "spend": 2645,
+        "tenureMonths": 0.2,
+        "basis": "domain match",
+        "confidence": "fact"
+      },
+      {
+        "client": "Steve Baldas",
+        "company": "SALAA",
+        "demoDate": "2026-04-08",
+        "demoEmail": "ceo@salaa.org.au",
+        "payingName": "Kainen Heath",
+        "basis": "alias — paid under the name Kainen Heath (AJ-confirmed); not in the 3 cohorts so spend not attributed here",
+        "confidence": "reported"
+      }
+    ],
+    "existingCustomerMeetings": [
+      {
+        "client": "Peter Nittes",
+        "company": "MacroView",
+        "date": "2026-07-02",
+        "note": "already a customer (first payment ~Apr 2026) — this was a later meeting, not the converting demo"
+      },
+      {
+        "client": "anzuk Education",
+        "date": "2026-06-25",
+        "attendees": [
+          "vesna.n@anzuk.education",
+          "chloe.c@anzuk.education"
+        ],
+        "note": "existing customer account (Ludi Wiggins); Vesna is not a client in her own right"
+      }
+    ],
+    "totalDemosInWindow": 41,
+    "note": "Conversions are demos in-window whose booking predates the first payment. Demos booked under a different email/company than the payment only surface via AJ-confirmed aliases."
   }
 }
