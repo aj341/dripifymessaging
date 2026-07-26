@@ -105,6 +105,10 @@ CREATE INDEX IF NOT EXISTS jobs_pending_idx ON jobs(status, created_at);
 -- patterns and is woken by anything published on them. Added separately because
 -- signals predates the bus and already holds rows in production.
 ALTER TABLE signals ADD COLUMN IF NOT EXISTS topic TEXT;
+
+-- Transient API failures (credit ran out, overloaded) re-queue instead of
+-- dying; attempts caps the retries so nothing loops forever.
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0;
 CREATE INDEX IF NOT EXISTS signals_topic_idx ON signals(topic, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS settings (
