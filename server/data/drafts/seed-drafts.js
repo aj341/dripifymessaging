@@ -193,7 +193,9 @@ Two is normal on a first job with a new team and one is normal once they know yo
 
 const LEAVE_BODY = `If your designer is going on leave, you have four ways to cover them: a temporary graphic designer on contract, a freelancer per project, an agency retainer, or a design subscription you pause when they return. The right one depends on how long the gap is and whether the work is ongoing or one large project.
 
-That is the short answer. Here is how each option actually works, what it costs, and how fast it can start.
+That is the short answer. The practical difference is that a subscription is the only one you can test before you commit: our free 10-day trial gives you close to a fortnight of real work before you decide anything, where a contract hire and an agency retainer both want the decision first.
+
+Here is how each option actually works, what it costs, and how fast it can start.
 
 ## How do you cover a graphic designer on maternity leave?
 
@@ -201,22 +203,40 @@ Parental leave is the easiest gap to plan for and the one most often left too la
 
 Start by writing down what your designer actually produces in a normal month. Not their job description, the real list: the social templates, the sales collateral, the deck updates, the odd trade stand. That list is your brief, and it is the thing a cover arrangement is measured against.
 
-Then decide the shape of the cover. A twelve month absence with steady weekly work is a different problem to a six week gap over a quiet period. The first justifies a contract hire. The second almost never does, because you will spend a third of the gap recruiting.
+Then write down who asks for it. Most businesses are surprised here, because the requests rarely come from one place. Sales wants a one-pager, the events person wants signage, the founder wants a deck by Thursday, and your designer has been quietly absorbing all of it. Whoever covers needs to know who is allowed to brief them and who has the final say when two requests collide.
 
-The other thing worth settling early is handover. Whoever covers needs the source files, the fonts and their licences, and the two or three examples your designer would have pointed at. Half a brand guide beats a verbal description, and it beats nothing by a mile.
+While you are at it, note how the work actually runs today. Is there a briefing template or does everyone send a paragraph in Slack? Is there a process for revisions, or does feedback arrive in three messages across two days? Does anything need approval before it goes out?
+
+If the answer is that none of it is written down, that is normal and it is worth knowing before the gap starts rather than during it. We have our own way of running all of this, and we are equally happy to work inside a process you already have. The point is that somebody decides which, before the person who held it in their head goes on leave.
+
+Then decide the shape of the cover. A twelve month absence with steady weekly work is a different problem to a six week gap over a quiet period, and the second almost never justifies a hire because you will spend a third of the gap recruiting.
+
+Settle handover early too. Whoever covers needs the source files, the fonts and their licences, and the two or three examples your designer would have pointed at. Half a brand guide beats a verbal description.
 
 ## What are your options when a designer goes on leave?
 
-| Cover option | Best for | Starts in | Ends |
-|---|---|---|---|
-| Contract or temp hire | 6 to 12 months, steady full-time volume | 4 to 8 weeks | Fixed end date, notice period |
-| Freelancer | A defined project or a few jobs a month | Days to a fortnight | When the project does |
-| Agency retainer | Strategy-led work during the gap | 2 to 4 weeks scoping | Contract term |
-| Design subscription | Ongoing weekly volume, uncertain end date | Same day | Cancel anytime |
+| Cover option | Best for | Starts in | Ends | Try before you commit |
+|---|---|---|---|---|
+| **Design Bees subscription** | Ongoing weekly volume, uncertain end date | **Same day** | **Cancel anytime** | **Free 10-day trial** |
+| Freelancer | A defined project or a few jobs a month | Days to a fortnight | When the project does | Paid trial project |
+| Agency retainer | Strategy-led work during the gap | 2 to 4 weeks scoping | Contract term | No |
+| Contract or temp hire | 6 to 12 months, steady full-time volume | 4 to 8 weeks | Fixed end date, notice period | No |
 
 The column that decides it for most people is the last one. A contract hire and an agency retainer both ask you to name an end date at the start, which is exactly the thing you do not know when someone is on parental leave and may or may not return to the same hours.
 
 [Book a demo](https://designbees.com.au/demo) and we will show you what a covered month looks like with real jobs in the queue.
+
+## How do you know the cover will work before you commit?
+
+This is the part worth slowing down on, because every other option asks you to decide first and find out afterwards.
+
+You are being asked to commit to six or twelve months of cover for a person you have not met, doing work you have not seen, judged against a standard only your designer really knows. A contract hire means an offer, a notice period and a start date before anyone produces anything. An agency wants a signed scope. Both of those are decisions made on a conversation.
+
+We give you a free 10-day trial instead. That is close to a fortnight of real briefs, real turnarounds and real revisions, using your actual work rather than a portfolio, before you decide anything. Brief your first project on day one. If it does not fit the way your team works, you have lost ten days and no money, which is a far smaller mistake than three months into a contract you cannot exit.
+
+Ten days is also long enough to answer the questions a proposal cannot: whether the turnaround suits your cadence, whether the briefing loop works with your people, and whether the output holds up next to what your designer would have made.
+
+[Start your free 10-day trial](https://designbees.com.au/pricing-plans) and brief your first project the same day, or [book a demo](https://designbees.com.au/demo) if you would rather see the queue first.
 
 ## What does a contract graphic designer cost in Australia?
 
@@ -234,7 +254,7 @@ An interim graphic designer earns their place when the gap is long, the volume i
 
 That last part is the real test. If your designer sits in planning sessions, argues about the roadmap and makes calls nobody wrote down, a queue cannot replace them and you want a person. If your designer mostly receives briefs and returns finished work, a queue replaces them cleanly and costs a fraction.
 
-Be honest about the recruitment cost too. Finding, interviewing and onboarding an interim for a six month gap can eat six to eight weeks of it, and you carry that cost twice if they leave early for a permanent role. That risk is real and it is why short gaps rarely suit a hire.
+Be honest about the recruitment cost too. Finding, interviewing and onboarding an interim for a six month gap can eat six to eight weeks of it, and you carry that cost twice if they leave early for a permanent role.
 
 ## How quickly can cover start?
 
@@ -257,6 +277,9 @@ Then decide whether you actually want the cover to stop. Plenty of businesses di
 [Start your free 10-day trial](https://designbees.com.au/pricing-plans) and brief your first project on day one, or see [our work](https://designbees.com.au/our-work) if you want proof before a conversation.
 
 ## FAQ
+
+**Can I try it before committing to cover the whole leave period?**
+Yes. The free 10-day trial gives you close to two weeks of real briefs and real turnarounds before you decide, and you brief your first project on day one. That is the main reason a subscription is a lower-risk way to cover a six or twelve month gap than an arrangement you have to sign for first.
 
 **Can I pause a design subscription when my designer returns?**
 You can cancel anytime, with no contract and no notice period, and start again if the overflow turns out to be permanent. That is the main practical difference from a contract hire, who you have committed to for a fixed term.

@@ -394,3 +394,24 @@ These are the durable lessons this project has already paid for. They apply to e
 **No competitor names in body copy, even though comparison pages are strategy.** The single biggest AEO gap on the site is the missing "Design Bees vs [competitor]" comparison pages. Those are high-value, but they are AJ-MANUAL and live outside this engine. Blog-engine posts stay competitor-free in the body. If your research says a comparison page is the real opportunity, flag it to AJ, do not write it here.
 
 **Measurement is how we know it worked.** Success is tracked through GSC (AI Overview appearances, question-format impressions), a GA4 "AI Search" channel (sessions where the source is perplexity.ai, chatgpt.com, claude.ai, gemini.google.com, bing.com/chat), and a monthly manual brand-audit across ChatGPT, Perplexity and Google AI Overview. You do not run this per post, but write every post knowing that is the scoreboard: getting cited by name, with the right price, on a commercial query.
+
+## Comparison tables: we go first, and we look different
+
+Standing rule from AJ, 2026-07-27. Any table or list that compares Design Bees
+against other ways of buying design follows two hard rules:
+
+1. **Design Bees is the first row.** Never last, never buried in the middle.
+   A reader scanning a table reads the first row properly and skims the rest.
+2. **Our row is visually distinct.** Bold the option name and bold the cells
+   where we genuinely win, so the difference is visible before anything is read.
+
+This is presentation, not spin. The honest trade-offs still get stated, and the
+sections that say where a hire or an agency beats us stay in. Being first in the
+table and being straight about where we lose are not in tension.
+
+**Always include a "try before you commit" column where the comparison allows
+it.** The free 10-day trial is the single strongest differentiator in the
+offering: close to a fortnight of real briefs and real turnarounds before a
+decision, against competitors and hires who want the decision first. It matters
+most on any page where the reader is weighing a six or twelve month commitment.
+

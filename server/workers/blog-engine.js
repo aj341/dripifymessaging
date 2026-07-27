@@ -299,6 +299,24 @@ export function l99Warnings(text, opts = {}) {
   if (/(?<!<)--(?!>)/.test(prose)) {
     warn.push('Double hyphen found. Hard ban, same rule as the em dash.');
   }
+  // AJ's standing rule, 2026-07-27: in any comparison table we are the FIRST
+  // row and our row is visually distinct. A reader scanning a table reads row
+  // one properly and skims the rest, so being listed last gives the comparison
+  // away. This is presentation only. The honest trade-offs stay in the prose.
+  const tableRows = t.split('\n').filter((l) => /^\s*\|/.test(l) && !/^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l));
+  if (tableRows.length > 2) {
+    const dataRows = tableRows.slice(1); // row 0 is the header
+    const usIndex = dataRows.findIndex((r) => /design bees|\bours?\b|subscription/i.test(r));
+    if (usIndex > 0) {
+      warn.push(
+        `Comparison table lists us at row ${usIndex + 1}. We go FIRST, always. Move that row to the top.`
+      );
+    }
+    if (usIndex === 0 && !/\*\*/.test(dataRows[0])) {
+      warn.push('Our row in the comparison table is not visually distinct. Bold the option name and the cells where we win.');
+    }
+  }
+
   for (const p of BANNED_PHRASES) {
     if (lower.includes(p)) warn.push(`Banned phrase "${p}". Cut it.`);
   }
