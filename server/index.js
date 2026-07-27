@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { migrate } from './migrate.js';
 import { ping, query as dbQuery } from './db.js';
-import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, allKnowledge, getSetting, setSetting } from './brain.js';
+import { readHive, writeSignal, askQuestion, setMemory, seedKnowledge, refreshUndecided, allKnowledge, getSetting, setSetting } from './brain.js';
 import { enrichmentSeed, applyKnowledge } from './wix.js';
 import { SEED_DRAFTS } from './data/drafts/seed-drafts.js';
 import { startPolling, telegramReady, send, commands } from './telegram.js';
@@ -508,7 +508,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v51-cheap-by-default | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v52-seed-refresh | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
@@ -532,6 +532,11 @@ async function boot() {
     // overwrites one AJ has already approved or rejected.
     const seededDrafts = await seedKnowledge(SEED_DRAFTS);
     if (seededDrafts) console.log(`[hive] ${seededDrafts} seeded draft(s) now awaiting AJ on /approve`);
+    // A correction to a seeded draft only lands while AJ has not ruled on it.
+    // Without this, an edit to the copy sat in the repo forever while the
+    // dashboard kept serving the version from the first boot.
+    const refreshed = await refreshUndecided(SEED_DRAFTS);
+    if (refreshed) console.log(`[hive] refreshed ${refreshed} undecided draft(s) from the repo`);
     const rows = await allKnowledge();
     applyKnowledge(rows);
     console.log(`[hive] knowledge: ${rows.length} entities (${added} seeded this boot)`);

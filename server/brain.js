@@ -175,3 +175,31 @@ export async function seedKnowledge(rows) {
   }
   return added;
 }
+
+/**
+ * Refresh a seeded row, but ONLY while AJ has not ruled on it.
+ *
+ * seedKnowledge above never overwrites, which protects his decisions and is
+ * right. It also meant a correction to a seeded draft could never reach the
+ * database: the copy was fixed in the repo and the dashboard kept serving the
+ * old text. This is the narrow escape hatch — an undecided draft is still ours
+ * to correct; the moment it is approved, rejected or published it is his, and
+ * this leaves it alone.
+ */
+export async function refreshUndecided(rows) {
+  let updated = 0;
+  for (const r of rows) {
+    if (r.data?.status !== 'draft-awaiting-aj') continue;
+    const res = await query(
+      `UPDATE knowledge SET data = $3, source = $4, updated_at = now()
+        WHERE entity_type = $1 AND entity_key = $2
+          AND data->>'status' = 'draft-awaiting-aj'
+          AND data IS DISTINCT FROM $3::jsonb
+        RETURNING id`,
+      [r.entity_type, String(r.entity_key).toLowerCase().trim(),
+       JSON.stringify(r.data), JSON.stringify(r.source)]
+    );
+    if (res.rows[0]) updated += 1;
+  }
+  return updated;
+}
