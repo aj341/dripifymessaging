@@ -157,10 +157,47 @@ const countLoose = (text, phrase) => (String(text || '').match(rxLoose(phrase)) 
  * weight for AEO, so they are reported separately rather than lumped into a
  * single body count.
  */
+// Words that carry no targeting signal, so a query and a heading can differ by
+// all of them and still be about the same thing.
+const STOP = new Set([
+  'a','an','the','to','for','of','in','on','at','and','or','is','are','do','does','did',
+  'you','your','my','our','it','its','with','how','what','why','when','who','which','that',
+  'this','much','many','be','should','can','from','get','got','into','vs','about',
+]);
+const stemOf = (w) => (w.length >= 5 ? w.replace(/(ings|ing|ed|es|s|e)$/i, '') : w);
+const contentWords = (p) =>
+  String(p || '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w)).map(stemOf);
+
+/**
+ * Is this query ANSWERED somewhere prominent, even if the exact words never
+ * appear? A post titled "How to outsource graphic design in Australia" answers
+ * "how to outsource design" completely, and a checker that calls that a miss is
+ * pushing the writer to stuff the phrase in verbatim, which is the padding AJ
+ * objected to and which the AEO research says does not help anyway. What earns
+ * a citation is a question-shaped heading with a direct answer under it.
+ */
+function answeredIn(phrase, lines) {
+  const need = contentWords(phrase);
+  if (!need.length) return null;
+  for (const { text, where } of lines) {
+    const have = new Set(contentWords(text));
+    if (need.every((w) => have.has(w))) return where;
+  }
+  return null;
+}
+
 function keywordUsage(d) {
   const body = String(d.body || d.text || '');
   const headings = (body.match(/^#{1,3}\s+.+$/gm) || []).join('\n');
   const opening = body.split(/\n\s*\n/).slice(0, 2).join('\n');
+  // Where an answer counts as prominent: the H1 and every section heading.
+  const prominent = [
+    { text: d.query || '', where: 'answered in H1' },
+    ...(body.match(/^#{1,3}\s+(.+)$/gm) || []).map((h) => ({
+      text: h.replace(/^#{1,3}\s+/, ''),
+      where: 'answered in a heading',
+    })),
+  ];
   return targetPhrases(d).map(({ phrase, role }) => {
     const where = [];
     if (countIn(d.query, phrase)) where.push('H1');
@@ -172,7 +209,9 @@ function keywordUsage(d) {
     if (countLoose(opening, phrase)) where.push('opening');
     const exact = countIn(body, phrase);
     const loose = countLoose(body, phrase);
-    return { phrase, role, body: loose, exact, variants: Math.max(0, loose - exact), where };
+    const answered = loose || where.length ? null : answeredIn(phrase, prominent);
+    if (answered) where.push(answered);
+    return { phrase, role, body: loose, exact, variants: Math.max(0, loose - exact), where, answered };
   });
 }
 
@@ -390,21 +429,27 @@ export function mountApprove(app) {
           `<td class="${u.body || u.where.length ? 'cnt' : 'miss'}">${
             u.body
               ? `${u.body}×${u.variants ? ` <span class="meta">(${u.exact} exact)</span>` : ''}`
-              : u.where.length
-                ? '<span class="meta">title only</span>'
-                : 'not used'
+              : u.answered
+                ? '<span class="meta">covered, not verbatim</span>'
+                : u.role === 'primary'
+                  ? '<span class="meta">this is the H1</span>'
+                  : u.where.length
+                    ? '<span class="meta">title only</span>'
+                    : 'never addressed'
           }</td>` +
-          `<td class="where">${u.where.length ? esc(u.where.join(' · ')) : 'body only'}</td></tr>`;
-        const missing = usage.filter((u) => !u.body && !u.where.length).length;
+          `<td class="where">${
+            u.where.length ? esc(u.where.join(' · ')) : u.body ? 'body only' : 'nowhere'
+          }</td></tr>`;
+        const missing = usage.filter((u) => u.role !== 'primary' && !u.body && !u.where.length && !u.answered).length;
         sections.push(
           `<div class="k">Keyword coverage</div>` +
-            `<table class="kw"><tr><th>Target phrase</th><th>Uses in the post</th><th>Where it lands</th></tr>` +
+            `<table class="kw"><tr><th>Target query</th><th>Is it addressed?</th><th>Where</th></tr>` +
             usage.map(row).join('') +
             `</table>` +
             `<div class="meta" style="margin-top:6px">${
               missing
-                ? `<b class="miss">${missing} target phrase(s) never appear in the post.</b> Highlighted below: every place a target phrase is actually used.`
-                : 'Every target phrase appears in the post. Highlighted below.'
+                ? `<b class="miss">${missing} target quer(y/ies) are never addressed.</b> Either write the section, or drop them from the cluster rather than claiming them. Highlighted below: every verbatim use.`
+                : 'Every target query is addressed, verbatim or by a heading that answers it. Verbatim uses highlighted below.'
             }</div>`
         );
       }
