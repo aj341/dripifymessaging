@@ -68,6 +68,51 @@ function listItem(text) {
   };
 }
 
+
+function tableCell(text) {
+  return {
+    type: 'TABLE_CELL',
+    id: nodeId(),
+    nodes: [paragraph(text)],
+    tableCellData: { cellStyle: { verticalAlignment: 'TOP' } },
+  };
+}
+
+function tableRow(cells) {
+  return { type: 'TABLE_ROW', id: nodeId(), nodes: cells.map(tableCell) };
+}
+
+/** `| a | b |` to its cells, dropping the outer pipes. */
+const rowCells = (line) => line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+const isTableLine = (line) => /^\s*\|/.test(line);
+const isSeparator = (line) => /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(line);
+
+/**
+ * A markdown table becomes a real Wix table.
+ *
+ * Without this every row published as a paragraph of pipe characters, which
+ * would have made the leave-cover post unreadable on the live site. Tables are
+ * the format the AEO research rates highest after listicles, so they have to
+ * survive the trip.
+ */
+function table(lines) {
+  const rows = lines.filter((l) => !isSeparator(l)).map(rowCells);
+  const cols = Math.max(...rows.map((r) => r.length));
+  return {
+    type: 'TABLE',
+    id: nodeId(),
+    nodes: rows.map((r) => tableRow([...r, ...Array(Math.max(0, cols - r.length)).fill('')])),
+    tableData: {
+      dimensions: {
+        colsWidthRatio: Array(cols).fill(Math.round(1000 / cols)),
+        rowsHeight: rows.map(() => 47),
+        colsMinWidth: Array(cols).fill(120),
+      },
+      header: { rows: 1 },
+    },
+  };
+}
+
 /**
  * Markdown to Ricos. Handles the shapes the blog engine actually produces:
  * H2/H3 headings, paragraphs, bullet lists, bold and links. Anything else is
@@ -89,8 +134,17 @@ export function toRichContent(markdown) {
     bullets = [];
   };
 
+  let tableLines = [];
+  const flushTable = () => {
+    if (tableLines.length >= 2) nodes.push(table(tableLines));
+    else tableLines.forEach((l) => nodes.push(paragraph(l)));
+    tableLines = [];
+  };
+
   for (const raw of lines) {
     const line = raw.trim();
+    if (isTableLine(line)) { flushBullets(); tableLines.push(line); continue; }
+    if (tableLines.length) flushTable();
     if (!line) { flushBullets(); continue; }
     if (/^###\s+/.test(line)) { flushBullets(); nodes.push(heading(line.replace(/^###\s+/, ''), 3)); continue; }
     if (/^##\s+/.test(line)) { flushBullets(); nodes.push(heading(line.replace(/^##\s+/, ''), 2)); continue; }
@@ -100,6 +154,7 @@ export function toRichContent(markdown) {
     nodes.push(paragraph(line));
   }
   flushBullets();
+  flushTable();
   return { nodes };
 }
 
