@@ -286,12 +286,17 @@ export function l99Warnings(text, opts = {}) {
   const t = String(text || '').trim();
   if (!t) return ['Empty text — nothing to check.'];
   const lower = t.toLowerCase();
+  // A markdown table separator row is `|---|---|`. It is syntax, not punctuation,
+  // and flagging it made the em-dash ban fire on every table. Tables are the
+  // format the AEO research rates highest after listicles, so a checker that
+  // penalises them is working against the standard it exists to enforce.
+  const prose = t.split('\n').filter((l) => !/^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l)).join('\n');
 
   // The non-negotiables first.
-  if (/[—–]/.test(t)) {
+  if (/[—–]/.test(prose)) {
     warn.push('Em dash or en dash found. Hard ban. Use a comma, a full stop or a line break.');
   }
-  if (/(?<!<)--(?!>)/.test(t)) {
+  if (/(?<!<)--(?!>)/.test(prose)) {
     warn.push('Double hyphen found. Hard ban, same rule as the em dash.');
   }
   for (const p of BANNED_PHRASES) {
