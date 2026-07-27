@@ -191,7 +191,156 @@ Local providers cost more per hour and cost you less in delay, which matters mos
 **How many rounds of revisions should I expect?**
 Two is normal on a first job with a new team and one is normal once they know your house style. If you are still at four rounds in month two, look at the brief before you look at the designer.`;
 
+const LEAVE_BODY = `If your designer is going on leave, you have four ways to cover them: a temporary graphic designer on contract, a freelancer per project, an agency retainer, or a design subscription you pause when they return. The right one depends on how long the gap is and whether the work is ongoing or one large project.
+
+That is the short answer. Here is how each option actually works, what it costs, and how fast it can start.
+
+## How do you cover a graphic designer on maternity leave?
+
+Parental leave is the easiest gap to plan for and the one most often left too late. You know the date months ahead, and the work does not pause with the person.
+
+Start by writing down what your designer actually produces in a normal month. Not their job description, the real list: the social templates, the sales collateral, the deck updates, the odd trade stand. That list is your brief, and it is the thing a cover arrangement is measured against.
+
+Then decide the shape of the cover. A twelve month absence with steady weekly work is a different problem to a six week gap over a quiet period. The first justifies a contract hire. The second almost never does, because you will spend a third of the gap recruiting.
+
+The other thing worth settling early is handover. Whoever covers needs the source files, the fonts and their licences, and the two or three examples your designer would have pointed at. Half a brand guide beats a verbal description, and it beats nothing by a mile.
+
+## What are your options when a designer goes on leave?
+
+| Cover option | Best for | Starts in | Ends |
+|---|---|---|---|
+| Contract or temp hire | 6 to 12 months, steady full-time volume | 4 to 8 weeks | Fixed end date, notice period |
+| Freelancer | A defined project or a few jobs a month | Days to a fortnight | When the project does |
+| Agency retainer | Strategy-led work during the gap | 2 to 4 weeks scoping | Contract term |
+| Design subscription | Ongoing weekly volume, uncertain end date | Same day | Cancel anytime |
+
+The column that decides it for most people is the last one. A contract hire and an agency retainer both ask you to name an end date at the start, which is exactly the thing you do not know when someone is on parental leave and may or may not return to the same hours.
+
+[Book a demo](https://designbees.com.au/demo) and we will show you what a covered month looks like with real jobs in the queue.
+
+## What does a contract graphic designer cost in Australia?
+
+A permanent graphic designer here earns roughly $75,000 to $85,000 a year according to SEEK's salary data. Contract rates usually sit above that on an hourly basis, because the person is carrying the risk of the contract ending, and because you are paying for availability rather than a headcount.
+
+Add the superannuation guarantee, currently 12% of ordinary time earnings, and a permanent salary of $80,000 is closer to $89,600 before software, recruitment or a desk. Divide that across the year and you are near $7,500 a month for one person's availability, whether or not there is a full week of work in front of them.
+
+Our plans run Worker Bee at $545 a month, Buzz Basics at $995, Honey Comb at $1,645 and Nectar Pro at $2,645, all AUD including GST. Worker Bee covers about 16 hours of design a month and the ladder runs 16, 30, 53 and 74 hours across the four plans. No contracts, cancel anytime.
+
+For the full picture on what design work costs in this market, our [graphic design costs in Australia](https://www.designbees.com.au/post/graphic-design-costs-in-australia-your-pricing-guide) guide breaks it down properly.
+
+## When is an interim graphic designer the right call?
+
+An interim graphic designer earns their place when the gap is long, the volume is genuinely full-time, and the work needs someone in your meetings rather than in your queue.
+
+That last part is the real test. If your designer sits in planning sessions, argues about the roadmap and makes calls nobody wrote down, a queue cannot replace them and you want a person. If your designer mostly receives briefs and returns finished work, a queue replaces them cleanly and costs a fraction.
+
+Be honest about the recruitment cost too. Finding, interviewing and onboarding an interim for a six month gap can eat six to eight weeks of it, and you carry that cost twice if they leave early for a permanent role. That risk is real and it is why short gaps rarely suit a hire.
+
+## How quickly can cover start?
+
+This is where the options separate hardest.
+
+A subscription starts the day you sign up. You brief your first project on day one, and the team works from whatever brand foundations you hand over.
+
+A freelancer usually starts within a fortnight, sooner if you already know one. An agency needs a scoping conversation and a signed scope before anyone draws anything, so allow two to four weeks. A contract hire is four to eight weeks from writing the ad to their first day, and longer if the market is tight.
+
+If your designer's last day is next Friday, three of those four options are already too slow.
+
+## What happens when your designer comes back?
+
+Plan the return before the leave starts, because the handover in that direction is the one everyone forgets.
+
+Keep a running record of what was produced and where the files live. Ask your cover for source files rather than exports, every time, without exception. Your returning designer should be able to open anything made in their absence and keep working, and that is entirely a function of what you asked for while they were away.
+
+Then decide whether you actually want the cover to stop. Plenty of businesses discover during the gap that the overflow was always there, and keep a smaller plan running alongside the returning designer. Ending an arrangement should be a decision, not a default, which is easier when there is no contract to unwind.
+
+[Start your free 10-day trial](https://designbees.com.au/pricing-plans) and brief your first project on day one, or see [our work](https://designbees.com.au/our-work) if you want proof before a conversation.
+
+## FAQ
+
+**Can I pause a design subscription when my designer returns?**
+You can cancel anytime, with no contract and no notice period, and start again if the overflow turns out to be permanent. That is the main practical difference from a contract hire, who you have committed to for a fixed term.
+
+**How much notice do you need to cover a leave gap?**
+None. You can start the same day you sign up and brief your first project immediately. Most people give us a fortnight so we can absorb the brand foundations before the volume starts, which makes the first week smoother.
+
+**Do I need a brand guide before handing work over?**
+No. Send your logo files, fonts and colours plus a few examples of work you like, and say plainly what is missing. A good cover arrangement builds the consistency as it goes and hands you the rules it has been following.
+
+**Is a temporary graphic designer cheaper than a subscription?**
+Rarely, once you count recruitment, superannuation, software and the weeks of the gap spent hiring. A contract hire wins on cost only when the volume genuinely fills a full week, every week, for the whole absence.
+
+**Who owns the files produced during the cover period?**
+You do, and you should confirm that in writing with any arrangement before the first job. Ask for source files as well as final artwork, because source files are what let your returning designer pick the work back up.`;
+
 export const SEED_DRAFTS = [
+  {
+    entity_type: 'topic',
+    entity_key: 'blogpost-temporary-graphic-designer-cover-australia',
+    worker_key: 'voice',
+    confidence: 'hypothesis',
+    source: {
+      tool: 'seed_draft',
+      note: "The one content piece AJ's own Growth Master Plan actively endorses: a term with real, growing AU volume and no owner on our site.",
+    },
+    data: {
+      format: 'blog-post',
+      status: 'draft-awaiting-aj',
+      standard: 'blog-engine-pack-2026-07',
+      origin: 'aj-request',
+      week: WEEK,
+      query: 'Temporary graphic designer: how to cover a designer on leave in Australia',
+      category: 'Design Operations',
+      slug: 'temporary-graphic-designer-cover-australia',
+      meta_title: 'Temporary Graphic Designer Cover in Australia',
+      meta_description:
+        'Covering a designer on leave in Australia: your four options, what each costs, how fast each can start, and how to hand the work back.',
+      tags: ['temporary graphic designer', 'maternity cover', 'contract designer', 'design operations', 'australia'],
+      long_tail_cluster: [
+        "temporary graphic designer",
+        "graphic designer maternity cover",
+        "contract graphic designer australia",
+        "interim graphic designer",
+        "cover a designer on leave"
+      ],
+      schema: 'Article + FAQPage',
+      author: 'AJ Kavanagh',
+      justification: {
+        "ownership_check": "keyword-ownership-map.md has no row claiming temporary, interim, contract or leave-cover terms, and none of them appear on the 24 Jul contested list. The adjacent owners are held clear deliberately: the cost pillar owns cost, price and how much, so none of those words appear in the title, H1 or slug and the pricing section sits under a subordinate H2 that links out with an exact-match anchor; the agency post owns graphic design agency australia and this page never uses the agency framing as its angle. It also recreates none of the three retired posts that were 301-redirected in June.",
+        "demand": "This is the single strongest content recommendation in the Growth Master Plan, and the only one backed by live Google Keyword Planner data showing both volume and growth. Temporary graphic designer sits at 10 to 100 AU searches a month and is flagged as growing year on year, which makes it one of very few terms in the entire keyword set that is not near-zero. Graphic designer maternity cover and contract graphic designer australia sit under 10 each but carry unambiguous buying intent. The plan also records that this positioning matches real closed deals, so the demand is evidenced in the payment record and not only in the search data.",
+        "winnability": "The AU results for these queries are dominated by recruitment agencies selling a contract hire and by job boards, so nobody currently answers the question the searcher is actually asking, which is how to cover the gap rather than how to fill the role. This page answers that directly and says outright where a hire beats us: long gaps, genuinely full-time volume, and a designer who sits in planning meetings rather than receiving briefs. We have no page competing for the cluster, so it consolidates rather than splits, and the comparison table gives assistants the extractable format the AEO research identifies as the most cited after listicles.",
+        "value_to_design_bees": "This is a money page rather than a blog post. It catches a buyer at a dated, forced decision point, which is the highest-intent moment this business gets, and it maps onto the exact objection the subscription answers better than any competitor: no contract and cancel anytime, against a contract hire that demands an end date you cannot know. It also opens a second life for the arrangement, because the closing section makes keeping a smaller plan after the return an explicit option rather than an accident. Every internal link points at a page that already ranks, using exact-match anchors, which is the consolidation pattern that recovered rankings in June and July.",
+        "value_to_reader": "They get the decision made for them on the two variables that actually matter, the length of the gap and whether the work is briefed or discussed, instead of a list of options with no way to choose between them. The table gives them realistic start times for all four routes, which is the thing nobody publishes and the thing that rules three of them out when a designer's last day is next week. They also get the two handover instructions that decide whether the return goes smoothly, being source files rather than exports and a written record of what was produced, both of which cost us business when followed properly and are true anyway.",
+        "sources": [
+          {
+            "claim": "Temporary graphic designer has AU volume of 10 to 100 a month and is growing year on year; graphic designer maternity cover and contract graphic designer australia are under 10.",
+            "source": "Google Keyword Planner, live pull from the DesignBees Google Ads account, Jul 2025 to Jun 2026, recorded in DesignBees-Growth-Master-Plan.md section 1"
+          },
+          {
+            "claim": "A graphic designer in Australia earns roughly $75,000 to $85,000 a year.",
+            "source": "SEEK salary data, Graphic Designer, Australia: https://www.seek.com.au/career-advice/role/graphic-designer/salary"
+          },
+          {
+            "claim": "The superannuation guarantee is 12% of ordinary time earnings.",
+            "source": "ATO, Super guarantee, rate from 1 July 2025: https://www.ato.gov.au/tax-rates-and-codes/key-superannuation-rates-and-thresholds/super-guarantee"
+          },
+          {
+            "claim": "Plan prices and hours: Worker Bee $545 / 16h, Buzz Basics $995 / 30h, Honey Comb $1,645 / 53h, Nectar Pro $2,645 / 74h, AUD inc GST.",
+            "source": "Design Bees canonical plan pricing and the live hours ladder, L99-voice.md and https://designbees.com.au/pricing-plans"
+          },
+          {
+            "claim": "The leave-cover positioning matches real closed deals and is a named priority.",
+            "source": "DesignBees-Growth-Master-Plan.md section 4 item 5, July 2026"
+          }
+        ]
+      },
+      voice_warnings: [
+        'L99 machine checks pass. Every figure is sourced in the case above: Keyword Planner volumes, SEEK salary, the ATO superannuation rate, and Design Bees plan pricing and hours.',
+      ],
+      body: LEAVE_BODY,
+      drafted_at: '2026-07-27T01:30:00.000Z',
+    },
+  },
   {
     entity_type: 'topic',
     entity_key: 'blogpost-design-subscription-vs-freelancer-vs-agency-vs-in-house',
