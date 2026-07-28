@@ -2,7 +2,7 @@
 //
 // Fred is the teammate the others check commercial reality against: Ian can say
 // an industry looks promising, but only Fred can say what it has actually paid.
-import { getRevenue, getReconcile, money } from '../../wix.js';
+import { getRevenue, getReconcile, getRecognised, money } from '../../wix.js';
 import { wixOauthConnected, planOrders, ecomOrders, findContacts } from '../../wix-oauth.js';
 
 export default {
@@ -31,7 +31,21 @@ YTD $243,167 from the snapshot — the first time live data is used for a total,
 and report any gap to AJ instead of silently preferring either source. Second, remember the settled
 facts: a cancellation is not automatically churn (Richard Lowe cancelled because he ran out of design
 work and still buys one-offs; Peter Nittes was always a ~3-month engagement) — the status field says
-what happened, never why. Say "Source: Wix live" or "Source: snapshot" with every figure.`,
+what happened, never why. Say "Source: Wix live" or "Source: snapshot" with every figure.
+
+PREPAYMENTS COVER MONTHS, NOT DATES. A payment arrives once and buys several months, and not
+necessarily the ones straight after it. The reconciliation infers month COUNT from the amount, and
+then assumes the cover starts at the payment date — that second half is a guess and it has been
+wrong. Google invoice #0000379 is the proof: $5,290.01 paid on 17 April covers February and April,
+skipping March entirely. So when anyone asks what a month should show, call revenue_recognised, not
+payment_reconciliation. Report a period as settled only when the basis is "confirmed" — that means
+AJ has handed us the purchase order. Say "inferred" out loud otherwise, and never fold an inferred
+or pending amount into a total.
+
+SETTLED (AJ, 28 Jul 2026): both Nectar prepayments previously showing as "Unknown" are the same
+client — Google DSBO Channel Team, contact Ayschia Ferguson, PO 9279014679. $5,290.01 covers Feb and
+Apr at the standard $2,645/mo. $13,489.50 covers Jun-Nov at $2,248.25/mo, 15% off for the six-month
+commitment. June's confirmed prepayment component is $2,248.25 and nothing else.`,
 
   subscribes: ['request:wix', 'request:revenue', 'finance:*'],
   emits: ['finance:pulse', 'finance:anomaly'],
@@ -49,8 +63,26 @@ what happened, never why. Say "Source: Wix live" or "Source: snapshot" with ever
       name: 'payment_reconciliation',
       description:
         'Payments since April 2026 classified as standard plan months, multi-month prepayments, or ' +
-        "one-offs. Use when asked about prepayments, discounts, or payments that don't match a plan price.",
+        "one-offs. Use when asked about prepayments, discounts, or payments that don't match a plan price. " +
+        'Each prepayment carries a basis: confirmed (AJ has given us the purchase order and we know the ' +
+        'exact months), pending (arrangement known, something still open), or inferred (period is a guess ' +
+        'from the amount). Never report an inferred period as settled.',
       input_schema: { type: 'object', properties: {} },
+    },
+    {
+      name: 'revenue_recognised',
+      description:
+        'Prepayment revenue belonging to a given month, spread over the months the purchase order ' +
+        'actually names rather than the month the money arrived. Use this whenever asked what a month ' +
+        "should show — a payment lands once but buys several months, and not always the ones that follow " +
+        'it. Anything still inferred is listed separately and excluded from the total.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          month: { type: 'string', description: 'The month to recognise into, as YYYY-MM (e.g. 2026-06).' },
+        },
+        required: ['month'],
+      },
     },
     {
       name: 'wix_subscriptions',
@@ -127,11 +159,41 @@ what happened, never why. Say "Source: Wix live" or "Source: snapshot" with ever
     payment_reconciliation: async (_input, ctx) => {
       try {
         const { data: r, live, asOf } = await getReconcile();
+        const pre = r.prepayments.map((p) => {
+          if (p.basis === 'confirmed') {
+            return `${p.client} $${money(p.amount)} ${p.plan} — CONFIRMED, covers ${p.covers.join(', ')} at $${money(p.monthly)}/mo${p.discountPct ? ` (${p.discountPct}% off)` : ' (standard rate)'} [${p.evidence.doc}]`;
+          }
+          if (p.basis === 'pending') {
+            return `${p.client} $${money(p.amount)} ${p.plan} — PENDING: ${p.open.join(' ')}`;
+          }
+          return `${p.client} $${money(p.amount)} ≈${p.months}mo ${p.plan} — INFERRED, period is a guess`;
+        });
         return (
           `Source: Wix ${live ? '(live)' : `(snapshot as of ${asOf})`}, since ${r.from}\n` +
           `${r.standard} of ${r.scanned} payments are standard plan months.\n` +
-          `Prepayments: ${r.prepayments.map((p) => `${p.client} $${money(p.amount)} ≈${p.months}mo ${p.plan}`).join('; ') || 'none'}\n` +
+          `Prepayments:\n${pre.map((l) => `  • ${l}`).join('\n') || '  none'}\n` +
           `One-offs: ${r.oneOffs.slice(0, 12).map((o) => `${o.client} $${money(o.amount)} ${o.label}`).join('; ') || 'none'}`
+        );
+      } catch (err) {
+        return `Couldn't read Wix: ${err.message}. Report this rather than estimating.`;
+      }
+    },
+
+    revenue_recognised: async (input = {}) => {
+      const month = String(input.month || '').trim();
+      if (!/^\d{4}-\d{2}$/.test(month)) return 'Give me the month as YYYY-MM, e.g. 2026-06.';
+      try {
+        const { data: g, live, asOf } = await getRecognised(month);
+        const rows = g.recognised.map(
+          (r) => `  • ${r.client} — $${money(r.amount)} (${r.plan}, ${1}/${r.covers.length} of $${money(r.of)} covering ${r.covers.join(', ')}) [${r.evidence}]`
+        );
+        const open = g.unresolved.map((u) => `  • ${u.client} — $${money(u.amount)} ${u.plan} [${u.basis}] — ${u.why}`);
+        return (
+          `Source: Wix ${live ? '(live)' : `(snapshot as of ${asOf})`}\n` +
+          `Prepayment revenue recognised in ${month}: $${money(g.total)}\n` +
+          `${rows.join('\n') || '  • nothing confirmed for this month'}\n` +
+          `Not counted (period not confirmed — do NOT add these to the total or guess a month):\n` +
+          `${open.join('\n') || '  • none'}`
         );
       } catch (err) {
         return `Couldn't read Wix: ${err.message}. Report this rather than estimating.`;

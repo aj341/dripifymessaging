@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { confirmedFor, pendingFor, monthlyOf } from './data/confirmed-prepayments.js';
 const SITE_ID = process.env.WIX_SITE_ID || 'aa112b96-b980-49fa-8f7f-202343661708'; // Design Bees
 const API_KEY = process.env.WIX_API_KEY;
 
@@ -347,6 +348,31 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
     const rawName = (items && items[0] && items[0].name) || '';
     const name = normalizePlan(rawName);
 
+    // Confirmed by AJ against a purchase order — beats anything we could infer,
+    // and is the only path that knows which months the money actually covers.
+    const conf = confirmedFor(amount, t.createdAt);
+    if (conf) {
+      prepayments.push({
+        client: conf.client, contact: conf.contact, plan: conf.plan, amount,
+        months: conf.covers.length, covers: conf.covers, monthly: monthlyOf(conf),
+        discountPct: conf.discountPct, evidence: conf.evidence,
+        basis: 'confirmed', confidence: 'fact', date: t.createdAt,
+      });
+      continue;
+    }
+
+    // Confirmed in shape but not yet in period — recorded, deliberately not
+    // recognised into any month until AJ closes the open points.
+    const pend = pendingFor(amount);
+    if (pend) {
+      prepayments.push({
+        client: pend.client || cust.name, plan: pend.plan, amount,
+        months: pend.months, covers: null, known: pend.known, open: pend.open,
+        basis: 'pending', confidence: 'hypothesis', date: t.createdAt,
+      });
+      continue;
+    }
+
     // A standard plan month — not a prepayment.
     if (isStandard(amount)) { standard += 1; continue; }
 
@@ -385,6 +411,52 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
   prepayments.sort((a, b) => b.amount - a.amount);
   oneOffs.sort((a, b) => b.amount - a.amount);
   return { scanned, standard, prepayments, oneOffs, from: from.toISOString().slice(0, 10) };
+}
+
+/**
+ * What prepayment revenue belongs to a given month.
+ *
+ * The distinction that caused the whole Fred thread: a payment lands in one
+ * month but buys several, and not necessarily the ones that follow it. This
+ * spreads only the confirmed blocks, over the months their purchase order
+ * actually names. Everything still inferred is returned separately and left out
+ * of the total, because a guessed period in a revenue figure is worse than a
+ * gap someone can see.
+ */
+export function recognisedInMonth(reconcile, month) {
+  const recognised = [];
+  const unresolved = [];
+
+  for (const p of reconcile?.prepayments || []) {
+    // Re-resolve against the ledger by amount + date rather than trusting the
+    // row's own basis. A cached snapshot may predate a confirmation, and the
+    // purchase order is the newer truth either way.
+    const conf = confirmedFor(p.amount, p.date);
+    if (conf) {
+      if (conf.covers.includes(month)) {
+        recognised.push({
+          client: conf.client, plan: conf.plan, amount: monthlyOf(conf),
+          of: conf.amount, covers: conf.covers, discountPct: conf.discountPct,
+          evidence: conf.evidence.doc,
+        });
+      }
+      continue;
+    }
+    const pend = pendingFor(p.amount);
+    unresolved.push({
+      client: pend?.client || p.client, plan: pend?.plan || p.plan, amount: p.amount,
+      basis: pend ? 'pending' : 'inferred',
+      why: pend ? pend.open.join(' ') : 'period inferred from the amount, never confirmed',
+    });
+  }
+
+  const total = Math.round(recognised.reduce((s, r) => s + r.amount, 0) * 100) / 100;
+  return { month, recognised, total, unresolved };
+}
+
+export async function getRecognised(month) {
+  const { data, live, asOf } = await getReconcile();
+  return { data: recognisedInMonth(data, month), live, asOf };
 }
 
 // --- Snapshot fallback ------------------------------------------------------
