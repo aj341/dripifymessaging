@@ -33,19 +33,29 @@ facts: a cancellation is not automatically churn (Richard Lowe cancelled because
 work and still buys one-offs; Peter Nittes was always a ~3-month engagement) — the status field says
 what happened, never why. Say "Source: Wix live" or "Source: snapshot" with every figure.
 
-PREPAYMENTS COVER MONTHS, NOT DATES. A payment arrives once and buys several months, and not
-necessarily the ones straight after it. The reconciliation infers month COUNT from the amount, and
-then assumes the cover starts at the payment date — that second half is a guess and it has been
-wrong. Google invoice #0000379 is the proof: $5,290.01 paid on 17 April covers February and April,
-skipping March entirely. So when anyone asks what a month should show, call revenue_recognised, not
-payment_reconciliation. Report a period as settled only when the basis is "confirmed" — that means
-AJ has handed us the purchase order. Say "inferred" out loud otherwise, and never fold an inferred
-or pending amount into a total.
+PREPAYMENTS COVER MONTHS, NOT DATES, AND ONLY AJ CAN CONFIRM WHICH. A payment arrives once and buys
+several months, not necessarily the ones straight after it. The reconciliation infers month COUNT
+from the amount and then assumes cover starts at the payment date — that second half is a guess and
+it has been wrong. Google invoice #0000379: $5,290.01 paid 17 April covers February and April,
+skipping March. Kristina Charchalis-Rana: $2,868 with no PO, no months on the invoice and a pro-rata
+credit inside the number — nothing on the document could have told us it was July and August.
 
-SETTLED (AJ, 28 Jul 2026): both Nectar prepayments previously showing as "Unknown" are the same
-client — Google DSBO Channel Team, contact Ayschia Ferguson, PO 9279014679. $5,290.01 covers Feb and
-Apr at the standard $2,645/mo. $13,489.50 covers Jun-Nov at $2,248.25/mo, 15% off for the six-month
-commitment. June's confirmed prepayment component is $2,248.25 and nothing else.`,
+So the standing rule (AJ, 28 Jul 2026) is that EVERY prepayment is confirmed by AJ personally. A
+purchase order is welcome evidence when one exists but it is not the mechanism. When you see a
+payment with basis "awaiting-aj", ask him the specific question in the row — which months does it
+cover — and never fold the amount into a total meanwhile. When anyone asks what a month should show,
+call revenue_recognised, not payment_reconciliation.
+
+SETTLED (AJ, 28 Jul 2026):
+• Both Nectar prepayments that showed as "Unknown" are Google DSBO Channel Team, Training & Advocacy
+  Support, contact Ayschia Ferguson, PO 9279014679. Attribute them to that client by name from now
+  on — never report them as Unknown. $5,290.01 covers Feb + Apr at the standard $2,645/mo;
+  $13,489.50 covers Jun-Nov at $2,248.25/mo, 15% off for the six-month commitment.
+• June's confirmed prepayment component is $2,248.25 and nothing else.
+• Kristina Charchalis-Rana: two months of Honeycomb Plus, July and August, $1,645/mo recognised.
+  She paid $2,868 cash because she upgraded off Worker Bee after 7 days and the unused 24 days
+  ($421.94) were credited against the upgrade. Cash and revenue differ here on purpose. The team's
+  pro-rata was correct — do not re-open it.`,
 
   subscribes: ['request:wix', 'request:revenue', 'finance:*'],
   emits: ['finance:pulse', 'finance:anomaly'],
@@ -161,12 +171,10 @@ commitment. June's confirmed prepayment component is $2,248.25 and nothing else.
         const { data: r, live, asOf } = await getReconcile();
         const pre = r.prepayments.map((p) => {
           if (p.basis === 'confirmed') {
-            return `${p.client} $${money(p.amount)} ${p.plan} — CONFIRMED, covers ${p.covers.join(', ')} at $${money(p.monthly)}/mo${p.discountPct ? ` (${p.discountPct}% off)` : ' (standard rate)'} [${p.evidence.doc}]`;
+            const credit = p.creditApplied ? `, after a $${money(p.creditApplied)} credit` : '';
+            return `${p.client} $${money(p.amount)} ${p.plan} — CONFIRMED, covers ${p.covers.join(', ')} at $${money(p.monthly)}/mo${p.discountPct ? ` (${p.discountPct}% off)` : ''}${credit} [${p.evidence.doc}]`;
           }
-          if (p.basis === 'pending') {
-            return `${p.client} $${money(p.amount)} ${p.plan} — PENDING: ${p.open.join(' ')}`;
-          }
-          return `${p.client} $${money(p.amount)} ≈${p.months}mo ${p.plan} — INFERRED, period is a guess`;
+          return `${p.client} $${money(p.amount)} ${p.plan} — AWAITING AJ: ${p.ask || 'which months does it cover?'}`;
         });
         return (
           `Source: Wix ${live ? '(live)' : `(snapshot as of ${asOf})`}, since ${r.from}\n` +

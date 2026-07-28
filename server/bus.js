@@ -35,6 +35,75 @@ const NOTIFY_MAX = 600;
 export function autorunEnabled() {
   return process.env.HIVE_AUTORUN !== '0';
 }
+
+// --- Per-teammate hold -------------------------------------------------------
+// The off switch above is all-or-nothing. AJ needed to stop two teammates
+// burning usage while the other four kept working (28 Jul 2026: "put ricky and
+// sam on hold I don't want to waste the usage today"), so a hold is per worker
+// and lives in settings — lifting it is a database write, not a redeploy.
+//
+// A held teammate is stopped at three points: nothing new is queued for them,
+// anything already pending is dropped, and the claim query skips them. All
+// three matter — holding only the queue would still let a backlog drain.
+const HOLD_KEY = 'hive_hold';
+const DEFAULT_HOLD = 'radar,voice'; // Ricky, Sam — AJ, 28 Jul 2026
+
+export async function heldWorkers() {
+  const raw = await getSetting(HOLD_KEY);
+  return new Set(
+    String(raw ?? DEFAULT_HOLD)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+}
+
+export async function isHeld(worker_key) {
+  return (await heldWorkers()).has(worker_key);
+}
+
+/**
+ * Drop background work already queued for held teammates.
+ *
+ * Run at boot. Without it, jobs queued before the hold sit pending forever and
+ * then all fire the moment they are released — which is the opposite of what a
+ * hold is for.
+ */
+export async function enforceHold() {
+  const hold = [...(await heldWorkers())];
+  if (!hold.length) return 0;
+  const { rowCount } = await _q(
+    `UPDATE jobs SET status='skipped', error='held by AJ', finished_at=now()
+      WHERE status='pending' AND topic IS DISTINCT FROM 'manual' AND worker_key = ANY($1)`,
+    [hold]
+  );
+  return rowCount;
+}
+
+/** Put teammates on hold and clear any work already waiting for them. */
+export async function holdWorkers(keys) {
+  const next = new Set([...(await heldWorkers()), ...keys]);
+  await setSetting(HOLD_KEY, [...next].join(','));
+  // Background work waiting for them is dropped; a direct request from AJ is
+  // left alone, same as the claim query below.
+  const { rowCount } = await _q(
+    `UPDATE jobs SET status='skipped', error='held by AJ', finished_at=now()
+      WHERE status='pending' AND topic IS DISTINCT FROM 'manual' AND worker_key = ANY($1)`,
+    [[...keys]]
+  );
+  return { held: [...next], cancelled: rowCount };
+}
+
+/** Let teammates start again. */
+export async function releaseWorkers(keys) {
+  const next = await heldWorkers();
+  for (const k of keys) next.delete(k);
+  // An empty string is stored, not left unset: `??` above only falls back to
+  // DEFAULT_HOLD when nothing has ever been written, so releasing everyone
+  // sticks instead of silently reverting to the default.
+  await setSetting(HOLD_KEY, [...next].join(','));
+  return [...next];
+}
 // The hive speaks once, then waits. Nothing else is sent until AJ has replied —
 // his answer usually removes the need for the next message anyway.
 export async function awaitingReply() {
@@ -73,9 +142,15 @@ export async function loadSpecs() {
       console.error(`[bus] failed to load ${f}:`, err.message);
     }
   }
+  const hold = await heldWorkers();
+  const live = allSpecs().filter((s) => !hold.has(s.key));
   console.log(
-    `[bus] ${specs.size} teammates online: ${allSpecs().map((s) => `${s.name} (${s.title})`).join(', ')}`
+    `[bus] ${live.length} teammates online: ${live.map((s) => `${s.name} (${s.title})`).join(', ')}`
   );
+  if (hold.size) {
+    const names = allSpecs().filter((s) => hold.has(s.key)).map((s) => s.name);
+    console.log(`[bus] ON HOLD — no background work: ${names.join(', ')} (AJ can still ask them directly)`);
+  }
   return specs;
 }
 
@@ -126,7 +201,11 @@ export async function publish({ worker_key, topic, title, body, data, confidence
     return sig;
   }
 
-  const subs = subscribersOf(topic, worker_key);
+  // A held teammate is not woken by a cascade. The signal is still written, so
+  // the finding is on the record and they can pick it up when released.
+  const hold = await heldWorkers();
+  const all = subscribersOf(topic, worker_key);
+  const subs = all.filter((s) => !hold.has(s.key));
   for (const s of subs) {
     await _q(
       `INSERT INTO jobs (worker_key, trigger_signal_id, topic, prompt, depth)
@@ -142,6 +221,10 @@ export async function publish({ worker_key, topic, title, body, data, confidence
   }
   if (subs.length) {
     console.log(`[bus] ${worker_key} published ${topic} → woke ${subs.map((s) => s.name).join(', ')}`);
+  }
+  const skipped = all.filter((s) => hold.has(s.key));
+  if (skipped.length) {
+    console.log(`[bus] ${topic} not sent to ${skipped.map((s) => s.name).join(', ')} — on hold`);
   }
   return sig;
 }
@@ -462,12 +545,15 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
     // a burst of cascade jobs buries a direct request behind them — which is
     // exactly what happened when he asked for proposals and waited half an hour
     // while George worked through a backlog of feed signals.
+    const held = [...(await heldWorkers())];
     const claim = await _q(
       `UPDATE jobs SET status = 'running', started_at = now()
         WHERE id = (SELECT id FROM jobs WHERE status = 'pending'
+                     AND (topic = 'manual' OR NOT (worker_key = ANY($1)))
                      ORDER BY (topic = 'manual') DESC, (topic = 'daily') DESC, created_at
                      LIMIT 1 FOR UPDATE SKIP LOCKED)
-        RETURNING *`
+        RETURNING *`,
+      [held]
     );
     const job = claim.rows[0];
     if (!job) break;
@@ -509,8 +595,10 @@ export async function processJobs(limit = MAX_JOBS_PER_TICK) {
 
 /** Queue a worker's standing daily task. */
 export async function queueDaily(hourSydney) {
+  const hold = await heldWorkers();
   for (const spec of allSpecs()) {
     if (!spec.daily || spec.daily.hourSydney !== hourSydney) continue;
+    if (hold.has(spec.key)) continue; // standing work stops too, not just cascades
     const recent = await _q(
       `SELECT 1 FROM jobs WHERE worker_key=$1 AND topic='daily'
         AND created_at > now() - interval '20 hours' LIMIT 1`,
@@ -525,7 +613,13 @@ export async function queueDaily(hourSydney) {
   }
 }
 
-/** Kick a worker by hand — used by Telegram commands. */
+/**
+ * Kick a worker by hand — used by Telegram commands.
+ *
+ * A hold does not block AJ himself. It exists to stop background work running
+ * up usage, not to stop him asking someone a direct question; if he addresses a
+ * held teammate the answer should come back, not vanish silently.
+ */
 export async function queueJob(workerKey, prompt) {
   const r = await _q(
     `INSERT INTO jobs (worker_key, topic, prompt, depth) VALUES ($1,'manual',$2,0) RETURNING id`,
