@@ -21,7 +21,7 @@ import {
   hoursSinceReconcile,
 } from './workers/ledger.js';
 import { runScout, runScoutSalesNav, runScoutDemos, scoutReady, scoutHasRun } from './workers/scout.js';
-import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autorunEnabled } from './bus.js';
+import { loadSpecs, allSpecs, processJobs, queueDaily, queueJob, publish, autorunEnabled, enforceHold } from './bus.js';
 import { authUrl, completeAuth, googleConfigured, googleConnected, grantedScopes } from './google.js';
 import { mountApprove } from './approve.js';
 import { mountIngest } from './ingest.js';
@@ -508,7 +508,7 @@ async function resetSamContentOnce() {
 
 async function boot() {
   console.log(
-    `[hive] build: hive-v55-trial-first | wix:${scoutReady()} telegram:${telegramReady()}`
+    `[hive] build: hive-v56-prepay-confirmed | wix:${scoutReady()} telegram:${telegramReady()}`
   );
   await migrateWithRetry();
   await resetSamContentOnce().catch((e) => console.error('[boot] sam reset:', e.message));
@@ -522,6 +522,14 @@ async function boot() {
     }
   } catch (e) {
     console.error('[boot] awaiting-reply check:', e.message);
+  }
+  // Clear background work queued for anyone on hold, so releasing them later
+  // doesn't fire a backlog all at once.
+  try {
+    const dropped = await enforceHold();
+    if (dropped) console.log(`[hive] dropped ${dropped} queued job(s) for teammates on hold`);
+  } catch (e) {
+    console.error('[boot] hold check:', e.message);
   }
   // Seed the file-based enrichment once, then load everything the workers know
   // into the in-memory index the cohort builder reads.

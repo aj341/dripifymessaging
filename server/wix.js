@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { confirmedFor, pendingFor, monthlyOf } from './data/confirmed-prepayments.js';
+import { confirmedFor, attributionFor, monthlyOf } from './data/confirmed-prepayments.js';
 const SITE_ID = process.env.WIX_SITE_ID || 'aa112b96-b980-49fa-8f7f-202343661708'; // Design Bees
 const API_KEY = process.env.WIX_API_KEY;
 
@@ -125,9 +125,17 @@ function txPlan(t) {
 }
 function txCustomer(t) {
   const b = t.order && t.order.description && t.order.description.billingAddress;
-  if (!b) return { name: 'Unknown', email: null };
-  const name = `${b.firstName || ''} ${b.lastName || ''}`.trim() || b.company || b.email || 'Unknown';
-  return { name, email: b.email || null };
+  const name = b
+    ? `${b.firstName || ''} ${b.lastName || ''}`.trim() || b.company || b.email || 'Unknown'
+    : 'Unknown';
+  // Wix leaves some transactions with no billing name at all — bank transfers
+  // against an invoice, mostly. AJ confirms who they belong to and the standing
+  // attribution names them everywhere, not just inside a prepayment row.
+  if (name === 'Unknown') {
+    const a = attributionFor(txAmount(t));
+    if (a) return { name: a.client, email: null, contact: a.contact, attributed: true };
+  }
+  return { name, email: (b && b.email) || null };
 }
 
 // Internal / staff — excluded from client and revenue analysis. The email
@@ -348,27 +356,18 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
     const rawName = (items && items[0] && items[0].name) || '';
     const name = normalizePlan(rawName);
 
-    // Confirmed by AJ against a purchase order — beats anything we could infer,
-    // and is the only path that knows which months the money actually covers.
+    // Confirmed by AJ — the only path that knows which months the money covers.
+    // A purchase order is good evidence where one exists, but plenty of
+    // prepayments have no PO and no months on the invoice, so his confirmation
+    // is the mechanism, not the paperwork.
     const conf = confirmedFor(amount, t.createdAt);
     if (conf) {
       prepayments.push({
         client: conf.client, contact: conf.contact, plan: conf.plan, amount,
         months: conf.covers.length, covers: conf.covers, monthly: monthlyOf(conf),
+        recognises: monthlyOf(conf) * conf.covers.length, creditApplied: conf.creditApplied,
         discountPct: conf.discountPct, evidence: conf.evidence,
         basis: 'confirmed', confidence: 'fact', date: t.createdAt,
-      });
-      continue;
-    }
-
-    // Confirmed in shape but not yet in period — recorded, deliberately not
-    // recognised into any month until AJ closes the open points.
-    const pend = pendingFor(amount);
-    if (pend) {
-      prepayments.push({
-        client: pend.client || cust.name, plan: pend.plan, amount,
-        months: pend.months, covers: null, known: pend.known, open: pend.open,
-        basis: 'pending', confidence: 'hypothesis', date: t.createdAt,
       });
       continue;
     }
@@ -403,7 +402,15 @@ export function reconcilePayments(txns, { from = RECONCILE_FROM } = {}) {
       }
     }
     if (best && best.roundErr <= 0.02) {
-      prepayments.push({ client: cust.name, email: cust.email, plan: planForPrice(best.price), amount, months: best.months, discountPct: best.discountPct, basis: 'inferred', confidence: 'hypothesis', date: t.createdAt });
+      // The shape says prepayment, so flag it — but the months are a guess and
+      // are not offered as one. This row exists to get AJ's confirmation, not
+      // to stand in for it.
+      prepayments.push({
+        client: cust.name, email: cust.email, plan: planForPrice(best.price), amount,
+        months: best.months, covers: null, discountPct: best.discountPct,
+        basis: 'awaiting-aj', confidence: 'hypothesis', date: t.createdAt,
+        ask: `Looks like ~${best.months} months of ${planForPrice(best.price)}${best.discountPct ? ` at ${best.discountPct}% off` : ''}. Which months does it cover?`,
+      });
     } else {
       oneOffs.push({ client: cust.name, email: cust.email, label: name || rawName || 'payment', amount, date: t.createdAt });
     }
@@ -437,16 +444,15 @@ export function recognisedInMonth(reconcile, month) {
         recognised.push({
           client: conf.client, plan: conf.plan, amount: monthlyOf(conf),
           of: conf.amount, covers: conf.covers, discountPct: conf.discountPct,
-          evidence: conf.evidence.doc,
+          creditApplied: conf.creditApplied, evidence: conf.evidence.doc,
         });
       }
       continue;
     }
-    const pend = pendingFor(p.amount);
     unresolved.push({
-      client: pend?.client || p.client, plan: pend?.plan || p.plan, amount: p.amount,
-      basis: pend ? 'pending' : 'inferred',
-      why: pend ? pend.open.join(' ') : 'period inferred from the amount, never confirmed',
+      client: attributionFor(p.amount)?.client || p.client, plan: p.plan, amount: p.amount,
+      basis: 'awaiting-aj', date: p.date,
+      why: p.ask || 'looks like a prepayment; AJ has not confirmed which months it covers',
     });
   }
 
