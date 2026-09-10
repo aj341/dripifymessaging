@@ -27,7 +27,7 @@ AHREFS='https://app.ahrefs.com/site-audit/9577405/overview'
 PEEK='https://www.aipeekaboo.com/'
 SEM='https://www.semrush.com/siteaudit/?domain=www.designbees.com.au'
 # ================= Task Tracker =================
-ws=wb.active; ws.title='Task Tracker'
+ws=wb.active; ws.title='Tasks'
 style_title(ws,'Design Bees — AEO/SEO Task Tracker (from the Visibility Report, 10 Sep 2026)','Work through P0 first. Update Status after each change in Wix, then use the Verification column to confirm on the live site or in Search Console. Source URLs point at the evidence for each task; the full report is the Summary tab link.',13)
 cols=['Task ID','Priority','Status','Workstream','Task','Wix location','Proposed change / acceptance','Effort','Owner','Due date','Source URL','Verification','Notes']
 widths=[9,9,16,18,40,32,46,9,12,12,34,40,34]
@@ -77,18 +77,18 @@ for c,w in zip('ABCDEFGH',[28,14,4,14,10,4,30,40]): ws.column_dimensions[c].widt
 hdr=Font(name=F,size=10,bold=True)
 ws['A4']='Metric'; ws['B4']='Value'; ws['D4']='Priority'; ws['E4']='Tasks'
 for c in ('A4','B4','D4','E4'): ws[c].font=hdr
-rows=[('Total tasks',"=COUNTA('Task Tracker'!$A$5:$A$1000)"),('Done','=COUNTIF(\'Task Tracker\'!$C$5:$C$1000,"Done")'),('In progress','=COUNTIF(\'Task Tracker\'!$C$5:$C$1000,"In progress")'),('Blocked','=COUNTIF(\'Task Tracker\'!$C$5:$C$1000,"Blocked")'),('Needs verification','=COUNTIF(\'Task Tracker\'!$C$5:$C$1000,"Needs verification")'),('Completion','=IF(B5=0,0,B6/B5)')]
+rows=[('Total tasks',"=COUNTA(Tasks!$A$5:$A$1000)"),('Done','=COUNTIF(Tasks!$C$5:$C$1000,"Done")'),('In progress','=COUNTIF(Tasks!$C$5:$C$1000,"In progress")'),('Blocked','=COUNTIF(Tasks!$C$5:$C$1000,"Blocked")'),('Needs verification','=COUNTIF(Tasks!$C$5:$C$1000,"Needs verification")'),('Completion','=IF(B5=0,0,B6/B5)')]
 for i,(a,b) in enumerate(rows,5):
     ws.cell(row=i,column=1,value=a).font=Font(name=F,size=10); ws.cell(row=i,column=2,value=b).font=Font(name=F,size=10)
 ws['B10'].number_format='0%'
 for i,p in enumerate(('P0','P1','P2'),5):
-    ws.cell(row=i,column=4,value=p).font=Font(name=F,size=10); ws.cell(row=i,column=5,value=f"=COUNTIF('Task Tracker'!$B$5:$B$1000,D{i})").font=Font(name=F,size=10)
+    ws.cell(row=i,column=4,value=p).font=Font(name=F,size=10); ws.cell(row=i,column=5,value=f"=COUNTIF(Tasks!$B$5:$B$1000,D{i})").font=Font(name=F,size=10)
 ws['G4']='Baseline, 10 Sep 2026 (actual)'; ws['G4'].font=hdr; ws['H4']='Source'; ws['H4'].font=hdr
 base=[('Semrush SEO score','50 / 100','Semrush SEO Checker, run by AJ'),('Performance / INP / TBT','56 · 6.186 s · 1.065 s','Semrush SEO Checker'),('HubSpot AI Search Grader','ChatGPT 43 · Perplexity 51 · Gemini 44','HubSpot, session run'),('Peekaboo visibility','56 / 100 (5 prompts × 4 engines, 40 runs)','Peekaboo MCP, AJ authorised'),('Semrush AI Visibility','Free checker 0 · dashboard (AU) 14','Semrush, run by AJ'),('Google AI-feature impressions, 92 days','7,865','Search Console Generative AI export'),('Web clicks / impressions, 92 days','930 / 65,504 · CTR 1.42%','Search Console Search results export'),('"graphic design services"','1,787 impressions · position 4.6 · CTR 0.22%','Search Console Search results export'),('Ahrefs health (3 URLs)','93 / 100','Ahrefs Site Audit email 9 Sep')]
 for i,(a,b,c) in enumerate(base,5):
     ws.cell(row=i,column=7,value=a).font=Font(name=F,size=10); ws.cell(row=i,column=8,value=b+'  —  '+c).font=Font(name=F,size=10); ws.cell(row=i,column=8).alignment=Alignment(wrap_text=True)
 ws['A16']='How to use'; ws['A16'].font=hdr; ws.merge_cells('A16:H16')
-ws['A17']=('Start with the P0 tasks on the Task Tracker tab. Set Status as you work in Wix; use "Needs verification" until the Verification column check has been done on the live site or in Search Console. '
+ws['A17']=('Start with the P0 tasks on the Tasks tab. Set Status as you work in Wix; use "Needs verification" until the Verification column check has been done on the live site or in Search Console. '
           'Evergreen Pages lists the pages that answer the six target questions and which are still to build. Sources holds every evidence and implementation link. Tracking is the monthly log: add a row per metric each month with the same inputs, and the Latest block updates itself. '
           'Full report: '+REPORT)
 ws['A17'].font=Font(name=F,size=10); ws['A17'].alignment=Alignment(wrap_text=True,vertical='top'); ws.merge_cells('A17:H20'); ws.row_dimensions[17].height=30
