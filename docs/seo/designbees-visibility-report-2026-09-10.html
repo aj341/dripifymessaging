@@ -102,9 +102,9 @@
   <p style="max-width:78ch; margin-top:10px;">Four free audits, Google Search Console and their supporting data, read as three separate things that are often blurred together: <b>SEO scores</b> (site health), <b>AI mentions</b> (what answer engines say), and <b>Google AI impressions</b> (Search Console's own report). Each finding carries its source and date. Recommendations are labelled as such.</p>
   <div class="meta">
     <div>Site<b>designbees.com.au · Wix Studio · 38 pages + 23 posts (sitemap, 10 Sep)</b></div>
-    <div>Version<b>Draft v5 · full detail · 10 Sep 2026</b></div>
+    <div>Version<b>Draft v6 · full detail · 10–11 Sep 2026</b></div>
     <div>Prepared for<b>AJ Kavanagh, Design Bees</b></div>
-    <div>Still pending<b>Nothing. All four tools and both Search Console exports are in.</b></div>
+    <div>Still pending<b>Nothing. Four tools, both Search Console exports and live engine checks are all in.</b></div>
   </div>
   <div class="legend">Labels: <span class="tag t-fact">Actual</span> measured result <span class="tag t-rec">Recommendation</span> my opinion <span class="tag t-miss">Missing</span> could not be obtained <span class="tag t-sec">Secondary</span> older or third-party monitoring, used as context</div>
   <nav class="toc" aria-label="Contents">
@@ -121,6 +121,7 @@
     <a href="#g-monitoring"><span class="eyebrow">G</span>Ahrefs and SearchAtlas monitoring</a>
     <a href="#h-site"><span class="eyebrow">H</span>Live site check</a>
     <a href="#i-method"><span class="eyebrow">I</span>Method, access and sources</a>
+    <a href="#j-live"><span class="eyebrow">J</span>Live engine checks</a>
   </nav>
 </header>
 
@@ -149,7 +150,8 @@
         <li>By engine: Perplexity 68, Google AI Overview 60, Gemini 49, ChatGPT 46. Google AI Mode was not sampled.</li>
         <li>But <b>0 mentions in 8 runs</b> for the unbranded prompt "what do small businesses typically switch to when their freelance designer becomes too costly?", and 0 on both ChatGPT and Gemini for "graphic design services (Australia)".</li>
         <li>HubSpot AI Search Grader: 43 ChatGPT · 51 Perplexity · 44 Gemini, share of voice 0/10 on ChatGPT and Gemini, sentiment the only strong dimension.</li>
-        <li>Semrush AI Visibility Checker: score <b>0</b>, 2 mentions, 4 citations; Semrush dashboard (Australia) 14, 1 mention, 9 cited pages. The tools disagree because they ask different questions: Appendix D5 reconciles them.</li>
+        <li>Live check, 11 Sep, from an Australian connection: Google AI Mode names Design Bees in <b>6 of 6</b> buyer queries and ChatGPT in <b>5 of 6</b>, in both cases ranking it first or near-first on the commercial ones. The one miss is ChatGPT on "what do small businesses switch to when a freelance designer gets too costly", where it names no provider at all.</li>
+    <li>Semrush AI Visibility Checker: score <b>0</b>, 2 mentions, 4 citations; Semrush dashboard (Australia) 14, 1 mention, 9 cited pages. The tools disagree because they ask different questions: Appendix D5 reconciles them.</li>
       </ul>
     </div>
     <div class="lane goog">
@@ -164,7 +166,7 @@
       </ul>
     </div>
   </div>
-  <p class="note"><b>The one-line read.</b> The site is technically sound at the crawl level and has a strong pricing page, but it earns clicks almost only on its own name: the biggest non-brand terms now sit at positions 2 to 5 with almost no clicks, and page speed on interaction fails. On AI visibility the picture is more specific than "invisible": when the question names Australia, Peekaboo has Design Bees ahead of all four subscription competitors, and Google's own AI features showed the site 7,865 times in three months. The gap is ChatGPT and Gemini on the head term, and unbranded problem-framed questions where the brand never appears. Nothing is outstanding.</p>
+  <p class="note"><b>The one-line read.</b> The site is technically sound at the crawl level and has a strong pricing page, but it earns clicks almost only on its own name: the biggest non-brand terms now sit at positions 2 to 5 with almost no clicks, and page speed on interaction fails. On AI visibility the picture is more specific than "invisible": when the question names Australia, Peekaboo has Design Bees ahead of all four subscription competitors, and Google's own AI features showed the site 7,865 times in three months. Live checks on 11 September confirm it: ChatGPT and Google AI Mode each name Design Bees in five of six buyer queries, usually first. The one gap common to every measurement is the unbranded question about a freelancer becoming too costly, which no provider currently owns.</p>
 </section>
 
 <section id="priorities">
@@ -199,7 +201,7 @@
       <tr><td>Graphic design services (Australia)</td><td class="num bad">40</td><td>Peekaboo 40: Google AI Overview 100 at position 1 and Perplexity 60, but <b>ChatGPT 0 and Gemini 0</b> (10 Sep). 1,787 + 365 impressions in the last three months at positions 4.6 and 3.6, CTR 0.22% and 0.27% (Search Console export); in June it was position 10.6. The homepage owns the head term in the site's own keyword map.</td><td><a href="https://www.designbees.com.au/">/ (homepage)</a></td><td class="ok">Existing</td></tr>
       <tr><td>Graphic design services Sydney</td><td class="num">not tracked</td><td>Not among the five prompts Peekaboo runs; worth adding. City page cited 13 times by AI engines (SearchAtlas, 31 Aug) and twice by Perplexity in the Peekaboo run. Search Console export: "graphic design services sydney" 122 impressions at position 2.1 with 0 clicks, "graphic design sydney" 68 at 7.3; the page itself 373 impressions, 5 clicks, average position 30.8. The page returned HTTP 502 once on 10 Sep and 200 on two rechecks; worth watching.</td><td><a href="https://www.designbees.com.au/design-solutions/graphic-design-sydney">/design-solutions/graphic-design-sydney</a></td><td class="ok">Existing</td></tr>
       <tr><td>Design Pickle alternative Australia</td><td class="num warn">51</td><td>Peekaboo 51 over 8 runs (10 Sep), reached mostly through other companies' listicles rather than a Design Bees page. "design bees vs penji vs design pickle for small teams" appears in Search Console (12 impressions, position 9.6). All three engines answered "Design Bees vs Design Pickle" in June, but no page targets the "alternative" query; the URL is a 404 (checked 10 Sep). P2 on the 24 Jul checklist.</td><td><span class="mono">/design-pickle-alternative-australia</span></td><td class="warn">Proposed new page</td></tr>
-      <tr><td>What do small businesses switch to when a freelance designer gets too costly?</td><td class="num bad">0</td><td>Peekaboo <b>0 mentions in 8 runs</b>, across ChatGPT, Gemini, Perplexity and Google AI Overview alike (10 Sep). The one prompt of the five where Design Bees is completely absent, and the closest to how a buyer describes the problem before knowing the category. Search Console already shows this framing: "graphic design subscription service vs hiring a local australian designer (for australia)" 39 impressions at position 1.1 and "freelance graphic designer vs graphic design agency in australia, which is better (for australia)" 26 at position 1.0, both 0 clicks.</td><td><span class="mono">/temporary-graphic-designer-cover-australia</span></td><td class="warn">Proposed new page</td></tr>
+      <tr><td>What do small businesses switch to when a freelance designer gets too costly?</td><td class="num bad">0</td><td>Peekaboo <b>0 mentions in 8 runs</b>, across ChatGPT, Gemini, Perplexity and Google AI Overview alike (10 Sep), and absent on ChatGPT in 2 of 2 verified live runs. But <b>Google AI Mode names Design Bees and cites the site more than any other source</b> (Appendix J4), an engine Peekaboo never sampled. So the content works and the gap is reach, not absence. This is the closest of the six to how a buyer describes the problem before knowing the category. Search Console already shows this framing: "graphic design subscription service vs hiring a local australian designer (for australia)" 39 impressions at position 1.1 and "freelance graphic designer vs graphic design agency in australia, which is better (for australia)" 26 at position 1.0, both 0 clicks.</td><td><span class="mono">/temporary-graphic-designer-cover-australia</span></td><td class="warn">Proposed new page</td></tr>
     </tbody>
   </table></div>
   <p class="src">The sixth row is Peekaboo's own discovery prompt. The drafted "Temporary graphic designer cover in Australia" page (slug <span class="mono">temporary-graphic-designer-cover-australia</span>, 404 on 10 Sep) is the natural home for it; the July checklist calls it the one topic with rising demand that matches closed deals.</p>
@@ -221,6 +223,9 @@
     <label><input type="checkbox" id="a10"><span><span class="own">Miguel</span> Unpublish the placeholder post /post/your-title-what-s-your-blog-about (still live and in the sitemap on 10 Sep).</span></label>
     <label><input type="checkbox" id="a11"><span><span class="own">Miguel</span> Decide the fate of the three thin pages still indexable: /design-subscriptions-for-construction, /design-subscriptions-for-manufacturing, /options-to-scale-design (about 230 words each, no schema). Build them out or noindex them.</span></label>
     <label><input type="checkbox" id="a12"><span><span class="own">AJ / Claude</span> Re-run the four tools and the two Search Console reports in 30 days with the same inputs and compare against this report.</span></label>
+    <label><input type="checkbox" id="a15"><span><span class="own">AJ</span> Claim and complete the Google Business Profile listing. Both ChatGPT and AI Mode answer the Australia and Sydney queries from the map pack, it is why ChatGPT ranks Design Bees top on the head term, and both displayed the profile as "Closed" when asked.</span></label>
+    <label><input type="checkbox" id="a16"><span><span class="own">AJ</span> Claim the Clutch profile. Both engines cite Clutch directory pages ahead of vendor sites for "graphic design services Australia".</span></label>
+    <label><input type="checkbox" id="a17"><span><span class="own">AJ / Claude</span> Own the freelancer-cost question. No provider is named by any engine for it, so it is uncontested rather than lost. Rework <span class="mono">/post/cannot-afford-a-full-time-designer-here-are-your-options</span> to answer it directly, or fold it into the proposed <span class="mono">/temporary-graphic-designer-cover-australia</span> page. Also strengthen <span class="mono">/post/are-unlimited-graphic-design-services-truly-limitless-what-you-need-to-know</span>, which ChatGPT cited in all four verified runs and which Peekaboo never saw.</span></label>
   </div>
 </section>
 
@@ -389,6 +394,7 @@
     </tbody>
   </table></div>
   <p>The ordering matches every other source in this report: Perplexity and Google AI Overview are where Design Bees does well, ChatGPT and Gemini are where it does not. Average position is around 1 to 2 everywhere, so when the brand is named at all it is named early; the variable is whether it is named. <b>One caveat worth knowing:</b> Peekaboo samples ChatGPT as <span class="mono">gpt-4o-mini</span>, a small fast model, not the default model a buyer gets on chatgpt.com, so treat 46 as indicative of that tier rather than of the full product. Google AI Mode returned no runs, so Peekaboo adds nothing there and the Search Console Generative AI report remains the only reliable read on it.</p>
+  <div class="note"><b>Tested on 11 Sep.</b> Live checks against the real ChatGPT (Appendix J) agree with Peekaboo on three of the four comparable prompts. The exception is the head category term, where Peekaboo scores ChatGPT 0 and the live product ranks Design Bees top through a Google Business Profile map pack. So this caveat holds narrowly: <span class="mono">gpt-4o-mini</span> under-reports answers driven by local and map results, rather than being unreliable across the board.</div>
   <h3>D3 · By prompt</h3>
   <div class="tablewrap"><table>
     <thead><tr><th style="width:52%">Prompt as tracked</th><th class="num">Runs</th><th class="num">Score</th><th>Reading</th></tr></thead>
@@ -869,7 +875,7 @@ australia (for australia)</td><td class="num">0</td><td class="num">25</td><td c
       <tr><td>Search Console, Generative AI report</td><td>AJ, export</td><td class="ok">Received as Search Console's CSV export (zip, dated 11 Sep 2026 AEST), last 3 months, impressions only. No connector was available; Supermetrics's Search Console source was unauthenticated and its trial expired.</td></tr>
       <tr><td>Search Console, Search results export (Queries, Pages, Dates, Search appearance)</td><td>AJ, export</td><td class="ok">Received as Search Console's CSV export (zip, dated 11 Sep 2026 AEST), last 3 months, via the teleported terminal session. CSVs in docs/seo/data/gsc-search-results-2026-09-11.</td></tr>
       <tr><td>Search Console, monthly and alert emails</td><td>Gmail connector</td><td class="ok">Read directly from Google's emails to aj@designbees.com.au.</td></tr>
-      <tr><td>Live Google search / AI Mode checks of the five queries</td><td>This session</td><td class="bad">Google served its "unusual traffic" bot check to the session's IP. Not attempted for ChatGPT.</td></tr>
+      <tr><td>Live ChatGPT and Google AI Mode checks of six queries</td><td>AJ's machine, teleported session</td><td class="ok">Completed 11 Sep 2026 from an Australian connection, after Google served its "unusual traffic" bot check to the cloud session's datacentre IP. A first capture pass produced three false negatives; every affected result was re-tested with a corrected method. See Appendix J0.</td></tr>
       <tr><td>Live site fetches</td><td>This session</td><td class="ok">curl after the environment's network access was changed from Trusted to Full at about 13:33 UTC; before that every audit domain and the site itself were blocked by the egress policy.</td></tr>
     </tbody>
   </table></div>
@@ -891,5 +897,78 @@ australia (for australia)</td><td class="num">0</td><td class="num">25</td><td c
   </ul>
 </section>
 
-<footer>Design Bees Visibility Report · draft v5 · 10 September 2026 · Facts carry their source and date; recommendations are opinions; missing items are named, not estimated.</footer>
+<section id="j-live" class="appendix">
+  <h2>Appendix J · Live engine checks <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Six buyer queries run on 11 Sep 2026 (AEST) from AJ's own machine and Australian connection: ChatGPT in a signed-in browser session, and Google AI Mode via <span class="mono">google.com/search?udm=50&amp;hl=en-AU&amp;gl=au</span>. This is the check the cloud session could not perform, because Google served its "unusual traffic" challenge to the datacentre IP. Four readings from the first pass were later found to be false negatives and were re-checked before anything here was relied on; see J0.</p>
+  <h3>J0 · A correction, and what it means for reading this appendix</h3>
+  <div class="missbox"><b>The first capture script was unreliable, and this appendix was wrong before it was corrected.</b> It read each page after a fixed delay rather than waiting for the answer to finish generating, so a slow response was recorded as an empty one, and an empty one was scored as "brand not mentioned". <b>Four readings were affected</b>, every one a false negative: the cost and best-subscription queries on ChatGPT, and the cost and freelancer queries on Google AI Mode. All four actually <b>do</b> name Design Bees. An earlier draft of this appendix concluded from the first three that Peekaboo's ChatGPT score was "inverted" against the real product. That conclusion was wrong and has been withdrawn.</div>
+  <p>The fault only ever ran one way: a truncated read can invent an absence, but it cannot invent a brand mention. So every negative from the first pass has since been re-checked, and the positives were left as recorded. Three were re-tested by script, using a method that waits for ChatGPT's stop-generating control to disappear and then requires the answer to hold steady across four consecutive polls, twice per query. The fourth, the freelancer query on Google AI Mode, was run by hand (<span class="mono">docs/seo/data/live-ai-checks-manual-2026-09-11.md</span>). After that sweep exactly one negative survives: ChatGPT on the freelancer query.</p>
+  <div class="note"><b>What this appendix is and is not.</b> One or two runs per query, on one day, from one account and one location, with personalisation and location both in play. It is not an average. Its value is the opposite of Peekaboo's: Peekaboo repeats prompts across models to give a comparable score over time, while this shows the actual words, prices and links a buyer receives.</div>
+  <h3>J1 · The scoreboard</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th style="width:24%">Query</th><th class="num">Peekaboo</th><th style="width:33%">ChatGPT, live</th><th style="width:31%">Google AI Mode, live</th></tr></thead>
+    <tbody>
+      <tr><td>Best unlimited graphic design subscription in Australia</td><td class="num">88</td><td class="ok"><b>Present, ranked #1</b> in both runs. "Best overall for Australia", A$545–$2,645. <span class="src">re-tested 2/2</span></td><td class="ok">Present, ranked "Best Overall Local Choice".</td></tr>
+      <tr><td>How much does unlimited graphic design cost in Australia?</td><td class="num">100</td><td class="ok"><b>Present</b> in both runs, quoting $545–$2,645 incl GST correctly. <span class="src">re-tested 2/2</span></td><td class="ok">Present and the lead source, same price range. <span class="src">re-tested</span></td></tr>
+      <tr><td>Graphic design services Australia</td><td class="num">40<br><span class="src">ChatGPT 0</span></td><td class="ok">Present, top of a local map pack, "$545/month incl. GST".</td><td class="warn">Present, but below agency lists sourced from Clutch.</td></tr>
+      <tr><td>Graphic design services Sydney</td><td class="num">not tracked</td><td class="ok">Present, "Surry Hills", $545 inc GST, dedicated designer.</td><td class="ok">Present in the map pack, beside Made Agency, Design Fox and 55 Knots.</td></tr>
+      <tr><td>What is a Design Pickle alternative in Australia?</td><td class="num">51</td><td class="warn">Present but ranked 5th, below ManyPixels, Penji, Kimp and Flocksy, with no price given.</td><td class="ok">Present and listed first among Australian alternatives.</td></tr>
+      <tr><td>What do small businesses switch to when a freelance designer gets too costly?</td><td class="num bad">0<br><span class="src">AI Mode not sampled</span></td><td class="bad"><b>Absent</b> in both runs. No provider named at all, no citations. <span class="src">re-tested 0/2</span></td><td class="ok"><b>Present.</b> Named as a provider, and the most-cited source in the answer. <span class="src">manual run</span></td></tr>
+      <tr><td><b>Total naming Design Bees</b></td><td class="num">—</td><td class="num ok"><b>5 / 6</b></td><td class="num ok"><b>6 / 6</b></td></tr>
+    </tbody>
+  </table></div>
+  <h3>J2 · How the live picture compares with Peekaboo</h3>
+  <p>Once the false negatives are removed, the two mostly agree, which is reassuring for both:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Query</th><th class="num">Peekaboo</th><th>Live ChatGPT</th><th>Agree?</th></tr></thead>
+    <tbody>
+      <tr><td>Cost in Australia</td><td class="num">100</td><td>Present, 2/2</td><td class="ok">Yes</td></tr>
+      <tr><td>Best subscription in Australia</td><td class="num">88</td><td>Present, 2/2, ranked #1</td><td class="ok">Yes</td></tr>
+      <tr><td>Freelancer too costly</td><td class="num">0</td><td>Absent, 0/2</td><td class="ok">Yes</td></tr>
+      <tr><td>Graphic design services (Australia)</td><td class="num">0 <span class="src">(ChatGPT)</span></td><td>Present, top of map pack</td><td class="bad">No</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>One genuine discrepancy remains</b>, and it is instructive. Peekaboo scores ChatGPT 0 on the head category term while the live product puts Design Bees at the top. The likely cause is the one flagged in Appendix D2: Peekaboo samples ChatGPT as <span class="mono">gpt-4o-mini</span>, which has neither the live retrieval nor the local map results the consumer product uses, and this is precisely the query the live answer resolves through a map pack. So the caveat in D2 holds, but narrowly: <b>Peekaboo under-reports answers that are driven by local and map results</b>. It is not wrong across the board, and on three of four comparable prompts it matches the live product.</p>
+  <h3>J3 · What ChatGPT cites when it does name Design Bees</h3>
+  <p>Across four verified runs, ChatGPT cited <span class="mono">designbees.com.au</span> every time. Two pages did the work:</p>
+  <ul>
+    <li><span class="mono">/</span> the homepage, cited in all four runs</li>
+    <li><span class="mono">/post/are-unlimited-graphic-design-services-truly-limitless-what-you-need-to-know</span>, also cited in all four</li>
+  </ul>
+  <p>That second page is worth noting: it does not appear anywhere in Peekaboo's top-50 cited URLs (Appendix D4), yet it is half of ChatGPT's evidence base for both commercial queries. Alongside it ChatGPT cited <span class="mono">graphiker.com.au/pricing</span>, <span class="mono">digitalpolo.com</span> and <span class="mono">kimp.io</span>. The rivals it names alongside Design Bees are Graphiker, DigitalPolo, Kimp, Design Pickle and Flocksy, so the Australian competitor set identified in D4 is confirmed on the live product.</p>
+  <h3>J4 · The freelancer question: lost on four engines, won on the fifth</h3>
+  <p>This query was checked by hand after the automated capture misread it (J0). The result splits by engine:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Engine</th><th>Result</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>ChatGPT</td><td class="bad">Absent, and no provider named at all</td><td>2 of 2 verified runs, zero citations</td></tr>
+      <tr><td>Gemini · Perplexity · AI Overview</td><td class="bad">Absent</td><td>Peekaboo, 8 runs, score 0</td></tr>
+      <tr><td>Google AI Mode</td><td class="ok">Present, and the most-cited source</td><td>Manual run, 11 Sep</td></tr>
+    </tbody>
+  </table></div>
+  <p>Peekaboo's 0 does not contradict the AI Mode win, because Peekaboo never sampled AI Mode: it logged 0 runs on that engine (D2). The two measurements cover different surfaces.</p>
+  <p><b>The most useful detail is which page won it.</b> Google AI Mode built its answer largely from <span class="mono">/post/cannot-afford-a-full-time-designer-here-are-your-options</span>, citing it five times, more than any other source including Reddit. The content that answers this question already exists and already works. The problem is reach, not absence: that page is invisible to ChatGPT, Gemini, Perplexity and AI Overview. The action is to extend and interlink it, not to commission something new.</p>
+  <p><b>Two cautions.</b> Even in the win, Design Bees is framed as a "local regional option" after "global platforms like Penji, Design Pickle, and ManyPixels", despite being the source the answer is built on. And on ChatGPT the query names <i>nobody</i>, describing the models generically and citing nothing, so that surface is uncontested rather than lost to a rival, which makes it cheaper to win than a term competitors already hold.</p>
+  <h3>J5 · Two levers this check surfaced that the rest of the report missed</h3>
+  <ul>
+    <li><b>Google Business Profile drives the location answers.</b> Both engines returned a map pack for the Australia and Sydney queries, with "Design Bees - Unlimited Graphic Design, 5.0, Surry Hills" as a map entity rather than a web result. That is the Business Profile, not the website, and it is the reason ChatGPT ranks Design Bees top on the head term where Peekaboo scores 0. Both engines also displayed it as "Closed" at the time of asking, so hours are being read and shown to buyers.</li>
+    <li><b>Clutch is cited by both engines and there is no claimed profile.</b> AI Mode led its Australia answer with Clutch directory pages, and ChatGPT cited Clutch's Sydney page. The report already recommended claiming Clutch on general principle; this is direct evidence for it.</li>
+  </ul>
+  <h3>J6 · An under-defended slot: capped, fixed-price projects</h3>
+  <p>Google AI Mode's answer to the freelancer question offered four alternatives: design subscriptions, DIY tools, offshore outsourcing, and <b>capped project-based contracts</b>. That fourth option is the thinnest-sourced part of the whole answer, resting on a single LinkedIn post cited twice, where every other section drew on Reddit, industry blogs and designbees.com.au. The engine described it as fixed, predefined cost for a defined package, with "no hidden hourly billing surprises".</p>
+  <p><b>Design Bees already sells this and does not say so in that language.</b> <span class="mono">/one-off-packages/custom-jobs</span> is live and its meta description already promises a "custom, flat-rate graphic design quote", but the page is titled "Request a Custom Graphic Design Quote". It leads with the internal framing, a custom quote, rather than the buyer's framing, a capped price that cannot blow out.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Search Console query, 9 Jun – 8 Sep</th><th class="num">Impressions</th><th class="num">Clicks</th><th class="num">Position</th></tr></thead>
+    <tbody>
+      <tr><td>flat rate graphic design</td><td class="num">25</td><td class="num bad">0</td><td class="num">—</td></tr>
+      <tr><td>how do graphic design service pricing models work in australia, hourly vs …</td><td class="num">17</td><td class="num bad">0</td><td class="num">—</td></tr>
+      <tr><td>flat rate graphic design services</td><td class="num">12</td><td class="num bad">0</td><td class="num">—</td></tr>
+      <tr><td>freelance graphic design rates per project</td><td class="num">8</td><td class="num">1</td><td class="num">—</td></tr>
+      <tr><td>graphic design rates per project</td><td class="num">5</td><td class="num bad">0</td><td class="num">—</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>An honest verdict.</b> As an SEO play this is small: roughly 67 impressions and a single click across three months. As an AI-citation play it is more interesting, because the slot exists in the answer, it is poorly defended, and the service already exists so nothing has to be built. The cheap test is to re-word the existing page in the engine's vocabulary — capped, fixed fee, defined scope, no hourly surprises — rather than commission anything, then re-run the freelancer query in 30 days and see whether the fourth section starts citing Design Bees instead of a LinkedIn post. <b>Renaming the product itself is a commercial decision, not an SEO one</b>, and is left to AJ; the page can be re-worded to match buyer language whether or not the product name changes.</p>
+</section>
+
+<footer>Design Bees Visibility Report · draft v6 · 10 September 2026 · Facts carry their source and date; recommendations are opinions; missing items are named, not estimated.</footer>
 </div>

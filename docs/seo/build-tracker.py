@@ -173,8 +173,10 @@ for row in L:
     if row[2] not in seen: seen.add(row[2]); metrics.append(row[2])
 for i,m in enumerate(metrics,5):
     ws.cell(row=i,column=7,value=m).font=Font(name=F,size=10); ws.cell(row=i,column=7).alignment=Alignment(wrap_text=True,vertical='top')
-    ws.cell(row=i,column=8,value=f'=SUMIFS($D$5:$D$1000,$C$5:$C$1000,G{i},$A$5:$A$1000,_xlfn.MAXIFS($A$5:$A$1000,$C$5:$C$1000,G{i}))').font=Font(name=F,size=10)
-    c=ws.cell(row=i,column=9,value=f'=_xlfn.MAXIFS($A$5:$A$1000,$C$5:$C$1000,G{i})'); c.font=Font(name=F,size=10); c.number_format='yyyy-mm-dd'
+    # SUMPRODUCT/MAX rather than MAXIFS: evaluates in Excel, LibreOffice and Google
+    # Sheets alike, with no _xlfn prefix and no array entry.
+    ws.cell(row=i,column=8,value=f'=IF(I{i}=0,"",SUMIFS($D$5:$D$1000,$C$5:$C$1000,G{i},$A$5:$A$1000,I{i}))').font=Font(name=F,size=10)
+    c=ws.cell(row=i,column=9,value=f'=SUMPRODUCT(MAX(($C$5:$C$1000=G{i})*$A$5:$A$1000))'); c.font=Font(name=F,size=10); c.number_format='yyyy-mm-dd'
 n=5+len(L)+1
 ws.cell(row=n,column=1,value='Legend: fill columns A–E only; one row per metric per reading; keep the Metric text identical each time so the Latest block matches it. Numbers only in Value (use 1/0 for yes/no).').font=Font(name=F,size=9,italic=True,color='555555')
 ws.merge_cells(start_row=n,start_column=1,end_row=n,end_column=5)
