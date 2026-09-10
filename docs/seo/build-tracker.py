@@ -45,7 +45,7 @@ T=[
 ('T10','P1','Not started','Social','Add Instagram and X profile links to the footer social bar.','Wix Studio > footer > social bar','Working links to the live profiles.','Low','AJ',None,SEM,'Semrush social checks pass for Instagram and X.','Facebook, YouTube and LinkedIn already found.'),
 ('T11','P0','Not started','AEO page','Publish /design-pickle-alternative-australia.','Wix Studio > Pages > Add page','Comparison table (Design Bees vs Design Pickle, ManyPixels, Penji, Reel Unlimited), AUD pricing, AEST support, FAQ block with FAQPage schema, links from the Top 7 post and the homepage.','Medium','AJ / Claude',None,PEEK,'Live, in the pages sitemap, indexed (URL inspection). Peekaboo prompt "Design Pickle alternative in Australia" above 70 after 30 days.','Peekaboo 10 Sep: 51, reached through other companies\' listicles. Export: "design bees vs penji vs design pickle for small teams" 12 impressions, position 9.6.'),
 ('T12','P1','Not started','AEO page','Publish the freelancer-replacement page (temporary graphic designer cover).','Wix Studio > Pages or Blog','Answer the "my freelancer got too costly / went on leave" question first; FAQ with FAQPage schema; link from the pricing guide.','Medium','AJ / Claude',None,PEEK,'Live and indexed; Peekaboo discovery prompt score above 0; the "(for australia)" comparison queries gain clicks.','Peekaboo: 0 mentions in 8 runs. Export: "graphic design subscription service vs hiring a local australian designer (for australia)" 39 impressions, position 1.1, 0 clicks. Draft exists in the repo (server/data/drafts).'),
-('T13','P0','Not started','Off-site authority','Claim and complete Clutch, G2 and DesignRush profiles; ask five clients for reviews.','External: clutch.co, g2.com, designrush.com','Profiles complete with pricing, turnaround, AEST hours; five reviews within 60 days.','Medium','AJ',None,PEEK,'Profiles live; reviews visible; G2 citations rise in the Peekaboo sources table.','Peekaboo cites g2.com 3 times with no claimed profile. HubSpot share of voice 0/10 on ChatGPT and Gemini.'),
+('T13','P0','Not started','Off-site authority','Complete and optimise the Google Business Profile: services, price range, AEST hours, photos, and a review request to five recent clients.','External: business.google.com (Surry Hills listing)','Category "Graphic designer", services list matching the six target questions, price range from $545/mo, 10+ recent photos, five new reviews in 60 days.','Medium','AJ',None,'https://business.google.com/','Live check: ask ChatGPT "graphic design services Sydney" monthly and confirm Design Bees still appears; profile shows the price range and services.','11 Sep live check: ChatGPT returned the Google map pack for the Sydney query and Design Bees ranked first, so the profile is doing the work Peekaboo scores as 0. Peekaboo under-reports this.'),
 ('T14','P1','Not started','Off-site authority','Get listed in the third-party comparison posts the engines cite.','External outreach','Pitch inclusion (pricing, turnaround, 5.0/44 rating) to flocksy.com, digitalpolo.com, sourceforge.net, hatchwise.com, medium.com roundups and the reddit threads.','High','AJ',None,PEEK,'Named in at least three of the cited lists; ChatGPT prompt score in Peekaboo above 0 for "graphic design services (Australia)".','Peekaboo D4: manypixels.co 27 citations, flocksy.com 21, digitalpolo.com 18, reddit.com 16, sourceforge.net 11.'),
 ('T15','P1','Not started','Peekaboo','Add the Australian competitors (Reel Unlimited, Graphiker, Lumin) and the Sydney and freelancer prompts to Peekaboo; note the trial end date.','aipeekaboo.com > Competitors, Prompts','Tracked set reflects who the engines actually cite.','Low','AJ',None,PEEK,'Competitor table in Peekaboo updated; scores exported to the Tracking tab before the trial ends.','Free trial started 10 Sep 2026; 14 days.'),
 ('T16','P1','Not started','Content hygiene','Unpublish the placeholder post /post/your-title-what-s-your-blog-about.','Wix Blog','Returns 404 and drops out of the blog sitemap.','Low','Miguel',None,'https://www.designbees.com.au/post/your-title-what-s-your-blog-about','URL returns 404; not in blog-posts-sitemap.xml.','Still live on 10 Sep 2026.'),
@@ -61,6 +61,8 @@ T=[
 ('T26','P2','Not started','Indexing','Watch the four retired vertical pages and the http variant in the Generative AI pages report; resubmit the sitemap if they persist past 30 days.','Search Console > Performance > Generative AI > Pages; Sitemaps','Impressions on retired URLs fade to zero.','Low','Miguel',None,GSC,'Retired URLs absent from the Pages tab in the October export.','Their 301s are in place (checked 10 Sep).'),
 ('T27','P2','Not started','Content refresh','Update the 2025 trends post to 2026 in place (title, dateModified, content).','Wix Blog','Same URL; updated year; refreshed examples.','Low','AJ / Claude',None,'https://www.designbees.com.au/post/top-5-must-know-graphic-design-trends-for-small-and-medium-businesses-in-2025','Live with 2026 in the title.','Keyword map: refresh, do not create a new post.'),
 ('T28','P2','Not started','Case studies','Clean case-study slugs containing apostrophes, commas and "!" and set 301 redirects.','Wix Studio > Pages > case studies; URL Redirect Manager','Plain-text slugs; canonical tags match the clean URL.','Medium','Miguel',None,GSC,'Search Console > Pages shows the clean URLs only.','Export still shows encoded URLs such as the XV Premium and Pappa Flock case studies.'),
+('T29','P0','Not started','Off-site authority','Claim and complete Clutch, G2 and DesignRush profiles; ask five clients for reviews.','External: clutch.co, g2.com, designrush.com','Profiles complete with pricing, turnaround, AEST hours; five reviews within 60 days.','Medium','AJ',None,PEEK,'Profiles live; reviews visible; G2 citations rise in the Peekaboo sources table.','Peekaboo cites g2.com 3 times with no claimed profile. HubSpot share of voice 0/10 on ChatGPT and Gemini. Was T13 before the 11 Sep live checks.'),
+('T30','P1','Not started','Content refresh','Strengthen the post the engines already cite: /post/are-unlimited-graphic-design-services-truly-limitless-what-you-need-to-know.','Wix Blog > that post','Add the $545 entry price, an AEST turnaround line, and an FAQ block with FAQPage schema; link to the pricing guide and the Design Pickle comparison.','Low','AJ / Claude',None,'https://www.designbees.com.au/post/are-unlimited-graphic-design-services-truly-limitless-what-you-need-to-know','Re-run the six prompts monthly; this URL keeps appearing as the cited source and now quotes the price correctly.','11 Sep live check: cited by ChatGPT and by Google AI Mode across several of the six queries. It is the strongest citation asset the site has.'),
 ]
 body(ws,5,T,13)
 last=4+len(T)
@@ -135,7 +137,7 @@ for c,opts in (('B','"P0,P1,P2"'),('C','"Not started,Draft ready,In build,Needs 
 ws=wb.create_sheet('Tracking')
 style_title(ws,'Tracking log — one row per metric per reading','Add rows as you re-run each tool (same inputs every time). Columns A–E are the log; the Latest block on the right reads the most recent value per metric automatically. Baseline rows are the 10 Sep 2026 readings from the report.',12)
 header(ws,4,['Date','Source','Metric','Value','Notes','','Metric (latest)','Latest value','As at','','',''],[12,26,40,12,44,3,40,12,12,3,3,3])
-d0=dt.date(2026,9,10)
+d0=dt.date(2026,9,10); d1=dt.date(2026,9,11)
 L=[(d0,'Semrush SEO Checker','SEO score (0–100)',50,'homepage, run by AJ'),
 (d0,'Semrush SEO Checker','Performance score (0–100)',56,''),
 (d0,'Semrush SEO Checker','Interaction to Next Paint (s)',6.186,'Google good = 0.2'),
@@ -165,7 +167,10 @@ L=[(d0,'Semrush SEO Checker','SEO score (0–100)',50,'homepage, run by AJ'),
 (d0,'Search Console Search results','Brand share of itemised clicks (%)',64,'212 of 329'),
 (d0,'Ahrefs Site Audit','Health score (3 URLs)',93,'9 Sep crawl'),
 (d0,'SearchAtlas LLM Visibility','Sydney page AI mentions',13,'31 Aug email'),
-(d0,'Manual AI check','ChatGPT names Design Bees for "best unlimited graphic design subscription in Australia" (1 = yes)',0,'June audit result; re-check monthly')]
+(d0,'Manual AI check','ChatGPT names Design Bees for "best unlimited graphic design subscription in Australia" (1 = yes)',0,'June audit result; re-check monthly'),
+(d1,'Manual AI check','ChatGPT names Design Bees for "best unlimited graphic design subscription in Australia" (1 = yes)',1,'11 Sep live check from AJ\'s own browser: named'),
+(d1,'Manual AI check','ChatGPT: target queries naming Design Bees (of 6)',5,'11 Sep live check; only the freelancer question missed'),
+(d1,'Manual AI check','Google AI Mode: target queries naming Design Bees (of 6)',5,'11 Sep live check')]
 body(ws,5,L,5)
 for r in range(5,5+len(L)): ws.cell(row=r,column=1).number_format='yyyy-mm-dd'
 metrics=[]; seen=set()
@@ -173,11 +178,17 @@ for row in L:
     if row[2] not in seen: seen.add(row[2]); metrics.append(row[2])
 for i,m in enumerate(metrics,5):
     ws.cell(row=i,column=7,value=m).font=Font(name=F,size=10); ws.cell(row=i,column=7).alignment=Alignment(wrap_text=True,vertical='top')
-    # SUMPRODUCT/MAX rather than MAXIFS: evaluates in Excel, LibreOffice and Google
-    # Sheets alike, with no _xlfn prefix and no array entry.
-    ws.cell(row=i,column=8,value=f'=IF(I{i}=0,"",SUMIFS($D$5:$D$1000,$C$5:$C$1000,G{i},$A$5:$A$1000,I{i}))').font=Font(name=F,size=10)
-    c=ws.cell(row=i,column=9,value=f'=SUMPRODUCT(MAX(($C$5:$C$1000=G{i})*$A$5:$A$1000))'); c.font=Font(name=F,size=10); c.number_format='yyyy-mm-dd'
+    # Find the LAST row whose Metric matches, then INDEX the Value and Date out of it.
+    # The array arithmetic multiplies the match test by ROW() only, never by the cell
+    # contents, so text anywhere in columns A-D cannot poison it. The previous version
+    # multiplied the test by $A$5:$A$1000 directly, and the legend text sitting in
+    # column A turned every cell of this block into #VALUE! in Google Sheets.
+    # SUMPRODUCT forces array context, so no Ctrl+Shift+Enter and no _xlfn prefix:
+    # this evaluates the same in Excel, LibreOffice and Google Sheets.
+    idx=f'SUMPRODUCT(MAX(($C$5:$C$1000=$G{i})*(ROW($C$5:$C$1000)-4)))'
+    ws.cell(row=i,column=8,value=f'=IF({idx}=0,"",INDEX($D$5:$D$1000,{idx}))').font=Font(name=F,size=10)
+    c=ws.cell(row=i,column=9,value=f'=IF({idx}=0,"",INDEX($A$5:$A$1000,{idx}))'); c.font=Font(name=F,size=10); c.number_format='yyyy-mm-dd'
 n=5+len(L)+1
-ws.cell(row=n,column=1,value='Legend: fill columns A–E only; one row per metric per reading; keep the Metric text identical each time so the Latest block matches it. Numbers only in Value (use 1/0 for yes/no).').font=Font(name=F,size=9,italic=True,color='555555')
-ws.merge_cells(start_row=n,start_column=1,end_row=n,end_column=5)
+ws.cell(row=n,column=2,value='Legend: fill columns A–E only; one row per metric per reading; keep the Metric text identical each time so the Latest block matches it. Numbers only in Value (use 1/0 for yes/no). Add new readings at the bottom — the Latest block reads the last row for each metric. Leave column A to dates only.').font=Font(name=F,size=9,italic=True,color='555555')
+ws.merge_cells(start_row=n,start_column=2,end_row=n,end_column=5)
 wb.save('designbees-aeo-seo-tracker-2026-09-10.xlsx'); print('saved')
