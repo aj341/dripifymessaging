@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "peekaboo": {
+      "type": "http",
+      "url": "https://www.aipeekaboo.com/api/mcp"
+    }
+  }
+}
