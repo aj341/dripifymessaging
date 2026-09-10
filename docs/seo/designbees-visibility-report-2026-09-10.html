@@ -1,0 +1,566 @@
+<title>Design Bees Visibility Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@87.5,500;87.5,700;100,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #F3F4F1; --surface: #FFFFFF; --surface-2: #EAECE6; --ink: #17191C; --muted: #5B6068; --line: #D5D8D0; --line-strong: #B9BDB3;
+    --accent: #D99A00; --accent-ink: #7E5A00; --accent-soft: #FBEFC9;
+    --fact: #2E6B3F; --fact-soft: #DFEEE2; --rec: #7E5A00; --rec-soft: #FBEFC9; --miss: #A8322D; --miss-soft: #F8DEDC; --sec: #4C525B; --sec-soft: #E4E6E2;
+    --lane-seo: #2F5F8F; --lane-ai: #7A3E9D; --lane-google: #2E6B3F;
+    --shadow: 0 1px 2px rgba(20,22,25,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131416; --surface: #1B1D21; --surface-2: #24272C; --ink: #ECEDE9; --muted: #A3A7AD; --line: #33363C; --line-strong: #4A4E56;
+      --accent: #F2B733; --accent-ink: #F2B733; --accent-soft: #3A2E10;
+      --fact: #8CCB9B; --fact-soft: #1E3324; --rec: #F2B733; --rec-soft: #3A2E10; --miss: #F09A95; --miss-soft: #3E1F1D; --sec: #B8BCC3; --sec-soft: #2C2F35;
+      --lane-seo: #8FB7E0; --lane-ai: #C89BE3; --lane-google: #8CCB9B;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131416; --surface: #1B1D21; --surface-2: #24272C; --ink: #ECEDE9; --muted: #A3A7AD; --line: #33363C; --line-strong: #4A4E56;
+    --accent: #F2B733; --accent-ink: #F2B733; --accent-soft: #3A2E10;
+    --fact: #8CCB9B; --fact-soft: #1E3324; --rec: #F2B733; --rec-soft: #3A2E10; --miss: #F09A95; --miss-soft: #3E1F1D; --sec: #B8BCC3; --sec-soft: #2C2F35;
+    --lane-seo: #8FB7E0; --lane-ai: #C89BE3; --lane-google: #8CCB9B;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans", "Liberation Sans", Arial, sans-serif; font-size: 15px; line-height: 1.5; padding-block: 28px 64px; padding-inline: 20px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  a { color: var(--accent-ink); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 2px; overflow-wrap: anywhere; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  h1, h2, h3 { font-family: "Archivo", "Liberation Sans", Arial, sans-serif; font-stretch: 87.5%; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+  h1 { font-size: 34px; line-height: 1.1; font-weight: 700; }
+  h2 { font-size: 22px; line-height: 1.2; font-weight: 700; margin-top: 44px; padding-bottom: 8px; border-bottom: 2px solid var(--line-strong); }
+  h3 { font-size: 16px; font-weight: 700; margin-top: 22px; }
+  p { margin: 8px 0; max-width: 72ch; }
+  ul { margin: 6px 0 10px; padding-left: 20px; max-width: 78ch; }
+  li { margin: 3px 0; }
+  .eyebrow { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 20px; margin-top: 18px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  .meta div { font-size: 13px; color: var(--muted); }
+  .meta b { display: block; color: var(--ink); font-weight: 600; font-size: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; font-size: 13px; color: var(--muted); align-items: center; }
+  .tag { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; vertical-align: middle; white-space: nowrap; }
+  .t-fact { background: var(--fact-soft); color: var(--fact); }
+  .t-rec { background: var(--rec-soft); color: var(--rec); }
+  .t-miss { background: var(--miss-soft); color: var(--miss); }
+  .t-sec { background: var(--sec-soft); color: var(--sec); }
+  .lanes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  .lane { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--lane); border-radius: 6px; padding: 14px 16px 12px; box-shadow: var(--shadow); }
+  .lane h3 { margin-top: 0; color: var(--lane); font-size: 15px; }
+  .lane .big { font-family: "Archivo", sans-serif; font-stretch: 87.5%; font-size: 30px; font-weight: 700; line-height: 1; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+  .lane .cap { font-size: 12.5px; color: var(--muted); }
+  .lane ul { padding-left: 16px; font-size: 13.5px; }
+  .lane p { font-size: 13.5px; }
+  .seo { --lane: var(--lane-seo); } .ai { --lane: var(--lane-ai); } .goog { --lane: var(--lane-google); }
+  .lanetag { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--lane); border: 1px solid var(--lane); border-radius: 3px; padding: 0 6px; margin-left: 8px; vertical-align: middle; }
+  .pri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+  .pri article { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .pri h3 { margin-top: 0; font-size: 16px; }
+  .pri .why { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+  .pri p { font-size: 14px; }
+  .tablewrap { overflow-x: auto; margin: 12px 0 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  thead th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); font-weight: 500; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mono { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 12.5px; }
+  .ok { color: var(--fact); font-weight: 600; } .warn { color: var(--rec); font-weight: 600; } .bad { color: var(--miss); font-weight: 600; }
+  .check { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-top: 12px; }
+  .check label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
+  .check input { margin-top: 5px; accent-color: var(--accent); }
+  .check .own { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); letter-spacing: .05em; }
+  .note { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 8px 12px; border-radius: 0 4px 4px 0; font-size: 13.5px; margin: 10px 0; max-width: 78ch; }
+  .missbox { background: var(--miss-soft); border-left: 3px solid var(--miss); padding: 8px 12px; border-radius: 0 4px 4px 0; font-size: 13.5px; margin: 10px 0; max-width: 78ch; }
+  .src { font-size: 12.5px; color: var(--muted); }
+  .toc { columns: 2; column-gap: 28px; font-size: 14px; margin-top: 10px; }
+  .toc a { text-decoration: none; display: block; padding: 2px 0; color: var(--ink); }
+  .toc a:hover { color: var(--accent-ink); }
+  .toc .eyebrow { display: inline; margin-right: 8px; }
+  footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--line-strong); font-size: 12.5px; color: var(--muted); }
+  @media (max-width: 760px) { .lanes, .pri, .check { grid-template-columns: 1fr; } .toc { columns: 1; } h1 { font-size: 28px; } }
+  @media print {
+    @page { size: A4; margin: 12mm 11mm; }
+    body { background: #fff; color: #111; font-size: 10.5pt; padding: 0; }
+    .wrap { max-width: none; }
+    .lane, .pri article, .tablewrap, .meta { box-shadow: none; border-color: #bbb; break-inside: avoid; }
+    h2 { break-after: avoid; margin-top: 26px; }
+    section.appendix { break-before: page; }
+    tr { break-inside: avoid; }
+    a { color: #222; text-decoration: none; }
+    .toc { display: none; }
+  }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">designbees.com.au · search &amp; AI visibility · prepared 10 September 2026</div>
+  <h1>Design Bees Visibility Report</h1>
+  <p style="max-width:78ch; margin-top:10px;">Four free audits and Google Search Console, read as three separate things that are often blurred together: <b>SEO scores</b> (site health), <b>AI mentions</b> (what answer engines say), and <b>Google AI impressions</b> (Search Console's own report). Each finding carries its source and date. Recommendations are labelled as such.</p>
+  <div class="meta">
+    <div>Site<b>designbees.com.au · Wix Studio · 38 pages + 23 posts (sitemap, 10 Sep)</b></div>
+    <div>Version<b>Draft v2 · full detail · 10 Sep 2026</b></div>
+    <div>Prepared for<b>AJ Kavanagh, Design Bees</b></div>
+    <div>Still pending<b>Peekaboo run · Search Console Generative AI export · exact Semrush speed figures</b></div>
+  </div>
+  <div class="legend">Labels: <span class="tag t-fact">Actual</span> measured result <span class="tag t-rec">Recommendation</span> my opinion <span class="tag t-miss">Missing</span> could not be obtained <span class="tag t-sec">Secondary</span> older or third-party monitoring, used as context</div>
+  <nav class="toc" aria-label="Contents">
+    <a href="#summary"><span class="eyebrow">1</span>Summary: three lanes</a>
+    <a href="#priorities"><span class="eyebrow">2</span>Top three priorities</a>
+    <a href="#queries"><span class="eyebrow">3</span>Five customer queries and pages</a>
+    <a href="#actions"><span class="eyebrow">4</span>Next actions</a>
+    <a href="#a-semrush-seo"><span class="eyebrow">A</span>Semrush SEO Checker</a>
+    <a href="#b-hubspot"><span class="eyebrow">B</span>HubSpot AI Search Grader</a>
+    <a href="#c-semrush-ai"><span class="eyebrow">C</span>Semrush AI Visibility</a>
+    <a href="#d-peekaboo"><span class="eyebrow">D</span>Peekaboo</a>
+    <a href="#e-gsc"><span class="eyebrow">E</span>Google Search Console</a>
+    <a href="#f-june"><span class="eyebrow">F</span>June baseline: queries and AI-engine audit</a>
+    <a href="#g-monitoring"><span class="eyebrow">G</span>Ahrefs and SearchAtlas monitoring</a>
+    <a href="#h-site"><span class="eyebrow">H</span>Live site check</a>
+    <a href="#i-method"><span class="eyebrow">I</span>Method, access and sources</a>
+  </nav>
+</header>
+
+<section id="summary">
+  <h2>1 · Summary <span class="tag t-fact">Actual</span></h2>
+  <div class="lanes">
+    <div class="lane seo">
+      <h3>SEO scores · site health</h3>
+      <div class="big">50 / 100</div>
+      <div class="cap">Semrush SEO Checker, homepage, 10 Sep 2026 (run by AJ)</div>
+      <ul>
+        <li>Fails: Interaction to Next Paint, Total Blocking Time, image alt text, Instagram and X links, authority/backlinks/referring domains versus compared sites.</li>
+        <li>Could not measure: mobile-friendliness, DOM size.</li>
+        <li>Passes: sitemap, robots, canonical, H1, structured data (FAQPage, ProfessionalService), LCP, CLS, TTFB, FCP.</li>
+        <li>Ahrefs, 9 Sep: health 93 on only 3 crawled URLs; 1 error (HTTPS page links to HTTP), a redirect chain.</li>
+        <li>Search Console, 9 Sep: Product-snippet and Merchant-listing schema warnings on the site.</li>
+      </ul>
+    </div>
+    <div class="lane ai">
+      <h3>AI mentions · answer engines</h3>
+      <div class="big">43 · 51 · 44</div>
+      <div class="cap">HubSpot AI Search Grader, ChatGPT · Perplexity · Gemini, out of 100, 10 Sep 2026</div>
+      <ul>
+        <li>Share of voice 0/10 on ChatGPT and Gemini, 4/10 on Perplexity. Sentiment is the only strong dimension (27–32/40).</li>
+        <li>Semrush AI Visibility Checker: score <b>0</b>, 2 mentions (both Google AI Mode), 4 citations. Semrush dashboard (Australia): visibility 14, 1 mention (Gemini), 9 cited pages.</li>
+        <li>Peekaboo: <span class="tag t-miss">Missing</span> stops at "Create free account &amp; run it".</li>
+        <li>SearchAtlas, 31 Aug: the Sydney city page was cited 13 times by AI engines.</li>
+      </ul>
+    </div>
+    <div class="lane goog">
+      <h3>Google AI impressions · Search Console</h3>
+      <div class="big">299 · 21.3K</div>
+      <div class="cap">August 2026 web clicks · impressions, Google monthly email 8 Sep 2026</div>
+      <ul>
+        <li>Performance → Generative AI (AI Overviews + AI Mode): <span class="tag t-miss">Missing</span> needs AJ's export, last 3 months.</li>
+        <li>June 253 / 18.4K → July 328 / 24.4K → August 299 / 21.3K clicks / impressions.</li>
+        <li>Top page in August: the pricing-guide post, 121 clicks. Top queries are the brand name; the first non-brand query has 2 clicks.</li>
+        <li>3-month baseline to 3 June: 714 clicks, 53.1K impressions, 1.3% CTR, position 12.5. "graphic design services" 2,106 impressions at 0% CTR on page 1.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note"><b>The one-line read.</b> The site is technically sound at the crawl level and has a strong pricing page, but it earns clicks almost only on its own name, the biggest non-brand terms sit on page 1 with no clicks, page speed on interaction fails, and answer engines rarely choose Design Bees for category prompts. Two inputs are still outstanding (Peekaboo, Search Console Generative AI).</p>
+</section>
+
+<section id="priorities">
+  <h2>2 · Top three priorities <span class="tag t-rec">Recommendation</span></h2>
+  <div class="pri">
+    <article>
+      <h3>Turn head-term impressions into clicks</h3>
+      <p>"graphic design services" earned 2,106 impressions in a quarter on page 1 with 0% CTR; "graphic design services australia" 373 at 0.3%; "unlimited graphic design" 381 at position 31. Clicks are brand-led: in August "design bees" and "designbees" were 47 of the top 49 query clicks. Rewrite the title, meta description and first 100 words of the homepage and of <span class="mono">/design-solutions/graphic-design</span> as direct answers with the $545 entry price, then read CTR in Search Console after four weeks.</p>
+      <p class="why"><b>Why it matters:</b> it is the largest volume on the site with the least return, and it needs no new pages. Semrush already flags the homepage title (61 characters) and meta description (149 characters) as over length.</p>
+    </article>
+    <article>
+      <h3>Clear the technical flags the tools agree on</h3>
+      <p>Fix the Product-snippet and Merchant-listing schema fields Google flagged on 9 Sep (missing <i>review</i>, <i>aggregateRating</i>, <i>availability</i>, return policy, shipping, identifier), the HTTP internal link and redirect chain from Ahrefs, the missing image alt text, and the Interaction to Next Paint and Total Blocking Time failures (audit which Wix apps and scripts load on every page; Wix Hotels and Wix Chat are installed).</p>
+      <p class="why"><b>Why it matters:</b> schema on the pricing and package pages is what both rich results and AI engines read, and those are already the most-cited pages. INP failing hits the 29% of August clicks that were mobile.</p>
+    </article>
+    <article>
+      <h3>Close the AI-visibility gap off-site</h3>
+      <p>Semrush AI score 0 and HubSpot share of voice 0/10 on ChatGPT and Gemini say the engines are not choosing Design Bees for category prompts, even though Perplexity and Google AI Overview named it first in June. Publish the Design Pickle alternative page, claim Clutch, G2 and DesignRush profiles, and collect five client reviews there.</p>
+      <p class="why"><b>Why it matters:</b> the June audit found ChatGPT recommending ManyPixels, Penji and Kimp for "best unlimited graphic design subscription in Australia". Answer engines cite review sites and comparison lists. This was the #1 gap on the 24 July checklist and is still open.</p>
+    </article>
+  </div>
+</section>
+
+<section id="queries">
+  <h2>3 · Five customer queries to target <span class="tag t-rec">Recommendation</span></h2>
+  <p>Questions a buyer asks before they know the brand name, each mapped to the page that should answer it. Evidence is actual; the mapping is my call.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th style="width:24%">Customer query</th><th style="width:40%">Evidence (actual)</th><th style="width:26%">Best page</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Best unlimited graphic design subscription in Australia</td><td>Perplexity and Google AI Overview name Design Bees first; ChatGPT omits it (AI-engine audit, 3 Jun). "best unlimited graphic design service": 53 impressions, position 28, 0 clicks (Search Console, 3 Jun). The Top 7 post ranked #1 for "best design subscription australia" on 3 Jul.</td><td><a href="https://www.designbees.com.au/post/top-7-design-subscriptions-for-creative-teams-2026">/post/top-7-design-subscriptions-for-creative-teams-2026</a></td><td class="ok">Existing</td></tr>
+      <tr><td>How much does unlimited graphic design cost in Australia?</td><td>Top page in August (121 clicks, up from 64 in June); most-cited page in Semrush AI Visibility (2 of 4 citations); cited by Google AI Overview and ChatGPT with the correct $545–$2,645 range (3 Jun).</td><td><a href="https://www.designbees.com.au/post/graphic-design-costs-in-australia-your-pricing-guide">/post/graphic-design-costs-in-australia-your-pricing-guide</a></td><td class="ok">Existing</td></tr>
+      <tr><td>Graphic design services (Australia)</td><td>2,106 + 373 impressions in a quarter, page 1, 0–0.3% CTR (Search Console, 3 Jun). "graphic design services" was a growing query in July (+2 clicks). The homepage owns the head term in the site's own keyword map.</td><td><a href="https://www.designbees.com.au/">/ (homepage)</a></td><td class="ok">Existing</td></tr>
+      <tr><td>Graphic design services Sydney</td><td>City page cited 13 times by AI engines (SearchAtlas, 31 Aug). "graphic design surry hills" was a growing query in June. The page returned HTTP 502 once on 10 Sep and 200 on two rechecks; worth watching.</td><td><a href="https://www.designbees.com.au/design-solutions/graphic-design-sydney">/design-solutions/graphic-design-sydney</a></td><td class="ok">Existing</td></tr>
+      <tr><td>Design Pickle alternative Australia</td><td>All three engines answered "Design Bees vs Design Pickle" in June, but no page targets the "alternative" query; the URL is a 404 (checked 10 Sep). P2 on the 24 Jul checklist.</td><td><span class="mono">/design-pickle-alternative-australia</span></td><td class="warn">Proposed new page</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Also drafted but not live: "Temporary graphic designer cover in Australia" (slug <span class="mono">temporary-graphic-designer-cover-australia</span>, 404 on 10 Sep). The July checklist calls it the one topic with rising demand that matches closed deals; it is the sixth query if you want one more.</p>
+</section>
+
+<section id="actions">
+  <h2>4 · Next actions <span class="tag t-rec">Recommendation</span></h2>
+  <div class="check">
+    <label><input type="checkbox" id="a1"><span><span class="own">AJ</span> Create the free Peekaboo account, run the Design Bees report, send the results (text or screenshots).</span></label>
+    <label><input type="checkbox" id="a2"><span><span class="own">AJ</span> Export Search Console Performance → Generative AI and Performance → Search results (last 3 months) to Google Sheets in Drive.</span></label>
+    <label><input type="checkbox" id="a3"><span><span class="own">AJ</span> Paste the Semrush SEO Checker result as text so the exact INP, TBT and performance-score figures can replace the screenshot readings in Appendix A.</span></label>
+    <label><input type="checkbox" id="a4"><span><span class="own">Miguel</span> Fix the Product-snippet and Merchant-listing schema fields on the pricing and package pages; validate in the Rich Results Test; request re-indexing in Search Console.</span></label>
+    <label><input type="checkbox" id="a5"><span><span class="own">Miguel</span> Fix the HTTP internal link and the redirect chain Ahrefs flagged; add alt text to the images Semrush flagged.</span></label>
+    <label><input type="checkbox" id="a6"><span><span class="own">AJ / Claude</span> Rewrite the homepage and /design-solutions/graphic-design title, meta and opening for "graphic design services" and "unlimited graphic design australia"; title under 60 characters, meta under 155.</span></label>
+    <label><input type="checkbox" id="a7"><span><span class="own">Miguel</span> Cut homepage JavaScript: remove unused Wix apps (Hotels is installed), defer chat and third-party scripts; re-test INP and TBT.</span></label>
+    <label><input type="checkbox" id="a8"><span><span class="own">AJ / Claude</span> Publish /design-pickle-alternative-australia and the drafted temporary-designer-cover page.</span></label>
+    <label><input type="checkbox" id="a9"><span><span class="own">AJ</span> Claim Clutch, G2 and DesignRush profiles; ask five clients for reviews there; add Instagram and X links to the site footer.</span></label>
+    <label><input type="checkbox" id="a10"><span><span class="own">Miguel</span> Unpublish the placeholder post /post/your-title-what-s-your-blog-about (still live and in the sitemap on 10 Sep).</span></label>
+    <label><input type="checkbox" id="a11"><span><span class="own">Miguel</span> Decide the fate of the three thin pages still indexable: /design-subscriptions-for-construction, /design-subscriptions-for-manufacturing, /options-to-scale-design (about 230 words each, no schema). Build them out or noindex them.</span></label>
+    <label><input type="checkbox" id="a12"><span><span class="own">AJ / Claude</span> Re-run the four tools and the two Search Console reports in 30 days with the same inputs and compare against this report.</span></label>
+  </div>
+</section>
+
+<section id="a-semrush-seo" class="appendix">
+  <h2>Appendix A · Semrush SEO Checker <span class="lanetag" style="--lane:var(--lane-seo)">SEO scores</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Tool: <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a> · input <span class="mono">designbees.com.au</span> (homepage) · run by AJ on 10 Sep 2026 in a logged-in Semrush account · transcribed from AJ's screenshots. Metric values marked "as read" could not be read exactly from the screenshots and should be confirmed from the text export.</p>
+  <h3>Score and issue list</h3>
+  <p><b>SEO Score 50 / 100.</b> Four sub-bars: On-Page SEO (partial), Technical SEO (strongest), Off-Page SEO ("improve your off-page SEO"), Social Media (weakest).</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Type</th><th>Check</th><th>Status</th><th>Semrush's note</th></tr></thead>
+    <tbody>
+      <tr><td>Page speed</td><td>DOM size</td><td class="bad">Not measured</td><td>Unable to retrieve the DOM size metric; the page may be inaccessible or the API unavailable.</td></tr>
+      <tr><td>Page speed</td><td>Total Blocking Time</td><td class="bad">Fail</td><td>Heavy scripts severely delay user input. Break up long tasks, lazy-load non-essential code, reduce third-party scripts.</td></tr>
+      <tr><td>Page speed</td><td>Interaction to Next Paint</td><td class="bad">Fail</td><td>Clicks and taps feel noticeably delayed. Defer non-critical JavaScript, move work off the main thread, reduce third-party script impact.</td></tr>
+      <tr><td>Page speed</td><td>Mobile friendliness</td><td class="bad">Not measured</td><td>Failed to check mobile friendliness; the page may be inaccessible or the API unavailable.</td></tr>
+      <tr><td>Social media</td><td>X (Twitter)</td><td class="bad">Fail</td><td>No link to an X profile found on the page.</td></tr>
+      <tr><td>Social media</td><td>Instagram</td><td class="bad">Fail</td><td>No link to an Instagram page found on the page.</td></tr>
+      <tr><td>Off-page</td><td>Referring domains</td><td class="bad">Fail</td><td>Referring-domain count well below the compared sites. Prioritise link-building, digital PR and content promotion.</td></tr>
+      <tr><td>Off-page</td><td>Backlinks</td><td class="bad">Fail</td><td>Backlink total well below the compared sites.</td></tr>
+      <tr><td>Off-page</td><td>Authority Score</td><td class="bad">Fail</td><td>Authority Score well below the compared sites.</td></tr>
+      <tr><td>On-page</td><td>Image alt</td><td class="bad">Fail</td><td>Some images are missing alt text.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>On-page checks (homepage)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>URL</td><td class="ok">Pass</td><td>26 characters, <span class="mono">https://www.designbees.com.au/</span></td></tr>
+      <tr><td>Title</td><td class="warn">Warning</td><td>61 characters, aim for 50–60: "Unlimited Graphic Design Subscription Australia | Design Bees"</td></tr>
+      <tr><td>Meta description</td><td class="bad">Fail</td><td>149 characters, Semrush suggests 100–130: "Get unlimited graphic design from Design Bees, an Australian company. Packages start at $545/month with a 10-day free trial. Pause or cancel anytime."</td></tr>
+      <tr><td>H1</td><td class="ok">Pass</td><td>Single H1, 68 characters: "Unlimited Graphic Design for Australian Businesses – From $545/Month"</td></tr>
+      <tr><td>H2–H3 structure</td><td class="ok">Pass</td><td>18 H2, 3 H3. Examples: "Trusted By Australian Brands", "How It Works", "See How Our Design Subscription Works in Minutes"</td></tr>
+      <tr><td>Image alt</td><td class="bad">Fail</td><td>Some images missing alt text</td></tr>
+      <tr><td>Content</td><td class="ok">Pass</td><td>Text-to-code ratio and content length both passed (about 2,000 words; the live page carries about 1,750 visible words on 10 Sep)</td></tr>
+      <tr><td>Keyword density</td><td class="ok">Pass</td><td>"design" 44 instances (2.68%), "case" 38 (2.19%), "study" 38 (2.19%). The case-study carousel dominates the word count.</td></tr>
+      <tr><td>Keyword rankings</td><td>—</td><td>Three low-volume keywords listed, each with 0% of the site's traffic (as read).</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Technical checks</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Favicon</td><td class="ok">Pass</td><td>Valid and accessible</td></tr>
+      <tr><td>Noindex</td><td class="ok">Pass</td><td>Page is configured for indexing</td></tr>
+      <tr><td>Sitemap</td><td class="ok">Pass</td><td><span class="mono">https://www.designbees.com.au/sitemap.xml</span> (valid XML sitemap index)</td></tr>
+      <tr><td>Hreflang</td><td class="warn">Warning</td><td>No hreflang tags. Not needed for a single-language Australian site.</td></tr>
+      <tr><td>Language</td><td class="ok">Pass</td><td>en</td></tr>
+      <tr><td>Canonical</td><td class="ok">Pass</td><td>Configured, points to the appropriate URL</td></tr>
+      <tr><td>Robots.txt</td><td class="ok">Pass</td><td><span class="mono">https://www.designbees.com.au/robots.txt</span></td></tr>
+      <tr><td>Structured data</td><td class="ok">Pass</td><td>FAQPage, ProfessionalService</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Page speed and Core Web Vitals</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Metric</th><th>Status</th><th>Semrush's note</th></tr></thead>
+    <tbody>
+      <tr><td>Performance score</td><td class="warn">Partial</td><td>"Performs reasonably well but doesn't fully meet Google's targets": compress large images, remove unused CSS/JavaScript, enable caching. Numeric score: as read, unconfirmed.</td></tr>
+      <tr><td>Mobile friendliness</td><td class="bad">Not measured</td><td>Failed to check</td></tr>
+      <tr><td>Largest Contentful Paint</td><td class="ok">Pass</td><td>Main image or text block appears quickly</td></tr>
+      <tr><td>Interaction to Next Paint</td><td class="bad">Fail</td><td>Clicks and taps noticeably delayed. Value as read: several seconds; confirm from the text export.</td></tr>
+      <tr><td>Cumulative Layout Shift</td><td class="ok">Pass</td><td>Elements visually stable while loading</td></tr>
+      <tr><td>Time to First Byte</td><td class="ok">Pass</td><td>Server responds quickly</td></tr>
+      <tr><td>First Contentful Paint</td><td class="ok">Pass</td><td>First text or image appears almost instantly</td></tr>
+      <tr><td>Speed Index</td><td class="ok">Pass</td><td>Visual content appears quickly</td></tr>
+      <tr><td>Total Blocking Time</td><td class="bad">Fail</td><td>Heavy scripts severely delay input. Value as read: about one second; confirm from the text export.</td></tr>
+      <tr><td>DOM size</td><td class="bad">Not measured</td><td>Unable to retrieve</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Competitors, off-page and social</h3>
+  <ul>
+    <li><b>Competitors listed</b> (one common keyword each): graphicdesignacademy.com.au (27% competition level), two small Australian design studios (21% and 16%), one further design site (about 3%), clutch.co (0%). These are keyword-overlap neighbours, not the subscription competitors (Design Pickle, ManyPixels, Penji, Kimp).</li>
+    <li><b>Off-page assessment:</b> Authority Score N/A, backlinks N/A, referring domains N/A, nofollow vs dofollow N/A. Semrush had no aggregate link data for the domain, which is itself the finding.</li>
+    <li><b>Top backlinks shown:</b> one Behance profile page (Authority Score 21) and nine DesignRush directory pages (Authority Score 14 each): "Top Australia Design Agencies" page 3 and page 4, "Top Digital Agencies in Australia" pages 5 and 78, "Top Illustration Agencies in 2026" page 67, "Top Visual Communication Companies in 2026" page 68, "Top Automotive Branding Agencies in 2026" page 27, "Top Small Business Branding Agencies in 2026" page 152, "Top Startup Branding Agencies in 2026" page 51. The DesignRush links are marked nofollow.</li>
+    <li><b>Social links on the page:</b> Facebook <span class="ok">found</span>, YouTube <span class="ok">found</span>, LinkedIn <span class="ok">found</span>, Instagram <span class="bad">missing</span>, X <span class="bad">missing</span>.</li>
+  </ul>
+  <p class="note"><b>Reading it:</b> the on-page and technical basics pass. The score is dragged down by JavaScript interaction cost, a near-empty link profile made of nofollow directory listings, and two missing social links. Note the session's own attempts to run this tool failed Semrush's human-verification check (see Appendix I), so this run is AJ's.</p>
+</section>
+
+<section id="b-hubspot" class="appendix">
+  <h2>Appendix B · HubSpot AI Search Grader <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Tool: <a href="https://www.hubspot.com/ai-search-grader">hubspot.com/ai-search-grader</a> · run from this session on 10 Sep 2026 at 13:51 UTC · inputs: company "Design Bees", location "Australia", product or services "Unlimited graphic design subscription", industry "Marketing and Advertising" · <a href="https://www.hubspot.com/ai-search-grader/results?companyName=Design+Bees&amp;geography=Australia&amp;productsServices=Unlimited+graphic+design+subscription&amp;industry=Marketing+and+Advertising">result page</a>. HubSpot describes the grader as a free one-time check across three LLM providers; the detailed report ("Unlock Insights") requires a HubSpot form and was not unlocked.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Engine</th><th class="num">Overall (100)</th><th class="num">Brand recognition (20)</th><th class="num">Market score (10)</th><th class="num">Presence quality (20)</th><th class="num">Brand sentiment (40)</th><th class="num">Share of voice (10)</th><th>HubSpot's verdict</th></tr></thead>
+    <tbody>
+      <tr><td>ChatGPT (OpenAI)</td><td class="num">43</td><td class="num">4</td><td class="num">5</td><td class="num">7</td><td class="num">27</td><td class="num">0</td><td>"You're on the right track, but there's room to further optimise for AEO."</td></tr>
+      <tr><td>Perplexity</td><td class="num">51</td><td class="num">5</td><td class="num">3</td><td class="num">7</td><td class="num">32</td><td class="num">4</td><td>Same verdict text.</td></tr>
+      <tr><td>Gemini (Google)</td><td class="num">44</td><td class="num">3</td><td class="num">5</td><td class="num">5</td><td class="num">31</td><td class="num">0</td><td>Same verdict text.</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>How to read it.</b> HubSpot weights sentiment at 40 of the 100 points, so a brand that is rarely mentioned but described positively when it is mentioned lands in the 40s. Design Bees scores 67–80% on sentiment and 0–40% on share of voice: when the engines talk about it they are kind, but they mostly do not talk about it. Brand recognition at 3–5 of 20 says the engines do not reliably know the brand without prompting. The three engines agree within eight points, so this is not a one-engine quirk.</p>
+  <p class="src">The result page also lists, behind the unlock, sub-scores for recognition score, market position, brand archetype, confidence level, mention depth, source quality and data richness. These were not retrieved.</p>
+</section>
+
+<section id="c-semrush-ai" class="appendix">
+  <h2>Appendix C · Semrush AI Visibility <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span> <span class="tag t-fact">Actual</span></h2>
+  <h3>C1 · Free AI Search Visibility Checker</h3>
+  <p class="src">Tool: <a href="https://www.semrush.com/free-tools/ai-search-visibility-checker/">semrush.com/free-tools/ai-search-visibility-checker</a> · input <span class="mono">www.designbees.com.au</span> · run by AJ on 10 Sep 2026 · pasted as text. Covers ChatGPT, Gemini, Google AI Mode and Google AI Overviews.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Measure</th><th class="num">Value</th><th>Semrush's note</th></tr></thead>
+    <tbody>
+      <tr><td>AI Visibility Score</td><td class="num">0</td><td>"Low". Three-month trend not available: "We need more AI visibility history for this website before we can show a three-month trend."</td></tr>
+      <tr><td>Mentions</td><td class="num">2</td><td>ChatGPT 0 · Gemini 0 · AI Mode 2 · AI Overviews 0</td></tr>
+      <tr><td>Citations</td><td class="num">4</td><td>See cited pages below</td></tr>
+      <tr><td>Audience reach</td><td class="num">458</td><td>Estimated audience reached through AI search</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Top cited pages</th><th class="num">Citations</th></tr></thead>
+    <tbody>
+      <tr><td><span class="mono">www.designbees.com.au/post/graphic-design-costs-in-australia-your-pricing-guide</span></td><td class="num">2</td></tr>
+      <tr><td><span class="mono">www.designbees.com.au</span></td><td class="num">1</td></tr>
+      <tr><td><span class="mono">www.designbees.com.au/how-it-works</span></td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Best performing topics</th><th class="num">Mentions</th><th class="num">Topic volume</th></tr></thead>
+    <tbody>
+      <tr><td>Unlimited Design and Decor Services</td><td class="num">1</td><td class="num">861</td></tr>
+      <tr><td>Custom T-Shirt and Design Services Australia</td><td class="num">1</td><td class="num">109</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Competitor comparison</b> (Semrush's default pick): graphicdesignacademy.com.au, AI Visibility Score 0, mentions 0, audience reach 0. No other competitor was entered.</p>
+  <p class="note"><b>On "not enough data":</b> the score is a real 0, not a blank. Semrush ran its prompt sample and found Design Bees mentioned twice, both in Google AI Mode, and never in ChatGPT, Gemini or AI Overviews. What is unavailable is the trend line. The two topics it did appear for (home decor, custom t-shirts) are not Design Bees' market, which suggests the mentions came from broad "unlimited design" prompts rather than category prompts. The summary block showing "12.4K mentions, 3.8K citations, 1.2M reach, up 23%" on the same page is the AI Visibility Toolkit's sample promo, not Design Bees data, and is excluded here.</p>
+  <h3>C2 · Semrush SEO Dashboard → AI Search widget (logged in, Australia)</h3>
+  <p class="src">Source: AJ's screenshot of the Semrush SEO Dashboard for designbees.com.au, AI Search panel, country selector "Australia", 10 Sep 2026.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Platform</th><th class="num">Mentions</th><th class="num">Cited pages</th></tr></thead>
+    <tbody>
+      <tr><td>ChatGPT</td><td class="num">0</td><td class="num">7</td></tr>
+      <tr><td>Google AI Overview</td><td class="num">0</td><td class="num">1</td></tr>
+      <tr><td>Google AI Mode</td><td class="num">0</td><td class="num">1</td></tr>
+      <tr><td>Gemini</td><td class="num">1</td><td class="num">2</td></tr>
+      <tr><td><b>Total</b></td><td class="num"><b>1</b></td><td class="num"><b>9</b></td></tr>
+    </tbody>
+  </table></div>
+  <p>AI Visibility shown as <b>14</b> in this view. The dashboard and the free checker use different prompt samples and scopes (this one is Australia-scoped), which is why the numbers differ: 14 / 1 / 9 here versus 0 / 2 / 4 in the free tool. Both say the same thing: near-zero brand mentions, a handful of page citations, with ChatGPT citing pages without naming the brand.</p>
+</section>
+
+<section id="d-peekaboo" class="appendix">
+  <h2>Appendix D · Peekaboo <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span> <span class="tag t-miss">Missing</span></h2>
+  <p class="src">Tool: <a href="https://www.aipeekaboo.com/">aipeekaboo.com</a> · attempted from this session on 10 Sep 2026, 13:45–14:00 UTC.</p>
+  <p>What happened, step by step:</p>
+  <ul>
+    <li>Entered <span class="mono">designbees.com.au</span> in the homepage form. Peekaboo pulled the brand name "Design Bees", the website and the homepage meta description automatically and opened its onboarding flow.</li>
+    <li>Step 1 of 5: chose "Brand" (monitor your own company), set location to Australia, language English, chose "Quick Start".</li>
+    <li>Step 2 of 5: industry. The page first showed "Failed to generate prompts", then offered the industry list; chose "Agency &amp; Marketing".</li>
+    <li>Step 3 of 5: competitors, auto-suggest accepted.</li>
+    <li>Step 4 of 5: prompts. Auto-suggested prompt groups "Discovery Prompts", "Purchase Intent", "Sentiment Analysis" were shown, and the only way forward was the button <b>"Create free account &amp; run it"</b>. Peekaboo's free run defaults to 1 brand and 40 prompts (the sliders on its homepage).</li>
+  </ul>
+  <div class="missbox"><b>Needs AJ:</b> the free report requires an account. Sign up at aipeekaboo.com with the brand set to Design Bees, location Australia, industry Agency &amp; Marketing, let Quick Start run, then send the visibility, competitor and prompt tables (text or screenshots). This appendix will be replaced with the results.</div>
+</section>
+
+<section id="e-gsc" class="appendix">
+  <h2>Appendix E · Google Search Console <span class="lanetag" style="--lane:var(--lane-google)">Google AI impressions</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Property: <span class="mono">sc-domain:designbees.com.au</span> (domain property, verified 3 Jun 2026 under aj@designbees.com.au; a separate URL-prefix property for <span class="mono">https://designbees.com.au/our-work/</span> was verified 18 Mar 2026). <a href="https://search.google.com/search-console?resource_id=sc-domain:designbees.com.au">Open the property</a>. Data below comes from Google's own monthly performance emails and alert emails to aj@designbees.com.au, which are generated from the property.</p>
+  <h3>E1 · Performance → Generative AI (AI Overviews and AI Mode)</h3>
+  <div class="missbox"><b>Not received.</b> This report needs a logged-in export: in Search Console, select the domain property → Performance → Generative AI → date range Last 3 months → Export → Google Sheets, and the same for Performance → Search results (which includes the Queries and Pages tabs). A screenshot of the Generative AI view with the date range visible is a useful extra. No Search Console connector is available in this session and the account requires AJ's login; Supermetrics has a Search Console source, but it is unauthenticated and the trial has expired, so it was not used.</div>
+  <p>Context from 3 Jun 2026: at that date the property's Search Appearance filter showed only "Product snippets" and no AI dimension, and Google folded AI Overview impressions into web totals. Google has since documented the Generative AI report, so the property should now show it.</p>
+  <h3>E2 · Performance → Search results, monthly (Google performance emails)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Month</th><th class="num">Clicks (web)</th><th class="num">Impressions (web)</th><th class="num">Pages with first impressions*</th><th class="num">Desktop / mobile / tablet clicks</th><th>Top countries by clicks</th><th>Email date</th></tr></thead>
+    <tbody>
+      <tr><td>June 2026</td><td class="num">253</td><td class="num">18.4K</td><td class="num">19</td><td class="num">191 / 61 / 1</td><td>Australia 193, India 13, Philippines 13</td><td>7 Jul 2026</td></tr>
+      <tr><td>July 2026</td><td class="num">328</td><td class="num">24.4K</td><td class="num">3</td><td class="num">242 / 84 / 2</td><td>Australia 265, Philippines 17, New Zealand 7</td><td>4 Aug 2026</td></tr>
+      <tr><td>August 2026</td><td class="num">299</td><td class="num">21.3K</td><td class="num">9</td><td class="num">210 / 88 / 1</td><td>Australia 251, Philippines 11, India 6</td><td>8 Sep 2026</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">*Google's estimate. Image and video search clicks were 0 in all three months. Google also sent a "300 clicks in 28 days" milestone on 1 Aug 2026 (period ending 30 Jul).</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Month</th><th>Top performing pages (clicks)</th><th>Top growing pages (change vs previous month)</th></tr></thead>
+    <tbody>
+      <tr><td>June</td><td>Homepage 112 · pricing-guide post 64 · logo &amp; branding package 26</td><td>logo &amp; branding package +9 · homepage (http://) +4 · /post/graphic-design-services-in-australia +3</td></tr>
+      <tr><td>July</td><td>Pricing-guide post 110 · homepage 104 · logo &amp; branding package 55</td><td>pricing-guide post +46 · logo &amp; branding package +29 · /one-off-packages +4</td></tr>
+      <tr><td>August</td><td>Pricing-guide post 121 · homepage 85 · logo &amp; branding package 33</td><td>pricing-guide post +11 · XV Premium case study +5 · Pappa Flock case study +3</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Month</th><th>Top performing queries (clicks)</th><th>Top growing queries (change)</th></tr></thead>
+    <tbody>
+      <tr><td>June</td><td>design bees 57 · designbees 12 · design bee 5</td><td>design bees +7 · design bee +2 · graphic design surry hills +2</td></tr>
+      <tr><td>July</td><td>design bees 58 · designbees 15 · brand identity package 2</td><td>designbees +3 · graphic design subscription services +2 · graphic design services +2</td></tr>
+      <tr><td>August</td><td>design bees 36 · designbees 11 · freelance graphic designer hourly rate australia 2</td><td>cheap branding packages +2 · freelance graphic designer hourly rate australia +2 · graphic designer cost +2</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Reading it.</b> Impressions rose 33% from June to July and fell 13% in August; clicks followed (253 → 328 → 299). Brand queries fell from 73 clicks in July to 47 in August while the pricing-guide post kept growing, so the August dip is mostly brand demand, not content. Mobile is 24–29% of clicks. Australia is 76–84% of clicks; Philippines and India traffic is likely the team and job-seekers, not buyers.</p>
+  <h3>E3 · Alerts and validations, timeline</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Date</th><th>Alert (from sc-noreply@google.com)</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td>18 Mar 2026</td><td>Get started with Search Console for https://designbees.com.au/our-work/</td><td>URL-prefix property verified for the portfolio path only.</td></tr>
+      <tr><td>22 Mar 2026</td><td>New indexing reason on /our-work/ property: "Page with redirect"</td><td>Portfolio URLs redirecting.</td></tr>
+      <tr><td>3 Jun 2026</td><td>"Improve Google presence": domain property designbees.com.au verified</td><td>Site-wide data starts here.</td></tr>
+      <tr><td>30 Jun 2026</td><td>New owner: miguel@designbees.com.au added</td><td>Web developer has owner access.</td></tr>
+      <tr><td>1 Jul 2026</td><td>Product snippets structured data issue detected (1); validation started</td><td>Product schema added in June had a missing field.</td></tr>
+      <tr><td>3 Jul 2026</td><td>Product snippets issue fixed (validated) · Review snippets issue detected (1) · new indexing reason "Redirect error"</td><td>One fixed, one new schema warning, and a redirect misconfiguration on some URL.</td></tr>
+      <tr><td>6 Jul 2026</td><td>Validating Page indexing fixes ("Not found")</td><td>404 clean-up from the June fix list being checked.</td></tr>
+      <tr><td>17 Aug 2026</td><td>New indexing reason: "Alternate page with proper canonical tag"</td><td>Some URLs now point their canonical elsewhere; expected after the vertical-page consolidation, worth confirming the pages intended.</td></tr>
+      <tr><td>6 Sep 2026</td><td>Page indexing issues fixed for /our-work/ property (validated)</td><td>Portfolio indexing clean.</td></tr>
+      <tr><td>7 Sep 2026</td><td>Merchant listings structured data issue detected (1)</td><td>Offer schema on a product page missing a field.</td></tr>
+      <tr><td>9 Sep 2026</td><td>Merchant listings issues (4): missing <i>availability</i>, <i>hasMerchantReturnPolicy</i>, <i>shippingDetails</i> (in offers), no global identifier (gtin, brand) · Product snippets issues (3): missing <i>review</i>, <i>availability</i>, <i>aggregateRating</i></td><td>All flagged non-critical today; Google notes such issues can be reclassified as critical. For a service business, Merchant-listing fields (shipping, returns) suggest a Product/Offer schema type that may be the wrong type for the packages; consider Service + Offer instead.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="f-june" class="appendix">
+  <h2>Appendix F · June baseline: query table and AI-engine audit <span class="tag t-sec">Secondary</span></h2>
+  <p class="src">Two spreadsheets produced on 3 Jun 2026 from the newly verified domain property and a manual audit. Older than the September tools above, but they are the only query-level Search Console data and the only per-prompt AI-engine reading on file. Sources: <a href="https://docs.google.com/spreadsheets/d/19te5LI2Gz8v7K0N3PITVGwa41Re0hYLEfqqs2sePeoA">Design Bees AEO – GSC Review – 2026-06-03</a> · <a href="https://docs.google.com/spreadsheets/d/1iFoJM2y6VKBKKtGCLCwfXMhYl-4q7NvX88iLvhTGKwQ">Design Bees AEO Visibility Audit – 2026-06-03</a>.</p>
+  <h3>F1 · Search Console, 3 months to 3 Jun 2026 (714 clicks, 53.1K impressions, CTR 1.3%, average position 12.5)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Query</th><th>Type</th><th class="num">Clicks</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Avg position</th></tr></thead>
+    <tbody>
+      <tr><td>design bees</td><td>Brand</td><td class="num">170</td><td class="num">265</td><td class="num">64.2%</td><td class="num">1.2</td></tr>
+      <tr><td>graphic design services</td><td>Category</td><td class="num">1</td><td class="num">2,106</td><td class="num">0.0%</td><td class="num">10.6</td></tr>
+      <tr><td>graphic design services australia</td><td>Category</td><td class="num">1</td><td class="num">373</td><td class="num">0.3%</td><td class="num">8.1</td></tr>
+      <tr><td>unlimited graphic design</td><td>Core category</td><td class="num">1</td><td class="num">381</td><td class="num">0.3%</td><td class="num">31.4</td></tr>
+      <tr><td>graphic design subscription</td><td>Core category</td><td class="num">0</td><td class="num">191</td><td class="num">0.0%</td><td class="num">12.7</td></tr>
+      <tr><td>unlimited graphic design services</td><td>Core category</td><td class="num">0</td><td class="num">176</td><td class="num">0.0%</td><td class="num">35.4</td></tr>
+      <tr><td>design subscription</td><td>Core category</td><td class="num">1</td><td class="num">273</td><td class="num">0.4%</td><td class="num">25.8</td></tr>
+      <tr><td>design subscription service</td><td>Core category</td><td class="num">2</td><td class="num">229</td><td class="num">0.9%</td><td class="num">25.8</td></tr>
+      <tr><td>graphic design australia</td><td>Category</td><td class="num">2</td><td class="num">238</td><td class="num">0.8%</td><td class="num">17.7</td></tr>
+      <tr><td>best unlimited graphic design service</td><td>Best query</td><td class="num">0</td><td class="num">53</td><td class="num">0.0%</td><td class="num">28.4</td></tr>
+      <tr><td>unlimited graphic design subscription</td><td>Core category</td><td class="num">0</td><td class="num">37</td><td class="num">0.0%</td><td class="num">49.0</td></tr>
+      <tr><td>unlimited design subscription</td><td>Core category</td><td class="num">0</td><td class="num">94</td><td class="num">0.0%</td><td class="num">52.8</td></tr>
+      <tr><td>what does unlimited design services actually mean - are there limits or one active request at a time?</td><td>AI-style question</td><td class="num">0</td><td class="num">42</td><td class="num">0.0%</td><td class="num">8.1</td></tr>
+      <tr><td>how fast is turnaround with an unlimited graphic design subscription?</td><td>AI-style question</td><td class="num">0</td><td class="num">20</td><td class="num">0.0%</td><td class="num">16.8</td></tr>
+      <tr><td>what is an unlimited graphic design subscription, and how does it work for a growing business?</td><td>AI-style question</td><td class="num">0</td><td class="num">8</td><td class="num">0.0%</td><td class="num">18.9</td></tr>
+      <tr><td>can an unlimited design subscription handle social media graphics, ads, and brand assets every month?</td><td>AI-style question</td><td class="num">0</td><td class="num">6</td><td class="num">0.0%</td><td class="num">16.7</td></tr>
+      <tr><td>what is unlimited graphic designs</td><td>Question</td><td class="num">0</td><td class="num">26</td><td class="num">0.0%</td><td class="num">21.8</td></tr>
+      <tr><td>graphic design pricing</td><td>Pricing</td><td class="num">2</td><td class="num">15</td><td class="num">13.3%</td><td class="num">3.4</td></tr>
+      <tr><td>graphic design pricing guide</td><td>Pricing</td><td class="num">2</td><td class="num">3</td><td class="num">66.7%</td><td class="num">2.7</td></tr>
+      <tr><td>how much does a graphic designer cost</td><td>Question</td><td class="num">1</td><td class="num">19</td><td class="num">5.3%</td><td class="num">1.8</td></tr>
+      <tr><td>how much does it cost to hire a graphic designer</td><td>Question</td><td class="num">1</td><td class="num">4</td><td class="num">25.0%</td><td class="num">1.0</td></tr>
+      <tr><td>graphic design membership</td><td>Category</td><td class="num">1</td><td class="num">3</td><td class="num">33.3%</td><td class="num">2.3</td></tr>
+    </tbody>
+  </table></div>
+  <h3>F2 · Manual AI-engine audit, 3 Jun 2026 (five prompts, three engines)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Prompt</th><th>Perplexity</th><th>Google AI Overview</th><th>ChatGPT (logged in, web search)</th></tr></thead>
+    <tbody>
+      <tr><td>What is the best unlimited graphic design subscription in Australia?</td><td class="ok">Named top pick; cited (1 of 8 sources). $545 correct.</td><td class="ok">Named first, #1 in "Top Australian-based subscriptions"; cited; also organic #1.</td><td class="bad">Not mentioned. Named ManyPixels, Penji, Kimp, UnicornGO.</td></tr>
+      <tr><td>How much does unlimited graphic design cost in Australia?</td><td class="warn">Cited as a source, not named in prose.</td><td class="warn">Cited (#2 source); quoted range $545–$2,645 is Design Bees' plan span; not named.</td><td class="ok">Listed 2nd; cited; A$545–A$2,645 correct.</td></tr>
+      <tr><td>How does an unlimited graphic design subscription work?</td><td class="bad">Not mentioned (generic answer).</td><td class="bad">Not mentioned (generic answer).</td><td class="bad">Not mentioned (no web search).</td></tr>
+      <tr><td>Design Bees review</td><td class="ok">Positive; cited. Caveat: reviews sourced from own site.</td><td class="warn">Positive; cited; <b>wrong price</b>: "from around $900/month" (entry plan is $545).</td><td class="ok">Positive; cited. States founded 2024 (unverified).</td></tr>
+      <tr><td>Design Bees vs Design Pickle</td><td class="ok">Positive fit for Australian buyers; cited.</td><td class="ok">Boutique Australian service; cited (with YouTube, Reddit, SourceForge).</td><td class="ok">Comparison table; cited via Slashdot and SourceForge; founding year 2023 (inconsistent).</td></tr>
+    </tbody>
+  </table></div>
+  <p>Pattern in June: strong on Perplexity and Google AI Overview for the "best in Australia" prompt, invisible on ChatGPT for the same prompt, and absent everywhere for the neutral "how does it work" prompt. Guest-mode ChatGPT did not recognise the brand at all. The September tools (HubSpot share of voice 0/10 on ChatGPT and Gemini; Semrush 0 ChatGPT mentions) are consistent with this.</p>
+</section>
+
+<section id="g-monitoring" class="appendix">
+  <h2>Appendix G · Ahrefs and SearchAtlas monitoring <span class="tag t-sec">Secondary</span></h2>
+  <h3>G1 · Ahrefs Site Audit <span class="lanetag" style="--lane:var(--lane-seo)">SEO scores</span></h3>
+  <p class="src">Source: scheduled crawl emails from sa@ahrefs.com, project "Designbees" · <a href="https://app.ahrefs.com/site-audit/9577405/overview">app.ahrefs.com/site-audit/9577405</a>. The free crawl covers only 3–4 internal URLs, so the health score describes those pages, not the site.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Crawl date</th><th class="num">URLs analysed</th><th class="num">Health score</th><th class="num">Errors</th><th class="num">Warnings</th><th class="num">Notices</th></tr></thead>
+    <tbody>
+      <tr><td>26 Aug 2026</td><td class="num">4</td><td class="num">94</td><td class="num">1</td><td class="num">4</td><td class="num">2</td></tr>
+      <tr><td>2 Sep 2026</td><td class="num">3</td><td class="num">94</td><td class="num">1</td><td class="num">3</td><td class="num">2</td></tr>
+      <tr><td>9 Sep 2026</td><td class="num">3</td><td class="num">93</td><td class="num">1</td><td class="num">3</td><td class="num">2</td></tr>
+    </tbody>
+  </table></div>
+  <p>Top issues on 9 Sep: HTTPS page has internal links to HTTP (1 URL, the error); 3XX redirect (2); redirected page has no incoming internal links (1); redirect chain (1); HTTP to HTTPS redirect (1); page and SERP titles do not match (1). The HTTP internal link was first flagged in the June fix list as the footer "Book a time / Let's chat" link to <span class="mono">http://designbees.com.au/demo</span> and marked a false positive then; Ahrefs still sees one.</p>
+  <h3>G2 · SearchAtlas LLM Visibility and OTTO <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span></h3>
+  <p class="src">Source: weekly emails from noreply@searchatlas.com and hello@searchatlas.com · <a href="https://dashboard.searchatlas.com/llm-visibility?project_id=743c9ba9-fc17-4c59-8660-2008bcc58eaf">LLM Visibility dashboard</a>.</p>
+  <ul>
+    <li><b>27 and 31 Aug 2026, LLM visibility for designbees.com.au:</b> "4 new pages cited by AI": <span class="mono">/design-solutions/graphic-design-sydney</span> 13 mentions, <span class="mono">/one-off-jobs-packages</span> 1, <span class="mono">/one-off-packages</span> 1, <span class="mono">/post/the-benefits-of-subscription-based-design-services-for-startups</span> 1.</li>
+    <li><b>Competitor tracking in the same account:</b> designpickle.com climbed to #19 in AI visibility (27 Aug, up 14) and had 10 new pages cited (30–31 Aug); designjoy.co #52 (31 Aug); thevisualcollective.com.au 4 new pages cited (31 Aug).</li>
+    <li><b>1 Sep 2026, OTTO weekly performance:</b> impressions 2,741 → 1,316 week on week (−1,425); organic traffic 31 → 22; organic keywords 753 → 871 (+118); 3 "new content" fixes deployed. SearchAtlas's own tracking, not Search Console.</li>
+    <li><b>Account status:</b> SearchAtlas reported a failed payment on 28 Aug ("your service will soon be canceled") and LinkGraph downgraded the plan to Free on 1 Sep. These emails may stop. No action taken in this report, per the no-paid-plans rule.</li>
+  </ul>
+</section>
+
+<section id="h-site" class="appendix">
+  <h2>Appendix H · Live site check, 10 Sep 2026 <span class="lanetag" style="--lane:var(--lane-seo)">SEO scores</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Fetched from this session with curl after network access was opened: sitemap index, page and blog sitemaps, robots.txt, and 30 individual URLs (status code, robots meta, JSON-LD block count, approximate visible word count, title).</p>
+  <ul>
+    <li><b>Sitemap index</b> lists 11 child sitemaps: pages (38 URLs), blog posts (23), blog categories, case studies, client-times, logging-a-job, and five FAQ collections.</li>
+    <li><b>robots.txt</b> allows everything except member and operational areas (/my-account, /design-portal, /design-job-status, /new-design, /plans-pricing) and Wix lightbox URLs. AdsBot is explicitly allowed.</li>
+    <li><b>Homepage</b>: title "Unlimited Graphic Design Subscription Australia | Design Bees"; meta description 149 characters; 2 JSON-LD blocks; about 1,750 visible words; HTML weight 2.4 MB.</li>
+    <li><b>City pages</b> live for Sydney, Melbourne, Brisbane, Perth and Adelaide under /design-solutions/graphic-design-{city}, each about 920–945 words with one JSON-LD block and the title pattern "Graphic Design Services {City} | From $545/mo | Design Bees". Sydney returned 502 once, then 200 twice.</li>
+  </ul>
+  <div class="tablewrap"><table>
+    <thead><tr><th>URL</th><th class="num">Status</th><th>Robots meta</th><th class="num">JSON-LD</th><th class="num">Words</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">/pricing-cards</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">461</td><td>Pricing page; short copy for a money page.</td></tr>
+      <tr><td class="mono">/how-it-works</td><td class="num">200</td><td>—</td><td class="num">2</td><td class="num">1,091</td><td>Cited by Semrush AI.</td></tr>
+      <tr><td class="mono">/10-day-free-trial</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">442</td><td></td></tr>
+      <tr><td class="mono">/demo</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">346</td><td>No schema on the booking page.</td></tr>
+      <tr><td class="mono">/design-solutions/graphic-design</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">817</td><td>Title "Unlimited Graphic Design on a Simple Monthly Plan"; no location or price in the title.</td></tr>
+      <tr><td class="mono">/design-subscriptions-for-construction</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">227</td><td class="bad">Thin, indexable. June fix list said merge and delete.</td></tr>
+      <tr><td class="mono">/design-subscriptions-for-manufacturing</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">228</td><td class="bad">Thin, indexable. Same.</td></tr>
+      <tr><td class="mono">/options-to-scale-design</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">230</td><td class="bad">Thin, indexable; June list: "add content or noindex".</td></tr>
+      <tr><td class="mono">/affiliate-library</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">162</td><td class="warn">Thin, indexable.</td></tr>
+      <tr><td class="mono">/faq-general</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">367</td><td class="warn">No title tag returned.</td></tr>
+      <tr><td class="mono">/frequently-asked-questions</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">228</td><td>"Members Frequently Asked Questions"; three FAQ hubs now exist.</td></tr>
+      <tr><td class="mono">/general-frequently-asked-questions</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">228</td><td>/faqs 301-redirects here. No FAQPage schema detected in the HTML.</td></tr>
+      <tr><td class="mono">/videofolio</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">298</td><td></td></tr>
+      <tr><td class="mono">/client-portfolio</td><td class="num">404</td><td>—</td><td class="num">0</td><td class="num">—</td><td>Deleted in June; returns a 404 page, not a redirect to /our-work.</td></tr>
+      <tr><td class="mono">/staff-dashboard</td><td class="num">200</td><td>noindex</td><td class="num">0</td><td class="num">757</td><td class="ok">Correctly noindexed.</td></tr>
+      <tr><td class="mono">/pricing-plans/plans-pricing</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">3</td><td>Wix checkout page; blocked in robots.txt.</td></tr>
+      <tr><td class="mono">/post/your-title-what-s-your-blog-about</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">933</td><td class="bad">Placeholder post still live and in the sitemap ("Welcome to Design Bees: Your Hub for Creative Inspiration").</td></tr>
+      <tr><td class="mono">/post/graphic-design-costs-in-australia-your-pricing-guide</td><td class="num">200</td><td>—</td><td class="num">2</td><td class="num">1,177</td><td class="ok">Title "Graphic Design Prices in Australia: 2026 Cost Guide".</td></tr>
+      <tr><td class="mono">/post/top-7-design-subscriptions-for-creative-teams-2026</td><td class="num">200</td><td>—</td><td class="num">2</td><td class="num">3,215</td><td class="ok">Longest page on the site.</td></tr>
+      <tr><td class="mono">/one-off-packages/logo-and-branding-package</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">915</td><td>Third-biggest page by clicks; likely carrier of the Product/Merchant schema warnings.</td></tr>
+      <tr><td class="mono">/reviews</td><td class="num">200</td><td>—</td><td class="num">1</td><td class="num">1,133</td><td>Google AI Overview quoted "$900/month" from this page in June; confirm the $545 entry price is explicit.</td></tr>
+      <tr><td class="mono">/about</td><td class="num">200</td><td>—</td><td class="num">0</td><td class="num">1,053</td><td class="warn">No Organization schema in the HTML; June list had this "working on it".</td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">Proposed URLs checked and confirmed absent (404): /design-pickle-alternative-australia, /temporary-graphic-designer-cover-australia, /post/temporary-graphic-designer-cover-australia, /post/design-subscription-vs-freelancer-vs-agency-vs-in-house.</p>
+</section>
+
+<section id="i-method" class="appendix">
+  <h2>Appendix I · Method, access and sources</h2>
+  <h3>What was run, where, and what blocked</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Input</th><th>Run by</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Semrush SEO Checker</td><td>AJ, logged in</td><td class="ok">Received as screenshots. The session's own runs (twice, headless Chromium) failed Semrush's "we couldn't verify that you're human" check.</td></tr>
+      <tr><td>Semrush AI Search Visibility Checker</td><td>AJ, logged in</td><td class="ok">Received as text, plus the dashboard AI Search widget as a screenshot. Same human-verification failure from the session.</td></tr>
+      <tr><td>HubSpot AI Search Grader</td><td>This session</td><td class="ok">Completed without an account. Full report not unlocked.</td></tr>
+      <tr><td>Peekaboo</td><td>This session</td><td class="bad">Stopped at "Create free account &amp; run it" (step 4 of 5).</td></tr>
+      <tr><td>Search Console, Generative AI report</td><td>—</td><td class="bad">Needs AJ's login and export. No connector; Supermetrics source unauthenticated and trial expired.</td></tr>
+      <tr><td>Search Console, monthly and alert emails</td><td>Gmail connector</td><td class="ok">Read directly from Google's emails to aj@designbees.com.au.</td></tr>
+      <tr><td>Live Google search / AI Mode checks of the five queries</td><td>This session</td><td class="bad">Google served its "unusual traffic" bot check to the session's IP. Not attempted for ChatGPT.</td></tr>
+      <tr><td>Live site fetches</td><td>This session</td><td class="ok">curl after the environment's network access was changed from Trusted to Full at about 13:33 UTC; before that every audit domain and the site itself were blocked by the egress policy.</td></tr>
+    </tbody>
+  </table></div>
+  <p>No paid plans were started, nothing on the website was changed, and no credentials were used beyond the Gmail and Google Drive connectors already attached to this session.</p>
+  <h3>Sources</h3>
+  <ul>
+    <li>Semrush SEO Checker, <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a>, run by AJ, 10 Sep 2026.</li>
+    <li>Semrush AI Search Visibility Checker, <a href="https://www.semrush.com/free-tools/ai-search-visibility-checker/">semrush.com/free-tools/ai-search-visibility-checker</a>, run by AJ, 10 Sep 2026; Semrush SEO Dashboard AI Search widget, Australia, 10 Sep 2026.</li>
+    <li>HubSpot AI Search Grader, <a href="https://www.hubspot.com/ai-search-grader">hubspot.com/ai-search-grader</a>, 10 Sep 2026 (<a href="https://www.hubspot.com/ai-search-grader/results?companyName=Design+Bees&amp;geography=Australia&amp;productsServices=Unlimited+graphic+design+subscription&amp;industry=Marketing+and+Advertising">result</a>).</li>
+    <li>Peekaboo, <a href="https://www.aipeekaboo.com/">aipeekaboo.com</a>, attempted 10 Sep 2026, incomplete.</li>
+    <li>Google Search Console, property sc-domain:designbees.com.au: performance emails 7 Jul, 4 Aug, 8 Sep 2026; alert emails 18 Mar – 9 Sep 2026 (<a href="https://search.google.com/search-console?resource_id=sc-domain:designbees.com.au">property</a>).</li>
+    <li>Design Bees AEO – GSC Review – 2026-06-03 (<a href="https://docs.google.com/spreadsheets/d/19te5LI2Gz8v7K0N3PITVGwa41Re0hYLEfqqs2sePeoA">Google Sheet</a>); Design Bees AEO – GSC Findings – 2026-06-03 (<a href="https://docs.google.com/spreadsheets/d/1OZmCtG9jxIzgXSZt1aCYaumny8fJBg3ZO4v5AQpEzgw">Google Sheet</a>).</li>
+    <li>Design Bees AEO Visibility Audit – 2026-06-03 (<a href="https://docs.google.com/spreadsheets/d/1iFoJM2y6VKBKKtGCLCwfXMhYl-4q7NvX88iLvhTGKwQ">Google Sheet</a>); AEO Action Plan and Quick Wins, 3 Jun 2026 (<a href="https://docs.google.com/document/d/14ngv99ip5hM7R_tv5Dtqgvs33VfW37BU_5M1U7eu56Y">Google Doc</a>).</li>
+    <li>Design Bees – Full Site Fix List (AEO/SEO audit) – 2026-06-03 (<a href="https://docs.google.com/spreadsheets/d/1kUCu1IhJtb7SZz2876pMK4-QPSfWUt53ztpP82nyphA">Google Sheet</a>); Blog &amp; Website Performance Update, 3 Jul 2026 (<a href="https://docs.google.com/document/d/17sgVTKgMFXZByaQtCdz4t-cTN42lbh2hJgFakBYUhB8">Google Doc</a>); SEO &amp; AEO Next Steps checklist, 24 Jul 2026 (<a href="https://docs.google.com/spreadsheets/d/1CnIDt4lOnPiUoKXeGcQsLsxd3fQoc9oa8hbYG1fEe7A">Google Sheet</a>).</li>
+    <li>Ahrefs Site Audit emails, 26 Aug, 2 Sep, 9 Sep 2026 (<a href="https://app.ahrefs.com/site-audit/9577405/overview">project</a>).</li>
+    <li>SearchAtlas LLM Visibility emails 27 and 31 Aug 2026, OTTO weekly 1 Sep 2026, billing emails 28 Aug and 1 Sep 2026.</li>
+    <li>Keyword ownership map and content queue in the dripifymessaging repository (server/data/blog-engine), 26 Jul 2026, for page ownership of terms.</li>
+    <li>Live fetches of designbees.com.au (sitemaps, robots.txt, 30 URLs), 10 Sep 2026, 13:3x–14:1x UTC.</li>
+  </ul>
+</section>
+
+<footer>Design Bees Visibility Report · draft v2 · 10 September 2026 · Facts carry their source and date; recommendations are opinions; missing items are named, not estimated.</footer>
+</div>
