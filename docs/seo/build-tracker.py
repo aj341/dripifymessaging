@@ -170,7 +170,7 @@ L=[(d0,'Semrush SEO Checker','SEO score (0–100)',50,'homepage, run by AJ'),
 (d0,'Manual AI check','ChatGPT names Design Bees for "best unlimited graphic design subscription in Australia" (1 = yes)',0,'June audit result; re-check monthly'),
 (d1,'Manual AI check','ChatGPT names Design Bees for "best unlimited graphic design subscription in Australia" (1 = yes)',1,'11 Sep live check from AJ\'s own browser: named'),
 (d1,'Manual AI check','ChatGPT: target queries naming Design Bees (of 6)',5,'11 Sep live check; only the freelancer question missed'),
-(d1,'Manual AI check','Google AI Mode: target queries naming Design Bees (of 6)',5,'11 Sep live check')]
+(d1,'Manual AI check','Google AI Mode: target queries naming Design Bees (of 6)',6,'11 Sep live check; includes the freelancer query, won on AI Mode')]
 body(ws,5,L,5)
 for r in range(5,5+len(L)): ws.cell(row=r,column=1).number_format='yyyy-mm-dd'
 metrics=[]; seen=set()
