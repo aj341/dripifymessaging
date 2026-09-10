@@ -1,0 +1,104 @@
+<!--
+  Live AI engine checks - integration fragments for
+  docs/seo/designbees-visibility-report-2026-09-10.html
+
+  Written from the local (teleported) session on 11 Sep 2026. Six buyer queries put
+  through ChatGPT (logged in, real product) and Google AI Mode, from AJ's own machine
+  and Australian IP - the checks the cloud session could not run because Google served
+  it a bot challenge.
+
+  Raw output: docs/seo/data/live-ai-checks-2026-09-11.json
+  Companion fragments: docs/seo/peekaboo-appendix-2026-09-10.html
+
+  Suggested placement: a new Appendix J after Appendix I, plus the small inserts in
+  BLOCKS 2-5 which touch existing sections.
+-->
+
+
+<!-- ============================================================
+     BLOCK 1 - NEW SECTION. Insert after section#i-method.
+     ============================================================ -->
+<section id="j-live" class="appendix">
+  <h2>Appendix J · Live engine checks <span class="lanetag" style="--lane:var(--lane-ai)">AI mentions</span> <span class="tag t-fact">Actual</span></h2>
+  <p class="src">Six buyer queries run on 11 Sep 2026 (AEST) from AJ's own machine and Australian connection: ChatGPT in a signed-in browser session, and Google AI Mode via <span class="mono">google.com/search?udm=50&amp;hl=en-AU&amp;gl=au</span>. This is the check the cloud session could not perform, because Google served its "unusual traffic" challenge to the datacentre IP. Raw answers and citation lists: <span class="mono">docs/seo/data/live-ai-checks-2026-09-11.json</span>.</p>
+  <div class="note"><b>What this is and is not.</b> One run per query, on one day, from one account and one location. It is not an average, and personalisation and location both influence what came back. Its value is the opposite of Peekaboo's: Peekaboo repeats prompts across models to give a comparable score over time, while this shows the actual words, prices and links a buyer receives. Read the two together.</div>
+  <h3>J1 · The scoreboard</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th style="width:26%">Query</th><th class="num">Peekaboo</th><th style="width:30%">ChatGPT, live</th><th style="width:32%">Google AI Mode, live</th></tr></thead>
+    <tbody>
+      <tr><td>Best unlimited graphic design subscription in Australia</td><td class="num">88</td><td class="bad">Absent. Recommends ManyPixels ("best overall"), Kimp ("best value"), Penji, Design Pickle, Flocksy, Superside.</td><td class="ok">Present, ranked <b>"Best Overall Local Choice"</b>, described as 100% Aussie-owned.</td></tr>
+      <tr><td>How much does unlimited graphic design cost in Australia?</td><td class="num">100</td><td class="bad">Absent. Anchors on "from around A$299/month" taken from SourceForge, a competitor's figure.</td><td class="ok">Present and the lead source. Quotes <b>$545–$2,645 inc GST</b> correctly in a provider table.</td></tr>
+      <tr><td>Graphic design services Australia</td><td class="num">40<br><span class="src">ChatGPT 0</span></td><td class="ok">Present, top of a local map pack, "$545/month incl. GST".</td><td class="warn">Present, but below agency lists sourced from Clutch.</td></tr>
+      <tr><td>Graphic design services Sydney</td><td class="num">not tracked</td><td class="ok">Present, "Surry Hills", $545 inc GST, dedicated designer.</td><td class="ok">Present in the map pack, beside Made Agency, Design Fox and 55 Knots.</td></tr>
+      <tr><td>What is a Design Pickle alternative in Australia?</td><td class="num">51</td><td class="warn">Present but ranked 5th, below ManyPixels, Penji, Kimp and Flocksy, and with no price given.</td><td class="ok">Present and listed first among Australian alternatives.</td></tr>
+      <tr><td>What do small businesses switch to when a freelance designer gets too costly?</td><td class="num bad">0</td><td class="bad">Absent. No citations at all.</td><td class="bad">Absent. Answered from Reddit threads, Medium and LinkedIn.</td></tr>
+      <tr><td><b>Total naming Design Bees</b></td><td class="num">—</td><td class="num bad"><b>3 / 6</b></td><td class="num ok"><b>5 / 6</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="src">A correction worth recording: the cost query first came back as absent on AI Mode. That was a capture fault in the script, not a real absence — the page had not finished rendering when the text was read. It was re-run and returned the answer above. The figure in this table is the re-run.</p>
+  <h3>J2 · Peekaboo's ChatGPT score does not match the real ChatGPT</h3>
+  <p>On the three prompts measurable both ways, the two disagree, and not by a little:</p>
+  <ul>
+    <li>Peekaboo scored the cost prompt <b>100</b> and best-subscription <b>88</b>. Real ChatGPT names Design Bees in <b>neither</b>.</li>
+    <li>Peekaboo scored ChatGPT <b>0</b> on "graphic design services (Australia)". Real ChatGPT puts Design Bees <b>top, with the correct price</b>.</li>
+  </ul>
+  <p>The cause is in Appendix D2: Peekaboo samples ChatGPT as <span class="mono">gpt-4o-mini</span>, a small model without the live retrieval and local results the consumer product uses. The practical rule: <b>treat Peekaboo as a relative tracker across time, not as a description of what a customer sees.</b> Where the two conflict, the live check is the better guide to buyer experience, and Peekaboo is the better guide to whether things are improving month on month.</p>
+  <h3>J3 · Where the answers come from when Design Bees is missing</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Query and engine</th><th>Sources the engine used instead</th></tr></thead>
+    <tbody>
+      <tr><td>Best subscription, ChatGPT</td><td><span class="mono">flocksy.com</span> best-unlimited list · <span class="mono">manypixelscreative.com</span> Design Pickle vs ManyPixels vs Penji vs Superside · <span class="mono">superside.com</span></td></tr>
+      <tr><td>Cost, ChatGPT</td><td><span class="mono">digitalpolo.com</span> pricing breakdown · <span class="mono">sourceforge.net</span> Australia list · <span class="mono">flocksy.com</span> subscription cost guide</td></tr>
+      <tr><td>Freelancer too costly, AI Mode</td><td>Four Reddit threads (r/AgencyGrowthHacks, r/smallbusinessowner, r/graphic_design, r/smallbusiness) · Medium · LinkedIn · <span class="mono">optimumcorp.com.au</span></td></tr>
+      <tr><td>Freelancer too costly, ChatGPT</td><td>No citations. Answered from model knowledge, naming Design Pickle as the category example.</td></tr>
+      <tr><td>Services Australia, AI Mode</td><td><span class="mono">clutch.co</span> Australia and Melbourne directories, ahead of any vendor site</td></tr>
+    </tbody>
+  </table></div>
+  <p>This is the same pattern Peekaboo found in Appendix D4, now confirmed on the live products: when Design Bees is missing, the gap is filled by competitors' comparison posts and by directories. Flocksy, ManyPixels, DigitalPolo, SourceForge and Clutch appear in both datasets.</p>
+  <h3>J4 · Where Design Bees' own content is doing the work</h3>
+  <p>Google AI Mode cited <b>designbees.com.au</b> repeatedly, and its cost answer was built primarily from the site:</p>
+  <ul>
+    <li><span class="mono">/post/top-7-design-subscriptions-for-creative-teams-2026</span> — cited for both the best-subscription and cost answers</li>
+    <li><span class="mono">/post/the-rise-of-design-subscription-services-a-game-changer-for-businesses</span></li>
+    <li><span class="mono">/post/cannot-afford-a-full-time-designer-here-are-your-options</span> — cited for cost</li>
+    <li><span class="mono">/post/are-unlimited-graphic-design-services-truly-limitless-what-you-need-to-know</span></li>
+    <li><span class="mono">/design-solutions/graphic-design</span>, <span class="mono">/design-solutions/graphic-design-adelaide</span>, <span class="mono">/design-solutions/graphic-design-perth</span>, and the homepage</li>
+  </ul>
+  <p>Two things follow. The city pages are earning citations well beyond Sydney, which supports keeping and strengthening that set. And <span class="mono">cannot-afford-a-full-time-designer-here-are-your-options</span> is the closest existing asset to the freelancer question, yet it does not win that query: it surfaces for cost instead. Reworking or extending that post is a cheaper route to the gap than starting from nothing.</p>
+  <h3>J5 · Two levers this check surfaced that the rest of the report missed</h3>
+  <ul>
+    <li><b>Google Business Profile drives the location answers.</b> Both ChatGPT and AI Mode returned a map pack for the Australia and Sydney queries, with "Design Bees - Unlimited Graphic Design, 5.0, Surry Hills" as a map entity rather than a web result. That is the Business Profile, not the website, and it is currently the strongest asset in the two queries where Design Bees performs best on ChatGPT. Both engines also showed it as "Closed" at the time of asking, so opening hours are being read and displayed.</li>
+    <li><b>Clutch is cited by both engines and there is no claimed profile.</b> AI Mode led its Australia answer with Clutch directory pages, and ChatGPT cited Clutch's Sydney page. The report already recommended claiming Clutch on general principle; this is direct evidence for it.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     BLOCK 2 - Table of contents. Add after the Appendix I entry.
+     ============================================================ -->
+<a href="#j-live"><span class="eyebrow">J</span>Live engine checks</a>
+
+
+<!-- ============================================================
+     BLOCK 3 - Appendix D2. APPEND this after the existing
+     "One caveat worth knowing" paragraph about gpt-4o-mini.
+     The caveat is now evidenced rather than theoretical.
+     ============================================================ -->
+<div class="note"><b>Confirmed on 11 Sep.</b> Live checks against the real ChatGPT (Appendix J) found the opposite result to Peekaboo on all three comparable prompts: absent where Peekaboo scored 100 and 88, present and top where Peekaboo scored 0. Peekaboo's ChatGPT figure tracks <span class="mono">gpt-4o-mini</span>, not the product buyers use. Use Peekaboo for month-on-month movement, and Appendix J for what a customer actually sees.</div>
+
+
+<!-- ============================================================
+     BLOCK 4 - Section 1 summary, AI-mentions lane.
+     ADD as a further bullet (after the Peekaboo bullets supplied in
+     the companion fragments file).
+     ============================================================ -->
+<li>Live check, 11 Sep, from an Australian connection: ChatGPT names Design Bees in <b>3 of 6</b> buyer queries, Google AI Mode in <b>5 of 6</b>. Neither names it for "what do small businesses switch to when a freelance designer gets too costly".</li>
+
+
+<!-- ============================================================
+     BLOCK 5 - Section 4, Next actions. ADD these three.
+     Renumber the ids to follow whatever v4 ends on.
+     ============================================================ -->
+<label><input type="checkbox" id="a13"><span><span class="own">AJ</span> Claim and complete the Google Business Profile listing. Both ChatGPT and AI Mode answer the Australia and Sydney queries from the map pack, and both displayed the profile as "Closed" when asked, so hours and categories are being read directly.</span></label>
+<label><input type="checkbox" id="a14"><span><span class="own">AJ</span> Claim the Clutch profile. Both engines cite Clutch directory pages ahead of vendor sites for "graphic design services Australia".</span></label>
+<label><input type="checkbox" id="a15"><span><span class="own">AJ / Claude</span> Rework <span class="mono">/post/cannot-afford-a-full-time-designer-here-are-your-options</span> to answer the freelancer-cost question directly, or fold it into the proposed <span class="mono">/temporary-graphic-designer-cover-australia</span> page. It is the only existing asset near that gap, it is already cited by AI Mode for cost, and the gap is the one failure common to Peekaboo, ChatGPT and AI Mode alike.</span></label>
