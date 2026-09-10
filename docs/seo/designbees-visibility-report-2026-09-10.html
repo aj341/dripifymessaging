@@ -102,9 +102,9 @@
   <p style="max-width:78ch; margin-top:10px;">Four free audits and Google Search Console, read as three separate things that are often blurred together: <b>SEO scores</b> (site health), <b>AI mentions</b> (what answer engines say), and <b>Google AI impressions</b> (Search Console's own report). Each finding carries its source and date. Recommendations are labelled as such.</p>
   <div class="meta">
     <div>Site<b>designbees.com.au · Wix Studio · 38 pages + 23 posts (sitemap, 10 Sep)</b></div>
-    <div>Version<b>Draft v2 · full detail · 10 Sep 2026</b></div>
+    <div>Version<b>Draft v3 · full detail · 10 Sep 2026</b></div>
     <div>Prepared for<b>AJ Kavanagh, Design Bees</b></div>
-    <div>Still pending<b>Peekaboo run · Search Console Generative AI export · exact Semrush speed figures</b></div>
+    <div>Still pending<b>Peekaboo run · Search Console Generative AI export</b></div>
   </div>
   <div class="legend">Labels: <span class="tag t-fact">Actual</span> measured result <span class="tag t-rec">Recommendation</span> my opinion <span class="tag t-miss">Missing</span> could not be obtained <span class="tag t-sec">Secondary</span> older or third-party monitoring, used as context</div>
   <nav class="toc" aria-label="Contents">
@@ -132,7 +132,8 @@
       <div class="big">50 / 100</div>
       <div class="cap">Semrush SEO Checker, homepage, 10 Sep 2026 (run by AJ)</div>
       <ul>
-        <li>Fails: Interaction to Next Paint, Total Blocking Time, image alt text, Instagram and X links, authority/backlinks/referring domains versus compared sites.</li>
+        <li>Sub-scores: on-page 60%, technical 80%, off-page 0%, social 60%. 11 critical and 3 minor issues.</li>
+        <li>Fails: Interaction to Next Paint 6.19 s, Total Blocking Time 1.07 s (performance score 56/100), image alt text, Instagram and X links, authority/backlinks/referring domains versus compared sites.</li>
         <li>Could not measure: mobile-friendliness, DOM size.</li>
         <li>Passes: sitemap, robots, canonical, H1, structured data (FAQPage, ProfessionalService), LCP, CLS, TTFB, FCP.</li>
         <li>Ahrefs, 9 Sep: health 93 on only 3 crawled URLs; 1 error (HTTPS page links to HTTP), a redirect chain.</li>
@@ -175,7 +176,7 @@
     </article>
     <article>
       <h3>Clear the technical flags the tools agree on</h3>
-      <p>Fix the Product-snippet and Merchant-listing schema fields Google flagged on 9 Sep (missing <i>review</i>, <i>aggregateRating</i>, <i>availability</i>, return policy, shipping, identifier), the HTTP internal link and redirect chain from Ahrefs, the missing image alt text, and the Interaction to Next Paint and Total Blocking Time failures (audit which Wix apps and scripts load on every page; Wix Hotels and Wix Chat are installed).</p>
+      <p>Fix the Product-snippet and Merchant-listing schema fields Google flagged on 9 Sep (missing <i>review</i>, <i>aggregateRating</i>, <i>availability</i>, return policy, shipping, identifier), the HTTP internal link and redirect chain from Ahrefs, the missing image alt text, and the Interaction to Next Paint (6.19 s) and Total Blocking Time (1.07 s) failures (audit which Wix apps and scripts load on every page; Wix Hotels and Wix Chat are installed).</p>
       <p class="why"><b>Why it matters:</b> schema on the pricing and package pages is what both rich results and AI engines read, and those are already the most-cited pages. INP failing hits the 29% of August clicks that were mobile.</p>
     </article>
     <article>
@@ -207,7 +208,6 @@
   <div class="check">
     <label><input type="checkbox" id="a1"><span><span class="own">AJ</span> Create the free Peekaboo account, run the Design Bees report, send the results (text or screenshots).</span></label>
     <label><input type="checkbox" id="a2"><span><span class="own">AJ</span> Export Search Console Performance → Generative AI and Performance → Search results (last 3 months) to Google Sheets in Drive.</span></label>
-    <label><input type="checkbox" id="a3"><span><span class="own">AJ</span> Paste the Semrush SEO Checker result as text so the exact INP, TBT and performance-score figures can replace the screenshot readings in Appendix A.</span></label>
     <label><input type="checkbox" id="a4"><span><span class="own">Miguel</span> Fix the Product-snippet and Merchant-listing schema fields on the pricing and package pages; validate in the Rich Results Test; request re-indexing in Search Console.</span></label>
     <label><input type="checkbox" id="a5"><span><span class="own">Miguel</span> Fix the HTTP internal link and the redirect chain Ahrefs flagged; add alt text to the images Semrush flagged.</span></label>
     <label><input type="checkbox" id="a6"><span><span class="own">AJ / Claude</span> Rewrite the homepage and /design-solutions/graphic-design title, meta and opening for "graphic design services" and "unlimited graphic design australia"; title under 60 characters, meta under 155.</span></label>
@@ -222,9 +222,9 @@
 
 <section id="a-semrush-seo" class="appendix">
   <h2>Appendix A · Semrush SEO Checker <span class="lanetag" style="--lane:var(--lane-seo)">SEO scores</span> <span class="tag t-fact">Actual</span></h2>
-  <p class="src">Tool: <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a> · input <span class="mono">designbees.com.au</span> (homepage) · run by AJ on 10 Sep 2026 in a logged-in Semrush account · transcribed from AJ's screenshots. Metric values marked "as read" could not be read exactly from the screenshots and should be confirmed from the text export.</p>
+  <p class="src">Tool: <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a> · input <span class="mono">designbees.com.au</span> (homepage) · run by AJ on 10 Sep 2026 in a logged-in Semrush account · result pasted as text by AJ (<a href="https://www.semrush.com/siteaudit/?domain=www.designbees.com.au">report page</a>). The free checker uses Semrush's US keyword database for its rankings and competitor sections.</p>
   <h3>Score and issue list</h3>
-  <p><b>SEO Score 50 / 100.</b> Four sub-bars: On-Page SEO (partial), Technical SEO (strongest), Off-Page SEO ("improve your off-page SEO"), Social Media (weakest).</p>
+  <p><b>SEO Score 50 / 100.</b> Semrush counts 11 critical and 3 minor issues. Sub-scores: On-Page SEO 60%, Technical SEO 80%, Off-Page SEO 0%, Social Media 60%.</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Type</th><th>Check</th><th>Status</th><th>Semrush's note</th></tr></thead>
     <tbody>
@@ -244,27 +244,28 @@
   <div class="tablewrap"><table>
     <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
     <tbody>
-      <tr><td>URL</td><td class="ok">Pass</td><td>26 characters, <span class="mono">https://www.designbees.com.au/</span></td></tr>
+      <tr><td>URL</td><td class="ok">Pass</td><td>21 characters, <span class="mono">www.designbees.com.au</span></td></tr>
       <tr><td>Title</td><td class="warn">Warning</td><td>61 characters, aim for 50–60: "Unlimited Graphic Design Subscription Australia | Design Bees"</td></tr>
       <tr><td>Meta description</td><td class="bad">Fail</td><td>149 characters, Semrush suggests 100–130: "Get unlimited graphic design from Design Bees, an Australian company. Packages start at $545/month with a 10-day free trial. Pause or cancel anytime."</td></tr>
       <tr><td>H1</td><td class="ok">Pass</td><td>Single H1, 68 characters: "Unlimited Graphic Design for Australian Businesses – From $545/Month"</td></tr>
-      <tr><td>H2–H3 structure</td><td class="ok">Pass</td><td>18 H2, 3 H3. Examples: "Trusted By Australian Brands", "How It Works", "See How Our Design Subscription Works in Minutes"</td></tr>
+      <tr><td>H2–H3 structure</td><td class="ok">Pass</td><td>18 H2, 3 H3, no H4–H6. H2s: Trusted By Australian Brands · How It Works · See How Our Design Subscription Works in Minutes · Why Australian Businesses Choose Us · Proudly Australian · Unlimited Requests &amp; Revisions · Quality Control on Designs · Dedicated Designer · Instant Access to Top-Tier Creatives · Graphic Design &amp; Illustrations · Presentations &amp; Pitch Decks · Video Editing &amp; Motion Graphics · And More! · Check Out Our Work · Australian Businesses &amp; How They Use Us · All Plans Include · Unsure which plan best suits your business? · Have more questions? H3s: Unlimited Queue &amp; Revisions · Monthly Packages · No contracts. Only one H2 contains "graphic design".</td></tr>
       <tr><td>Image alt</td><td class="bad">Fail</td><td>Some images missing alt text</td></tr>
-      <tr><td>Content</td><td class="ok">Pass</td><td>Text-to-code ratio and content length both passed (about 2,000 words; the live page carries about 1,750 visible words on 10 Sep)</td></tr>
-      <tr><td>Keyword density</td><td class="ok">Pass</td><td>"design" 44 instances (2.68%), "case" 38 (2.19%), "study" 38 (2.19%). The case-study carousel dominates the word count.</td></tr>
-      <tr><td>Keyword rankings</td><td>—</td><td>Three low-volume keywords listed, each with 0% of the site's traffic (as read).</td></tr>
+      <tr><td>Content</td><td class="ok">Pass</td><td>Text-to-code ratio 53.82% (pass). Semrush counts 20,439 words, but its word list includes code tokens such as "pagehtmlembeds" and "polyfills", so it is reading embedded script as text; the live page carries about 1,750 visible words (10 Sep fetch).</td></tr>
+      <tr><td>Keyword density</td><td class="ok">Pass</td><td>"design" 44 (2.68%), "case" 36, "study" 36, "view" 36 (2.19% each), "plan" 17, "marketing" 16, "bees" 13, "hours" 12, "free", "start", "work" 11, "cancel", "trial", "unlimited" 10, "brand", "designer" 9. "graphic" appears only 5 times (0.30%) and "subscription" 5. The case-study carousel ("case study", "view") dominates the counted text.</td></tr>
+      <tr><td>Keyword rankings</td><td>—</td><td>US database: "graphic design australia" (volume 40, difficulty 21, 0% of traffic) and "80 graphics australia services products" (volume 50, difficulty 37, 0%, listed twice). Not Australian search data.</td></tr>
+      <tr><td>Top pages</td><td>—</td><td>Homepage only: 0% traffic share, 3 keywords, 30 referring domains, 158 backlinks (Semrush page-level data, which contradicts the N/A in the off-page section below).</td></tr>
     </tbody>
   </table></div>
   <h3>Technical checks</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
     <tbody>
-      <tr><td>Favicon</td><td class="ok">Pass</td><td>Valid and accessible</td></tr>
+      <tr><td>Favicon</td><td class="ok">Pass</td><td>Valid, served from static.wixstatic.com</td></tr>
       <tr><td>Noindex</td><td class="ok">Pass</td><td>Page is configured for indexing</td></tr>
       <tr><td>Sitemap</td><td class="ok">Pass</td><td><span class="mono">https://www.designbees.com.au/sitemap.xml</span> (valid XML sitemap index)</td></tr>
       <tr><td>Hreflang</td><td class="warn">Warning</td><td>No hreflang tags. Not needed for a single-language Australian site.</td></tr>
       <tr><td>Language</td><td class="ok">Pass</td><td>en</td></tr>
-      <tr><td>Canonical</td><td class="ok">Pass</td><td>Configured, points to the appropriate URL</td></tr>
+      <tr><td>Canonical</td><td class="ok">Pass</td><td><span class="mono">https://www.designbees.com.au</span></td></tr>
       <tr><td>Robots.txt</td><td class="ok">Pass</td><td><span class="mono">https://www.designbees.com.au/robots.txt</span></td></tr>
       <tr><td>Structured data</td><td class="ok">Pass</td><td>FAQPage, ProfessionalService</td></tr>
     </tbody>
@@ -273,26 +274,26 @@
   <div class="tablewrap"><table>
     <thead><tr><th>Metric</th><th>Status</th><th>Semrush's note</th></tr></thead>
     <tbody>
-      <tr><td>Performance score</td><td class="warn">Partial</td><td>"Performs reasonably well but doesn't fully meet Google's targets": compress large images, remove unused CSS/JavaScript, enable caching. Numeric score: as read, unconfirmed.</td></tr>
+      <tr><td>Performance score</td><td class="warn">Partial</td><td>"Performs reasonably well but doesn't fully meet Google's targets": compress large images, remove unused CSS/JavaScript, enable caching. Score <b>56 / 100</b>.</td></tr>
       <tr><td>Mobile friendliness</td><td class="bad">Not measured</td><td>Failed to check</td></tr>
-      <tr><td>Largest Contentful Paint</td><td class="ok">Pass</td><td>Main image or text block appears quickly</td></tr>
-      <tr><td>Interaction to Next Paint</td><td class="bad">Fail</td><td>Clicks and taps noticeably delayed. Value as read: several seconds; confirm from the text export.</td></tr>
-      <tr><td>Cumulative Layout Shift</td><td class="ok">Pass</td><td>Elements visually stable while loading</td></tr>
-      <tr><td>Time to First Byte</td><td class="ok">Pass</td><td>Server responds quickly</td></tr>
-      <tr><td>First Contentful Paint</td><td class="ok">Pass</td><td>First text or image appears almost instantly</td></tr>
-      <tr><td>Speed Index</td><td class="ok">Pass</td><td>Visual content appears quickly</td></tr>
-      <tr><td>Total Blocking Time</td><td class="bad">Fail</td><td>Heavy scripts severely delay input. Value as read: about one second; confirm from the text export.</td></tr>
+      <tr><td>Largest Contentful Paint</td><td class="ok">Pass</td><td>LCP 1.7 s</td></tr>
+      <tr><td>Interaction to Next Paint</td><td class="bad">Fail</td><td>INP <b>6.186 s</b>. Google's "good" threshold is 0.2 s; this is 30 times over it.</td></tr>
+      <tr><td>Cumulative Layout Shift</td><td class="ok">Pass</td><td>CLS 0.0</td></tr>
+      <tr><td>Time to First Byte</td><td class="ok">Pass</td><td>TTFB 0.111 s</td></tr>
+      <tr><td>First Contentful Paint</td><td class="ok">Pass</td><td>FCP 0.8 s</td></tr>
+      <tr><td>Speed Index</td><td class="ok">Pass</td><td>Speed Index 3.3 s</td></tr>
+      <tr><td>Total Blocking Time</td><td class="bad">Fail</td><td>TBT <b>1.065 s</b>. Google's "good" threshold is 0.2 s.</td></tr>
       <tr><td>DOM size</td><td class="bad">Not measured</td><td>Unable to retrieve</td></tr>
     </tbody>
   </table></div>
   <h3>Competitors, off-page and social</h3>
   <ul>
-    <li><b>Competitors listed</b> (one common keyword each): graphicdesignacademy.com.au (27% competition level), two small Australian design studios (21% and 16%), one further design site (about 3%), clutch.co (0%). These are keyword-overlap neighbours, not the subscription competitors (Design Pickle, ManyPixels, Penji, Kimp).</li>
+    <li><b>Competitors listed</b> (one common keyword each, US database): graphicdesignacademy.com.au 27% competition level, australianlogodesign.com.au 21%, goldcoastgraphicdesigncompany.com.au 19%, ccgraphicdesignsau.com 3%, clutch.co 0%. These are keyword-overlap neighbours, not the subscription competitors (Design Pickle, ManyPixels, Penji, Kimp).</li>
     <li><b>Off-page assessment:</b> Authority Score N/A, backlinks N/A, referring domains N/A, nofollow vs dofollow N/A. Semrush had no aggregate link data for the domain, which is itself the finding.</li>
-    <li><b>Top backlinks shown:</b> one Behance profile page (Authority Score 21) and nine DesignRush directory pages (Authority Score 14 each): "Top Australia Design Agencies" page 3 and page 4, "Top Digital Agencies in Australia" pages 5 and 78, "Top Illustration Agencies in 2026" page 67, "Top Visual Communication Companies in 2026" page 68, "Top Automotive Branding Agencies in 2026" page 27, "Top Small Business Branding Agencies in 2026" page 152, "Top Startup Branding Agencies in 2026" page 51. The DesignRush links are marked nofollow.</li>
-    <li><b>Social links on the page:</b> Facebook <span class="ok">found</span>, YouTube <span class="ok">found</span>, LinkedIn <span class="ok">found</span>, Instagram <span class="bad">missing</span>, X <span class="bad">missing</span>.</li>
+    <li><b>Top backlinks shown:</b> one Behance profile (Authority Score 21, <span class="mono">behance.net/Geloogtrz</span>, Miguel Angelo Gutierrez, the site's own developer, so not an independent link) and nine DesignRush directory pages (Authority Score 14 each, all nofollow): Top Australia Design Agencies page 3 · Top Digital Agencies in Australia page 5 · Top Digital Agencies page 75 · Top Australia Graphic Design Companies page 4 · Top Illustration Agencies in 2026 page 67 · Top Visual Communication Companies in 2026 page 69 · Top Automotive Branding Agencies in 2026 page 27 · Top Small Business Branding Agencies in 2026 page 152 · Top Startup Branding Agencies in 2026 page 91. Deep directory pages this far down pass almost no authority.</li>
+    <li><b>Social links on the page:</b> Facebook <span class="ok">found</span> (facebook.com/profile.php), YouTube <span class="ok">found</span> (youtube.com/@DesignBeesSubscriptions), LinkedIn <span class="ok">found</span> (linkedin.com/company/design-bees), Instagram <span class="bad">missing</span>, X <span class="bad">missing</span>.</li>
   </ul>
-  <p class="note"><b>Reading it:</b> the on-page and technical basics pass. The score is dragged down by JavaScript interaction cost, a near-empty link profile made of nofollow directory listings, and two missing social links. Note the session's own attempts to run this tool failed Semrush's human-verification check (see Appendix I), so this run is AJ's.</p>
+  <p class="note"><b>Reading it:</b> the on-page and technical basics pass. The score is dragged down by JavaScript interaction cost (INP 6.19 s and TBT 1.07 s against a 0.2 s target, performance 56/100), a link profile that is nine nofollow directory listings plus the developer's own Behance page, and two missing social links. The 20,439-word content count and the "pagehtmlembeds" keyword show Semrush is reading embedded script as page text, which also inflates the case-study carousel's share of the keyword density. Note the session's own attempts to run this tool failed Semrush's human-verification check (see Appendix I), so this run is AJ's.</p>
 </section>
 
 <section id="b-hubspot" class="appendix">
@@ -534,7 +535,7 @@
   <div class="tablewrap"><table>
     <thead><tr><th>Input</th><th>Run by</th><th>Outcome</th></tr></thead>
     <tbody>
-      <tr><td>Semrush SEO Checker</td><td>AJ, logged in</td><td class="ok">Received as screenshots. The session's own runs (twice, headless Chromium) failed Semrush's "we couldn't verify that you're human" check.</td></tr>
+      <tr><td>Semrush SEO Checker</td><td>AJ, logged in</td><td class="ok">Received as screenshots, then as pasted text with exact figures. The session's own runs (twice, headless Chromium) failed Semrush's "we couldn't verify that you're human" check.</td></tr>
       <tr><td>Semrush AI Search Visibility Checker</td><td>AJ, logged in</td><td class="ok">Received as text, plus the dashboard AI Search widget as a screenshot. Same human-verification failure from the session.</td></tr>
       <tr><td>HubSpot AI Search Grader</td><td>This session</td><td class="ok">Completed without an account. Full report not unlocked.</td></tr>
       <tr><td>Peekaboo</td><td>This session</td><td class="bad">Stopped at "Create free account &amp; run it" (step 4 of 5).</td></tr>
@@ -547,7 +548,7 @@
   <p>No paid plans were started, nothing on the website was changed, and no credentials were used beyond the Gmail and Google Drive connectors already attached to this session.</p>
   <h3>Sources</h3>
   <ul>
-    <li>Semrush SEO Checker, <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a>, run by AJ, 10 Sep 2026.</li>
+    <li>Semrush SEO Checker, <a href="https://www.semrush.com/free-tools/seo-checker/">semrush.com/free-tools/seo-checker</a>, run by AJ, 10 Sep 2026 (<a href="https://www.semrush.com/siteaudit/?domain=www.designbees.com.au">report page</a>, pasted as text).</li>
     <li>Semrush AI Search Visibility Checker, <a href="https://www.semrush.com/free-tools/ai-search-visibility-checker/">semrush.com/free-tools/ai-search-visibility-checker</a>, run by AJ, 10 Sep 2026; Semrush SEO Dashboard AI Search widget, Australia, 10 Sep 2026.</li>
     <li>HubSpot AI Search Grader, <a href="https://www.hubspot.com/ai-search-grader">hubspot.com/ai-search-grader</a>, 10 Sep 2026 (<a href="https://www.hubspot.com/ai-search-grader/results?companyName=Design+Bees&amp;geography=Australia&amp;productsServices=Unlimited+graphic+design+subscription&amp;industry=Marketing+and+Advertising">result</a>).</li>
     <li>Peekaboo, <a href="https://www.aipeekaboo.com/">aipeekaboo.com</a>, attempted 10 Sep 2026, incomplete.</li>
@@ -562,5 +563,5 @@
   </ul>
 </section>
 
-<footer>Design Bees Visibility Report · draft v2 · 10 September 2026 · Facts carry their source and date; recommendations are opinions; missing items are named, not estimated.</footer>
+<footer>Design Bees Visibility Report · draft v3 · 10 September 2026 · Facts carry their source and date; recommendations are opinions; missing items are named, not estimated.</footer>
 </div>
